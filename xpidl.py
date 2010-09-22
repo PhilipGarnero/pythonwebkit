@@ -756,7 +756,7 @@ class IDLParser(object):
     t_LSHIFT = r'<<'
     t_RSHIFT=  r'>>'
 
-    literals = '"(){}[],;:=|+-*'
+    literals = '"(){}[],;:=|+-*&'
 
     t_ignore = ' \t'
 
@@ -837,7 +837,7 @@ class IDLParser(object):
         p[0] = p[2]
 
     def p_module(self, p):
-        """module : MODULE IDENTIFIER '{' productions '}' """
+        """module : MODULE IDENTIFIER '{' productions '}' optsemi"""
         p[0] = p[4]
 
     def p_productions_start(self, p):
@@ -909,11 +909,21 @@ class IDLParser(object):
         p[0] = list(p[2])
         p[0].insert(0, p[1])
 
+    def p_attribute_vallist_start(self, p):
+        """attvallist : IDENTIFIER
+                      | number 
+                      | IID """
+        p[0] = [p[1]]
+
+    def p_attribute_vallist_continue(self, p):
+        """attvallist : IDENTIFIER '&' attvallist
+                      | number     '&' attvallist"""
+        p[0] = list(p[3])
+        p[0].insert(0, p[1])
+
     def p_attribute_eq(self, p):
-        """attribute : anyident '=' IDENTIFIER ','
-                     | anyident '=' number ','
-                     | anyident '=' IDENTIFIER 
-                     | anyident '=' number """
+        """attribute : anyident '=' attvallist ','
+                     | anyident '=' attvallist """
         p[0] = (p[1]['value'], p[3], p[1]['location'])
 
     def p_attribute(self, p):
@@ -929,7 +939,7 @@ class IDLParser(object):
             p[0] = p[2]
 
     def p_interface(self, p):
-        """interface : INTERFACE attributes IDENTIFIER ifacebase ifacebody ';'"""
+        """interface : INTERFACE attributes IDENTIFIER ifacebase ifacebody optsemi """
         INTERFACE, atts, name, base, body, SEMI = p[1:]
         attlist = atts['attlist']
         doccomments = []
@@ -1047,6 +1057,14 @@ class IDLParser(object):
         n1 = p[1]
         n2 = p[3]
         p[0] = lambda i: n1(i) | n2(i)
+
+    def p_optsemi(self, p):
+        """optsemi : ';'
+                   |"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = None
 
     def p_member_att(self, p):
         """member : optreadonly ATTRIBUTE attributes IDENTIFIER IDENTIFIER setters ';'"""
