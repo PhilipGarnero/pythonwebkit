@@ -531,67 +531,14 @@ class Interface(object):
         return c.getValue()
 
 class InterfaceAttributes(object):
-    uuid = None
-    scriptable = False
-    function = False
-    deprecated = False
-    noscript = False
-
-    def setuuid(self, value):
-        self.uuid = value.lower()
-
-    def setscriptable(self):
-        self.scriptable = True
-
-    def setfunction(self):
-        self.function = True
-
-    def setnoscript(self):
-        self.noscript = True
-
-    def setdeprecated(self):
-        self.deprecated = True
-
-    actions = {
-        'uuid':       (True, setuuid),
-        'scriptable': (False, setscriptable),
-        'function':   (False, setfunction),
-        'noscript':   (False, setnoscript),
-        'deprecated': (False, setdeprecated),
-        'object':     (False, lambda self: True),
-        }
 
     def __init__(self, attlist, location):
-        def badattribute(self):
-            raise IDLError("Unexpected interface attribute '%s'" % name, location)
-
+        self.attributes = {}
         for name, val, aloc in attlist:
-            hasval, action = self.actions.get(name, (False, badattribute))
-            if hasval:
-                if val is None:
-                    raise IDLError("Expected value for attribute '%s'" % name,
-                                   aloc)
-
-                action(self, val)
-            else:
-                if val is not None:
-                    raise IDLError("Unexpected value for attribute '%s'" % name,
-                                   aloc)
-
-                action(self)
-
-        if self.uuid is None:
-            raise IDLError("interface has no uuid", location)
+            self.attributes[name] = (val, aloc)
 
     def __str__(self):
-        l = []
-        if self.uuid:
-            l.append("\tuuid: %s\n" % self.uuid)
-        if self.scriptable:
-            l.append("\tscriptable\n")
-        if self.function:
-            l.append("\tfunction\n")
-        return "".join(l)
+        return str(self.attributes)
 
 class ConstMember(object):
     kind = 'const'
@@ -626,7 +573,8 @@ class Attribute(object):
     readonly = False
     binaryname = None
 
-    def __init__(self, type, name, attlist, readonly, location, doccomments):
+    def __init__(self, type, name, attlist, readonly, location, doccomments,
+                       getter, setter, raises):
         self.type = type
         self.name = name
         self.attlist = attlist
@@ -634,6 +582,9 @@ class Attribute(object):
         self.location = location
         self.doccomments = doccomments
         self.attributes = {}
+        self.getter = getter
+        self.setter = setter
+        self.raises = raises
 
         for name, value, aloc in attlist:
             self.attributes[name] = (value, aloc)
@@ -661,7 +612,8 @@ class Method(object):
     notxpcom = False
     binaryname = None
 
-    def __init__(self, type, name, attlist, paramlist, location, doccomments, raises):
+    def __init__(self, type, name, attlist, paramlist, location, doccomments, 
+                        raises):
         self.type = type
         self.name = name
         self.attlist = attlist
@@ -669,25 +621,10 @@ class Method(object):
         self.location = location
         self.doccomments = doccomments
         self.raises = raises
+        self.attributes = {}
 
         for name, value, aloc in attlist:
-            if name == 'binaryname':
-                if value is None:
-                    raise IDLError("binaryname attribute requires a value",
-                                   aloc)
-
-                self.binaryname = value
-                continue
-
-            if value is not None:
-                raise IDLError("Unexpected attribute value", aloc)
-
-            if name == 'noscript':
-                self.noscript = True
-            elif name == 'notxpcom':
-                self.notxpcom = True
-            else:
-                raise IDLError("Unexpected attribute '%s'", aloc)
+            self.attributes[name] = (value, aloc)
 
         self.namemap = NameMap()
         for p in paramlist:
@@ -735,34 +672,10 @@ class Param(object):
         self.attlist = attlist
         self.location = location
         self.realtype = realtype
+        self.attributes = {}
 
         for name, value, aloc in attlist:
-            # Put the value-taking attributes first!
-            if name == 'size_is':
-                if value is None:
-                    raise IDLError("'size_is' must specify a parameter", aloc)
-                self.size_is = value
-            elif name == 'iid_is':
-                if value is None:
-                    raise IDLError("'iid_is' must specify a parameter", aloc)
-                self.iid_is = value
-            else:
-                if value is not None:
-                    raise IDLError("Unexpected value for attribute '%s'" % name,
-                                   aloc)
-
-                if name == 'const':
-                    self.const = True
-                elif name == 'array':
-                    self.array = True
-                elif name == 'retval':
-                    self.retval = True
-                elif name == 'shared':
-                    self.shared = True
-                elif name == 'optional':
-                    self.optional = True
-                else:
-                    raise IDLError("Unexpected attribute '%s'" % name, aloc)
+            self.attributes[name] = (value, aloc)
 
     def resolve(self, method):
         self.realtype = method.iface.idl.getName(self.type, self.location)
@@ -809,6 +722,8 @@ class IDLParser(object):
         'attribute': 'ATTRIBUTE',
         'raises': 'RAISES',
         'readonly': 'READONLY',
+        'getter': 'GETTER',
+        'setter': 'SETTER',
         'native': 'NATIVE',
         'typedef': 'TYPEDEF'
         }
@@ -1014,7 +929,7 @@ class IDLParser(object):
         doccomments = []
         if 'doccomments' in atts:
             doccomments.extend(atts['doccomments'])
-        doccomments.extend(p.slice[2].doccomments)
+        doccomments.extend(p.slice[1].doccomments)
 
         l = lambda: self.getLocation(p, 2)
 
@@ -1051,6 +966,10 @@ class IDLParser(object):
     def p_members_start(self, p):
         """members : """
         p[0] = []
+
+    def p_members_comment(self, p):
+        """members : CPPCOMMENT members"""
+        p[0] = p[2]
 
     def p_members_continue(self, p):
         """members : member members"""
@@ -1124,8 +1043,7 @@ class IDLParser(object):
         p[0] = lambda i: n1(i) | n2(i)
 
     def p_member_att(self, p):
-        """member : optreadonly ATTRIBUTE attributes IDENTIFIER IDENTIFIER ';'"""
-        """member : attributes optreadonly ATTRIBUTE IDENTIFIER IDENTIFIER ';'"""
+        """member : optreadonly ATTRIBUTE attributes IDENTIFIER IDENTIFIER optgetter optsetter raises ';'"""
         if 'doccomments' in p[3]:
             doccomments = p[3]['doccomments']
         elif p[1] is not None:
@@ -1138,7 +1056,11 @@ class IDLParser(object):
                          attlist=p[3]['attlist'],
                          readonly=p[1] is not None,
                          location=self.getLocation(p, 3),
-                         doccomments=doccomments)
+                         doccomments=doccomments,
+                         getter=p[5] is not None,
+                         setter=p[6] is not None,
+                         raises=p[7] is not None,
+                        )
 
     def p_member_method(self, p):
         """member : attributes IDENTIFIER IDENTIFIER '(' paramlist ')' raises ';'"""
@@ -1174,11 +1096,11 @@ class IDLParser(object):
         p[0].insert(0, p[2])
 
     def p_param(self, p):
-        """param : attributes paramtype IDENTIFIER IDENTIFIER"""
-        p[0] = Param(paramtype=p[2],
+        """param : paramtype attributes IDENTIFIER IDENTIFIER"""
+        p[0] = Param(paramtype=p[1],
                      type=p[3],
                      name=p[4],
-                     attlist=p[1]['attlist'],
+                     attlist=p[2]['attlist'],
                      location=self.getLocation(p, 3))
 
     def p_paramtype(self, p):
@@ -1186,6 +1108,22 @@ class IDLParser(object):
                      | INOUT
                      | OUT"""
         p[0] = p[1]
+
+    def p_optgetter(self, p):
+        """optgetter : GETTER
+                       | """
+        if len(p) > 1:
+            p[0] = p.slice[1].doccomments
+        else:
+            p[0] = None
+
+    def p_optsetter(self, p):
+        """optsetter : SETTER
+                       | """
+        if len(p) > 1:
+            p[0] = p.slice[1].doccomments
+        else:
+            p[0] = None
 
     def p_optreadonly(self, p):
         """optreadonly : READONLY
