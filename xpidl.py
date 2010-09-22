@@ -898,20 +898,22 @@ class IDLParser(object):
                     'doccomments': p.slice[1].doccomments}
 
     def p_attlist_start(self, p):
-        """attlist : attribute"""
+        """attlist : attribute """
         p[0] = [p[1]]
 
     def p_attlist_continue(self, p):
-        """attlist : attribute ',' attlist"""
-        p[0] = list(p[3])
+        """attlist : attribute attlist"""
+        p[0] = list(p[2])
         p[0].insert(0, p[1])
 
     def p_attribute_eq(self, p):
-        """attribute : anyident '=' IDENTIFIER """
+        """attribute : anyident '=' IDENTIFIER 
+                     | anyident '=' IDENTIFIER ',' """
         p[0] = (p[1]['value'], p[3], p[1]['location'])
 
     def p_attribute(self, p):
-        """attribute : anyident attributeval"""
+        """attribute : anyident attributeval
+                     | anyident attributeval ',' """
         p[0] = (p[1]['value'], p[2], p[1]['location'])
 
     def p_attributeval(self, p):
@@ -1131,24 +1133,20 @@ class IDLParser(object):
     def p_optgetter(self, p):
         """optgetter : GETTER raises
                      | GETTER
-                     | """
+                     """
         if len(p) == 3:
             p[0] = {'getter': p[2] }
-        if len(p) == 2:
+        elif len(p) == 2:
             p[0] = {'getter': p.slice[1].doccomments }
-        else:
-            p[0] = {'getter': None}
 
     def p_optsetter(self, p):
         """optsetter : SETTER raises
                      | SETTER
-                     | """
+                     """
         if len(p) == 3:
             p[0] = {'setter': p[2] }
-        if len(p) == 2:
+        elif len(p) == 2:
             p[0] = {'setter': p.slice[1].doccomments }
-        else:
-            p[0] = {'setter': None}
 
     def p_optreadonly(self, p):
         """optreadonly : READONLY
