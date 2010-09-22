@@ -224,7 +224,7 @@ class NameMap(object):
             elif isinstance(old, Interface) and isinstance(object, Forward):
                 pass
             else:
-                raise IDLError("name '%s' specified twice. Previous location: %s" % (object.name, self._d[object.name].location), object.location)
+                print >> sys.stderr, "Warning: name '%s' specified twice. Previous location: %s" % (object.name, self._d[object.name].location), object.location
         else:
             self._d[object.name] = object
 
@@ -664,8 +664,10 @@ class Param(object):
     shared = False
     optional = False
 
-    def __init__(self, paramtype, type, name, attlist, location, realtype=None):
+    def __init__(self, paramtype, optional,
+                 type, name, attlist, location, realtype=None):
         self.paramtype = paramtype
+        self.optional = optional
         self.type = type
         self.name = name
         self.attlist = attlist
@@ -716,6 +718,7 @@ class IDLParser(object):
         'interface': 'INTERFACE',
         'module': 'MODULE',
         'in': 'IN',
+        'optional': 'OPTIONAL',
         'inout': 'INOUT',
         'out': 'OUT',
         'attribute': 'ATTRIBUTE',
@@ -907,8 +910,10 @@ class IDLParser(object):
         p[0].insert(0, p[1])
 
     def p_attribute_eq(self, p):
-        """attribute : anyident '=' IDENTIFIER 
-                     | anyident '=' IDENTIFIER ',' """
+        """attribute : anyident '=' IDENTIFIER ','
+                     | anyident '=' number ','
+                     | anyident '=' IDENTIFIER 
+                     | anyident '=' number """
         p[0] = (p[1]['value'], p[3], p[1]['location'])
 
     def p_attribute(self, p):
@@ -959,7 +964,7 @@ class IDLParser(object):
             p[0] = p[2]
 
     def p_ifacebase(self, p):
-        """ifacebase : ':' IDENTIFIER
+        """ifacebase : ':' idlist
                      | """
         if len(p) == 3:
             p[0] = p[2]
@@ -1103,12 +1108,21 @@ class IDLParser(object):
         p[0].insert(0, p[2])
 
     def p_param(self, p):
-        """param : paramtype attributes IDENTIFIER IDENTIFIER"""
+        """param : paramtype optionaltype attributes IDENTIFIER IDENTIFIER"""
         p[0] = Param(paramtype=p[1],
-                     type=p[3],
-                     name=p[4],
-                     attlist=p[2]['attlist'],
-                     location=self.getLocation(p, 3))
+                     optional=p[2],
+                     type=p[4],
+                     name=p[5],
+                     attlist=p[3]['attlist'],
+                     location=self.getLocation(p, 4))
+
+    def p_optionaltype(self, p):
+        """optionaltype : OPTIONAL
+                     | """
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = None
 
     def p_paramtype(self, p):
         """paramtype : IN
