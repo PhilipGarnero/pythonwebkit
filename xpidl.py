@@ -154,8 +154,8 @@ builtinNames = [
 ]
 
 builtinMap = {}
-for b in builtinNames:
-    builtinMap[b.name] = b
+#for b in builtinNames:
+#    builtinMap[b.name] = b
 
 class Location(object):
     _line = None
@@ -574,7 +574,7 @@ class Attribute(object):
     binaryname = None
 
     def __init__(self, type, name, attlist, readonly, location, doccomments,
-                       getter, setter, raises):
+                       getter, setter):
         self.type = type
         self.name = name
         self.attlist = attlist
@@ -584,7 +584,6 @@ class Attribute(object):
         self.attributes = {}
         self.getter = getter
         self.setter = setter
-        self.raises = raises
 
         for name, value, aloc in attlist:
             self.attributes[name] = (value, aloc)
@@ -1043,7 +1042,7 @@ class IDLParser(object):
         p[0] = lambda i: n1(i) | n2(i)
 
     def p_member_att(self, p):
-        """member : optreadonly ATTRIBUTE attributes IDENTIFIER IDENTIFIER optgetter optsetter raises ';'"""
+        """member : optreadonly ATTRIBUTE attributes IDENTIFIER IDENTIFIER setters ';'"""
         if 'doccomments' in p[3]:
             doccomments = p[3]['doccomments']
         elif p[1] is not None:
@@ -1051,15 +1050,21 @@ class IDLParser(object):
         else:
             doccomments = p.slice[2].doccomments
 
+        getter = None
+        setter = None
+        for s in p[6]:
+            if s.has_key('setter'):
+                setter = s['setter']
+            if s.has_key('getter'):
+                getter = s['getter']
         p[0] = Attribute(type=p[4],
                          name=p[5],
                          attlist=p[3]['attlist'],
                          readonly=p[1] is not None,
                          location=self.getLocation(p, 3),
                          doccomments=doccomments,
-                         getter=p[5] is not None,
-                         setter=p[6] is not None,
-                         raises=p[7] is not None,
+                         getter=getter,
+                         setter=getter,
                         )
 
     def p_member_method(self, p):
@@ -1109,21 +1114,41 @@ class IDLParser(object):
                      | OUT"""
         p[0] = p[1]
 
-    def p_optgetter(self, p):
-        """optgetter : GETTER
-                       | """
-        if len(p) > 1:
-            p[0] = p.slice[1].doccomments
+    def p_setters(self, p):
+        """setters : optgetter ',' optsetter
+                   | optsetter ',' optgetter
+                   | optgetter
+                   | optsetter
+                   |
+        """
+        if len(p) == 3:
+            p[0] = [p[1], p[3]]
+        elif len(p) == 2:
+            p[0] = [p[1]]
         else:
-            p[0] = None
+            p[0] = []
+
+    def p_optgetter(self, p):
+        """optgetter : GETTER raises
+                     | GETTER
+                     | """
+        if len(p) == 3:
+            p[0] = {'getter': p[2] }
+        if len(p) == 2:
+            p[0] = {'getter': p.slice[1].doccomments }
+        else:
+            p[0] = {'getter': None}
 
     def p_optsetter(self, p):
-        """optsetter : SETTER
-                       | """
-        if len(p) > 1:
-            p[0] = p.slice[1].doccomments
+        """optsetter : SETTER raises
+                     | SETTER
+                     | """
+        if len(p) == 3:
+            p[0] = {'setter': p[2] }
+        if len(p) == 2:
+            p[0] = {'setter': p.slice[1].doccomments }
         else:
-            p[0] = None
+            p[0] = {'setter': None}
 
     def p_optreadonly(self, p):
         """optreadonly : READONLY
