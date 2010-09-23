@@ -43,6 +43,7 @@
 import subprocess
 import sys, os.path, re
 from ply import lex, yacc
+import defsparser
 
 """A type conforms to the following pattern:
 
@@ -1241,8 +1242,23 @@ class IDLParser(object):
     def getLocation(self, p, i):
         return Location(self.lexer, p.lineno(i), p.lexpos(i))
 
+class IDLDefsParser(defsparser.DefsParser):
+    def startParsing(self, input, filename=None):
+        p = IDLParser()
+        x = p.parse(input, filename=self.filename)
+        for obj in x.productions:
+            if isinstance(obj, Interface):
+                print "Interface", obj.name, obj.base
+                self.define_object(obj.name,
+                                   ("in-module", "Webkit"),
+                                    ("parent", obj.base[0]),
+                                    ("c-name", obj.nativename) # XXX
+                                   )
+        # debug output
+        self.write_defs()
+
 if __name__ == '__main__':
-    p = IDLParser()
+    p = IDLDefsParser(None)
     cwd = os.path.abspath(os.getcwd())
     for f in sys.argv[1:]:
         print "Parsing %s" % f
@@ -1256,4 +1272,5 @@ if __name__ == '__main__':
                            )
         stdout_value, stderr_value = proc.communicate('')
 
-        p.parse(stdout_value, filename=f)
+        p.startParsing(stdout_value, filename=f)
+
