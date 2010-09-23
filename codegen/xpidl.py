@@ -1254,6 +1254,20 @@ class IDLDefsParser(defsparser.DefsParser):
                                     ("parent", obj.base[0]),
                                     ("c-name", obj.nativename) # XXX
                                    )
+            for m in obj.members:
+                if isinstance(m, CDATA):
+                    continue
+                if isinstance(m, Method):
+                    params = ['parameters']
+                    for p in m.params:
+                        p = (p.type, p.name) # XXX sort out attributes
+                        params.append(p)
+                    self.define_method(m.name,
+                                    ('of-object', obj.name),
+                                    ('return-type', m.type),
+                                    ("c-name", m.name), # XXX
+                                    tuple(params)
+                                      )
         # debug output
         self.write_defs()
 

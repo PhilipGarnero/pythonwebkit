@@ -130,6 +130,16 @@ _testString = """; a scheme file
   gdk_event_copy
   gdk_event_free
   "sizeof(GdkEvent)")
+
+(define-method is_default_namespace
+  (of-object "WebkitNode")
+  (c-name "webkit_node_is_default_namespace")
+  (return-type "gboolean")
+  (parameters
+    '("gchar*" "namespace_uri")
+  )
+)
+
 """
 
 if __name__ == '__main__':
