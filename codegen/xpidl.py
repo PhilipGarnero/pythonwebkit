@@ -1244,6 +1244,32 @@ class IDLParser(object):
     def getLocation(self, p, i):
         return Location(self.lexer, p.lineno(i), p.lexpos(i))
 
+tmap = {
+  "float": "float",
+    "CompareHow": "WebCore::Range::CompareHow ",
+    "double": "double",
+    "boolean": "int",
+    "char": "char",
+    "long": "long",
+    "short": "short",
+    "uchar": "uchar",
+    "unsigned": "unsigned",
+    "int": "int",
+    "unsigned int": "unsigned int",
+    "unsigned long": "unsigned long",
+    "unsigned long long": "unsigned long long",
+    "unsigned short": "unsigned short",
+    "void": "void",
+    "EventTarget": "Node*",
+    "DOMString": "char*"
+}
+
+def typeMap(ptype):
+    global tmap
+    if tmap.has_key(ptype):
+        return tmap[ptype]
+    return "%s*" % ptype
+
 class IDLDefsParser(defsparser.DefsParser):
     def startParsing(self, input, filename=None):
         p = IDLParser()
@@ -1251,23 +1277,26 @@ class IDLDefsParser(defsparser.DefsParser):
         for obj in x.productions:
             if isinstance(obj, Interface):
                 print "Interface", obj.name, obj.base
-                self.define_object(obj.name,
-                                   ("in-module", "Webkit"),
-                                    ("parent", obj.base[0]),
-                                    ("gtype-id", "NONE"), # XXX
-                                    ("c-name", obj.nativename) # XXX
-                                   )
+                args = [ ("in-module", "Webkit"),
+                         ("gtype-id", "NONE"), # XXX
+                         ("c-name", obj.nativename) # XXX
+                       ]
+                if obj.base:
+                    args.append( ("parent", obj.base[0]) )
+                else:
+                    args.append( ("parent", "DOMObject") )
+                self.define_object(obj.name, *args)
             for m in obj.members:
                 if isinstance(m, CDATA):
                     continue
                 if isinstance(m, Method):
                     params = ['parameters']
                     for p in m.params:
-                        p = (p.type, p.name) # XXX sort out attributes
+                        p = (typeMap(p.type), p.name) # XXX sort out attributes
                         params.append(p)
                     self.define_method(m.name,
                                     ('of-object', obj.name),
-                                    ('return-type', m.type),
+                                    ('return-type', typeMap(m.type)),
                                     ("c-name", m.name), # XXX
                                     tuple(params)
                                       )
@@ -1301,8 +1330,8 @@ if __name__ == '__main__':
 
         p.startParsing(stdout_value, filename=f)
         codegen.register_types(p)
-        fo = codegen.FileOutput(open(outfilename, "w"))
-        sw = codegen.SourceWriter(p, o, fn, fo)
-        sw.write()
-        fo.close()
+    fo = codegen.FileOutput(open("PyWebkit.c", "w"))
+    sw = codegen.SourceWriter(p, o, "Webkit", fo)
+    sw.write()
+    fo.close()
 

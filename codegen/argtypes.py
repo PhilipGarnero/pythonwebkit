@@ -518,6 +518,7 @@ class ObjectArg(ArgType):
                 info.add_parselist('O!', ['&Py%s_Type' % self.objname,
                                           '&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
+        print ptype, ownsreturn, info
         if ptype.endswith('*'):
             typename = ptype[:-1]
             try:
@@ -888,7 +889,7 @@ class ArgMatcher:
         except KeyError:
             if ptype[:8] == 'GdkEvent' and ptype[-1] == '*':
                 return self.argtypes['GdkEvent*']
-            raise ArgTypeNotFoundError("No ArgType for %s" % (ptype,))
+            raise ArgTypeNotFoundError(ptype)
     def _get_reverse_common(self, ptype, registry):
         props = dict(c_type=ptype)
         try:

@@ -305,6 +305,15 @@ class Wrapper:
 
         self.write_virtuals()
 
+    def find_function_ptypes(self, function_obj, handle_return=0):
+
+        includes = set()
+        for param in function_obj.params:
+            includes.add(param.ptype)
+        if handle_return:
+            includes.add(function_obj.ret)
+        return includes
+
     def write_function_wrapper(self, function_obj, template,
                                handle_return=0, is_method=0, kwargs_needed=0,
                                substdict=None):
@@ -331,6 +340,7 @@ class Wrapper:
                                 param.pnull, info)
 
         substdict['setreturn'] = ''
+        print "function", self.objinfo.c_name, function_obj.c_name
         if handle_return:
             if function_obj.ret not in ('none', None):
                 substdict['setreturn'] = 'ret = '
@@ -476,6 +486,19 @@ class Wrapper:
         substdict['cast'] = string.replace(parent.typecode, '_TYPE_', '_', 1)
         return substdict
 
+    def find_include_ptypes(self):
+        includes = set()
+        klass = self.objinfo.c_name
+        # First, get methods from the defs files
+        for meth in self.parser.find_methods(self.objinfo):
+            method_name = meth.c_name
+            if self.overrides.is_ignored(method_name):
+                continue
+            if self.overrides.is_overriden(method_name):
+                continue
+            includes.update(self.find_function_ptypes(meth, handle_return=1))
+        return includes
+
     def write_methods(self):
         methods = []
         klass = self.objinfo.c_name
@@ -504,9 +527,8 @@ class Wrapper:
                                  'docstring': meth.docstring })
                 methods_coverage.declare_wrapped()
             except argtypes.ArgTypeError, ex:
-                methods_coverage.declare_not_wrapped()
-                sys.stderr.write('Could not write method %s.%s: %s\n'
-                                % (klass, meth.name, str(ex)))
+                sys.stderr.write('declaration of type needed %s.%s: %s\n'
+                                % (klass, meth.name, ex))
 
         # Now try to see if there are any defined in the override
         for method_name in self.overrides.get_defines_for(klass):
@@ -1339,6 +1361,7 @@ class SourceWriter:
         argtypes.py_ssize_t_clean = py_ssize_t_clean
 
         self.write_headers(py_ssize_t_clean)
+        self.include_types = self.get_class_include_types()
         self.write_imports()
         self.write_type_declarations()
         self.write_body()
@@ -1391,6 +1414,9 @@ typedef intobjargproc ssizeobjargproc;
         for obj in self.parser.boxes:
             if not self.overrides.is_type_ignored(obj.c_name):
                 self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
+        #for ptype in self.include_types:
+        #    if not self.overrides.is_type_ignored(ptype):
+        #        self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + ptype + '_Type;\n')
         for obj in self.parser.objects:
             if not self.overrides.is_type_ignored(obj.c_name):
                 self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
@@ -1429,10 +1455,11 @@ typedef intobjargproc ssizeobjargproc;
                     modified = True
         return objects
 
-    def write_classes(self):
+    def get_class_include_types(self):
         ## Sort the objects, so that we generate code for the parent types
         ## before their children.
         objects = self._sort_parent_children(self.parser.objects)
+        include_types = set()
 
         for klass, items in ((GBoxedWrapper, self.parser.boxes),
                              (GPointerWrapper, self.parser.pointers),
@@ -1440,6 +1467,22 @@ typedef intobjargproc ssizeobjargproc;
                              (GInterfaceWrapper, self.parser.interfaces)):
             for item in items:
                 instance = klass(self.parser, item, self.overrides, self.fp)
+                include_types.update(instance.find_include_ptypes())
+        return include_types
+
+    def write_classes(self):
+        ## Sort the objects, so that we generate code for the parent types
+        ## before their children.
+        objects = self._sort_parent_children(self.parser.objects)
+        include_types = set()
+
+        for klass, items in ((GBoxedWrapper, self.parser.boxes),
+                             (GPointerWrapper, self.parser.pointers),
+                             (GObjectWrapper, objects),
+                             (GInterfaceWrapper, self.parser.interfaces)):
+            for item in items:
+                instance = klass(self.parser, item, self.overrides, self.fp)
+                include_types.update(instance.find_include_ptypes())
                 instance.write_class()
                 self.fp.write('\n')
 
