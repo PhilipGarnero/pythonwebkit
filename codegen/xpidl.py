@@ -44,6 +44,8 @@ import subprocess
 import sys, os.path, re
 from ply import lex, yacc
 import defsparser
+import codegen
+import override
 
 """A type conforms to the following pattern:
 
@@ -1252,6 +1254,7 @@ class IDLDefsParser(defsparser.DefsParser):
                 self.define_object(obj.name,
                                    ("in-module", "Webkit"),
                                     ("parent", obj.base[0]),
+                                    ("gtype-id", "NONE"), # XXX
                                     ("c-name", obj.nativename) # XXX
                                    )
             for m in obj.members:
@@ -1273,9 +1276,19 @@ class IDLDefsParser(defsparser.DefsParser):
 
 if __name__ == '__main__':
     p = IDLDefsParser(None)
+    o = override.Overrides()
     cwd = os.path.abspath(os.getcwd())
     for f in sys.argv[1:]:
         print "Parsing %s" % f
+        (pth, fn) = os.path.split(f)
+        (fn, ext) = os.path.splitext(fn)
+        print pth, fn, ext
+        try:
+            os.mkdir("DerivedSources")
+            os.mkdir("DerivedSources/python")
+        except OSError:
+            pass
+        outfilename="DerivedSources/python/%s.c" % fn
         cmd = 'cpp -DLANGUAGE_PYTHON=1 %s' % f.replace(" ", "\ ")
         proc = subprocess.Popen(cmd,
                            stdin=subprocess.PIPE,
@@ -1287,4 +1300,9 @@ if __name__ == '__main__':
         stdout_value, stderr_value = proc.communicate('')
 
         p.startParsing(stdout_value, filename=f)
+        codegen.register_types(p)
+        fo = codegen.FileOutput(open(outfilename, "w"))
+        sw = codegen.SourceWriter(p, o, fn, fo)
+        sw.write()
+        fo.close()
 
