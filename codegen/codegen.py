@@ -630,7 +630,7 @@ class Wrapper:
                     wrapper = reversewrapper.ReverseWrapper(
                         '_wrap_' + method_name, is_static=True)
                     wrapper.set_return_type(ret(wrapper, **props))
-                    wrapper.add_parameter(reversewrapper.PyGObjectMethodParam(
+                    wrapper.add_parameter(reversewrapper.PyDOMObjectMethodParam(
                         wrapper, "self", method_name="do_" + meth.name,
                         c_type=(klass + ' *')))
                     for param in meth.params:
@@ -938,7 +938,7 @@ _wrap__get_symbol(PyObject *self, PyObject *args)
 class GObjectWrapper(Wrapper):
     constructor_tmpl = (
         'static int\n'
-        '_wrap_%(cname)s(PyGObject *self%(extraparams)s)\n'
+        '_wrap_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
@@ -958,7 +958,7 @@ class GObjectWrapper(Wrapper):
 
     method_tmpl = (
         'static PyObject *\n'
-        '_wrap_%(cname)s(PyGObject *self%(extraparams)s)\n'
+        '_wrap_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
@@ -976,9 +976,9 @@ class GObjectWrapper(Wrapper):
                                             '_TYPE_', '_', 1)
 
     def get_initial_class_substdict(self):
-        return { 'tp_basicsize'      : 'PyGObject',
-                 'tp_weaklistoffset' : 'offsetof(PyGObject, weakreflist)',
-                 'tp_dictoffset'     : 'offsetof(PyGObject, inst_dict)' }
+        return { 'tp_basicsize'      : 'PyDOMObject',
+                 'tp_weaklistoffset' : 'offsetof(PyDOMObject, weakreflist)',
+                 'tp_dictoffset'     : 'offsetof(PyDOMObject, inst_dict)' }
 
     def get_field_accessor(self, fieldname):
         castmacro = string.replace(self.objinfo.typecode, '_TYPE_', '_', 1)
@@ -1017,7 +1017,7 @@ class GObjectWrapper(Wrapper):
         self.objinfo.has_new_constructor_api = True
         out = self.fp
         print >> out, "static int"
-        print >> out, '_wrap_%s(PyGObject *self, PyObject *args,' \
+        print >> out, '_wrap_%s(PyDOMObject *self, PyObject *args,' \
               ' PyObject *kwargs)\n{' % constructor.c_name
         if constructor.params:
             s = "    GType obj_type = pyg_type_from_object((PyObject *) self);"
@@ -1184,7 +1184,7 @@ class GInterfaceWrapper(GObjectWrapper):
                     wrapper = reversewrapper.ReverseWrapper(
                         '_wrap_' + method_name, is_static=True)
                     wrapper.set_return_type(ret(wrapper, **props))
-                    wrapper.add_parameter(reversewrapper.PyGObjectMethodParam(
+                    wrapper.add_parameter(reversewrapper.PyDOMObjectMethodParam(
                         wrapper, "self", method_name="do_" + meth.name,
                         c_type=(klass + ' *')))
                     for param in meth.params:

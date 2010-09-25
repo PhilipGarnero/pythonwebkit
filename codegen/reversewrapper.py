@@ -472,15 +472,15 @@ class VoidReturn(ReturnType):
 argtypes.matcher.register_reverse_ret('void', VoidReturn)
 argtypes.matcher.register_reverse_ret('none', VoidReturn)
 
-class GObjectParam(Parameter):
+class DOMObjectParam(Parameter):
 
     def get_c_type(self):
-        return self.props.get('c_type', 'GObject *')
+        return self.props.get('c_type', 'DOMObject *')
 
     def convert_c2py(self):
         self.wrapper.add_declaration("PyObject *py_%s = NULL;" % self.name)
         self.wrapper.write_code(code=("if (%s)\n"
-                                      "    py_%s = pygobject_new((GObject *) %s);\n"
+                                      "    py_%s = pygobject_new((DOMObject *) %s);\n"
                                       "else {\n"
                                       "    Py_INCREF(Py_None);\n"
                                       "    py_%s = Py_None;\n"
@@ -489,14 +489,14 @@ class GObjectParam(Parameter):
                                 cleanup=("Py_DECREF(py_%s);" % self.name))
         self.wrapper.add_pyargv_item("py_%s" % self.name)
 
-argtypes.matcher.register_reverse('GObject*', GObjectParam)
+argtypes.matcher.register_reverse('DOMObject*', DOMObjectParam)
 
-class GObjectReturn(ReturnType):
+class DOMObjectReturn(ReturnType):
 
     supports_optional = True
 
     def get_c_type(self):
-        return self.props.get('c_type', 'GObject *')
+        return self.props.get('c_type', 'DOMObject *')
 
     def write_decl(self):
         if not self.props.get('optional'):
@@ -511,23 +511,23 @@ class GObjectReturn(ReturnType):
         if not self.props.get('optional'):
             self.wrapper.write_code(
                 code=None,
-                failure_expression="!PyObject_TypeCheck(py_retval, &PyGObject_Type)",
-                failure_exception='PyErr_SetString(PyExc_TypeError, "retval should be a GObject");')
+                failure_expression="!PyObject_TypeCheck(py_retval, &PyDOMObject_Type)",
+                failure_exception='PyErr_SetString(PyExc_TypeError, "retval should be a DOMObject");')
             self.wrapper.write_code("retval = (%s) pygobject_get(py_retval);"
                                     % self.get_c_type())
-            self.wrapper.write_code("g_object_ref((GObject *) retval);")
+            self.wrapper.write_code("g_object_ref((DOMObject *) retval);")
         else:
             self.wrapper.write_code(
                 code=None,
-                failure_expression="py_retval != Py_None && !PyObject_TypeCheck(py_retval, &PyGObject_Type)",
-                failure_exception='PyErr_SetString(PyExc_TypeError, "retval should be None or a GObject");')
+                failure_expression="py_retval != Py_None && !PyObject_TypeCheck(py_retval, &PyDOMObject_Type)",
+                failure_exception='PyErr_SetString(PyExc_TypeError, "retval should be None or a DOMObject");')
             self.wrapper.write_code("if (py_retval != Py_None) {\n"
                                     "    retval = (%s) pygobject_get(py_retval);\n"
-                                    "    g_object_ref((GObject *) retval);\n"
+                                    "    g_object_ref((DOMObject *) retval);\n"
                                     "}\n"
                                     % self.get_c_type())
 
-argtypes.matcher.register_reverse_ret('GObject*', GObjectReturn)
+argtypes.matcher.register_reverse_ret('DOMObject*', DOMObjectReturn)
 
 
 
@@ -844,17 +844,17 @@ class GErrorParam(Parameter):
 argtypes.matcher.register_reverse('GError**', GErrorParam)
 
 
-class PyGObjectMethodParam(Parameter):
+class PyDOMObjectMethodParam(Parameter):
     def __init__(self, wrapper, name, method_name, **props):
         Parameter.__init__(self, wrapper, name, **props)
         self.method_name = method_name
 
     def get_c_type(self):
-        return self.props.get('c_type', 'GObject *')
+        return self.props.get('c_type', 'DOMObject *')
 
     def convert_c2py(self):
         self.wrapper.add_declaration("PyObject *py_%s;" % self.name)
-        self.wrapper.write_code(code=("py_%s = pygobject_new((GObject *) %s);" %
+        self.wrapper.write_code(code=("py_%s = pygobject_new((DOMObject *) %s);" %
                                       (self.name, self.name)),
                                 cleanup=("Py_DECREF(py_%s);" % self.name),
                                 failure_expression=("!py_%s" % self.name))
@@ -894,9 +894,9 @@ def _test():
     if 1:
         wrapper = ReverseWrapper("this_is_the_c_function_name", is_static=True)
         wrapper.set_return_type(StringReturn(wrapper))
-        wrapper.add_parameter(PyGObjectMethodParam(wrapper, "self", method_name="do_xxx"))
+        wrapper.add_parameter(PyDOMObjectMethodParam(wrapper, "self", method_name="do_xxx"))
         wrapper.add_parameter(StringParam(wrapper, "param2", optional=True))
-        wrapper.add_parameter(GObjectParam(wrapper, "param3"))
+        wrapper.add_parameter(DOMObjectParam(wrapper, "param3"))
         #wrapper.add_parameter(InoutIntParam(wrapper, "param4"))
         wrapper.generate(FileCodeSink(sys.stderr))
 
@@ -904,7 +904,7 @@ def _test():
         wrapper = ReverseWrapper("this_a_callback_wrapper")
         wrapper.set_return_type(VoidReturn(wrapper))
         wrapper.add_parameter(StringParam(wrapper, "param1", optional=False))
-        wrapper.add_parameter(GObjectParam(wrapper, "param2"))
+        wrapper.add_parameter(DOMObjectParam(wrapper, "param2"))
         wrapper.add_parameter(CallbackInUserDataParam(wrapper, "data", free_it=True))
         wrapper.generate(FileCodeSink(sys.stderr))
 
