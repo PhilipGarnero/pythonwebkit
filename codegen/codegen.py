@@ -522,7 +522,7 @@ class Wrapper:
                     self.fp.write(code)
                 methods.append(self.methdef_tmpl %
                                { 'name':  fixname(meth.name),
-                                 'cname': '_wrap_' + method_name,
+                                 'cname': '_wrap_%s_%s' % (klass, method_name),
                                  'flags': methflags,
                                  'docstring': meth.docstring })
                 methods_coverage.declare_wrapped()
@@ -958,7 +958,7 @@ class GObjectWrapper(Wrapper):
 
     method_tmpl = (
         'static PyObject *\n'
-        '_wrap_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
+        '_wrap_%(typename)s_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
