@@ -1367,6 +1367,7 @@ class SourceWriter:
         '    coreObject->ref();\n'
         '    return PyInt_FromLong(coreptr);\n'
         '}\n\n'
+        'PyObject toPython(WebCore::%(classname)s*);\n\n'
         )
 
     def __init__(self, parser, overrides, prefix, fp=FileOutput(sys.stdout)):
@@ -1430,13 +1431,14 @@ typedef intobjargproc ssizeobjargproc;
     def write_class_wrappers(self):
         self.fp.write('/* ---------- class wrappers ---------- */\n')
         self.fp.write('namespace WebKit {\n')
+        self.fp.write('using namespace WebCore;\n')
+        self.fp.write('\n')
         for obj in self.parser.objects:
             if not self.overrides.is_type_ignored(obj.c_name):
                 txt = self.wrapnode_tmpl % {'classname': obj.c_name}
                 self.fp.write(txt)
                 txt = self.wrapcore_tmpl % {'classname': obj.c_name}
                 self.fp.write(txt)
-
         self.fp.write('} // namespace WebKit\n')
         self.fp.write('\n')
 
