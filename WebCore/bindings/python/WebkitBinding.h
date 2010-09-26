@@ -20,12 +20,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef WebkitDOMBinding_h
-#define WebkitDOMBinding_h
+#ifndef PythonDOMBinding_h
+#define PythonDOMBinding_h
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
+#include <Python.h>
 
 #include "CSSRule.h"
 #include "CSSValue.h"
@@ -33,7 +31,6 @@
 #include "Event.h"
 #include "EventTarget.h"
 #include "WebkitNode.h"
-#include "WebkitNodePrivate.h"
 #include "HTMLCollection.h"
 #include "Node.h"
 #include "StyleSheet.h"
@@ -56,23 +53,23 @@ namespace WebCore {
 } // namespace WebCore
 
 namespace WebKit {
-    gpointer toWEBKIT(WebCore::CSSRule*);
-    gpointer toWEBKIT(WebCore::CSSValue*);
-    gpointer toWEBKIT(WebCore::Document*);
-    gpointer toWEBKIT(WebCore::Element*);
-    gpointer toWEBKIT(WebCore::Event*);
-    gpointer toWEBKIT(WebCore::EventTarget*);
-    gpointer toWEBKIT(WebCore::HTMLCollection*);
-    gpointer toWEBKIT(WebCore::Node*);
-    gpointer toWEBKIT(WebCore::StyleSheet*);
-    gpointer toWEBKIT(WebCore::Text*);
+    PyObject* toPython(WebCore::CSSRule*);
+    PyObject* toPython(WebCore::CSSValue*);
+    PyObject* toPython(WebCore::Document*);
+    PyObject* toPython(WebCore::Element*);
+    PyObject* toPython(WebCore::Event*);
+    PyObject* toPython(WebCore::EventTarget*);
+    PyObject* toPython(WebCore::HTMLCollection*);
+    PyObject* toPython(WebCore::Node*);
+    PyObject* toPython(WebCore::StyleSheet*);
+    PyObject* toPython(WebCore::Text*);
 
-    class WEBKITObjectCache {
+    class PythonObjectCache {
     public:
-        static gpointer getDOMObject(void *);
-        static gpointer putDOMObject(void *, gpointer);
+        static PyObject* getDOMObject(void *);
+        static PyObject* putDOMObject(void *, PyObject*);
         static void forgetDOMObject(void *);
     };
 } // namespace WebKit
 
-#endif // WebkitDOMBinding_h
+#endif // PythonDOMBinding_h

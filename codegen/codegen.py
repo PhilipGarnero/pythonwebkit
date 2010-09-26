@@ -1351,6 +1351,24 @@ class GPointerWrapper(GBoxedWrapper):
         return substdict
 
 class SourceWriter:
+
+    wrapcore_tmpl = (
+        'WebCore::%(classname)s* core%(classname)s(PyObject* request)\n'
+        '{\n'
+        '    long coreptr = PyInt_AS_LONG(request);\n'
+        '    return static_cast<WebCore::%(classname)s*>(coreptr);\n'
+        '}\n\n'
+        )
+
+    wrapnode_tmpl = (
+        'PyObject* wrap%(classname)s(WebCore::%(classname)s* coreObject)\n'
+        '{\n'
+        '    long coreptr = static_cast<long>(coreObject);\n'
+        '    coreObject->ref();\n'
+        '    return PyInt_FromLong(coreptr);\n'
+        '}\n\n'
+        )
+
     def __init__(self, parser, overrides, prefix, fp=FileOutput(sys.stdout)):
         self.parser = parser
         self.overrides = overrides
@@ -1364,6 +1382,7 @@ class SourceWriter:
         self.include_types = self.get_class_include_types()
         self.write_imports()
         self.write_type_declarations()
+        self.write_class_wrappers()
         self.write_body()
         self.write_classes()
 
@@ -1407,6 +1426,19 @@ typedef intobjargproc ssizeobjargproc;
                 self.fp.write('static PyTypeObject *_%s;\n' % cname)
                 self.fp.write('#define %s (*_%s)\n' % (cname, cname))
         self.fp.write('\n\n')
+
+    def write_class_wrappers(self):
+        self.fp.write('/* ---------- class wrappers ---------- */\n')
+        self.fp.write('namespace WebKit {\n')
+        for obj in self.parser.objects:
+            if not self.overrides.is_type_ignored(obj.c_name):
+                txt = self.wrapnode_tmpl % {'classname': obj.c_name}
+                self.fp.write(txt)
+                txt = self.wrapcore_tmpl % {'classname': obj.c_name}
+                self.fp.write(txt)
+
+        self.fp.write('} // namespace WebKit\n')
+        self.fp.write('\n')
 
     def write_type_declarations(self):
         #todo use 'static' if used only in one file
@@ -1747,7 +1779,7 @@ def main(argv):
         sys.stderr = open(errorfilename, "w")
     p = defsparser.DefsParser(args[0], defines)
     if not outfilename:
-        outfilename = os.path.splitext(args[0])[0] + '.c'
+        outfilename = os.path.splitext(args[0])[0] + '.cpp'
 
     p.startParsing()
 

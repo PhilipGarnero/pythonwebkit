@@ -22,7 +22,7 @@
 
 /* 
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place.
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place.
  * There should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  *
@@ -37,15 +37,11 @@
 #define HASH_MAP_PTR_SPEC_WORKAROUND 1
 #endif
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
 
 #include "CString.h"
+#include "PythonBinding.h"
 #include "WebkitAttrPrivate.h"
-#include "WebkitBinding.h"
 #include "WebkitCDATASectionPrivate.h"
 #include "WebkitCommentPrivate.h"
 #include "WebkitDocumentPrivate.h"
@@ -67,7 +63,7 @@ namespace WebKit {
 
 using namespace WebCore;
 
-typedef HashMap<void*, gpointer> DOMObjectMap;
+typedef HashMap<void*, PyObject*> DOMObjectMap;
 
 static DOMObjectMap& domObjects()
 {
@@ -75,26 +71,26 @@ static DOMObjectMap& domObjects()
     return staticDOMObjects;
 }
 
-gpointer WEBKITObjectCache::getDOMObject(void* objectHandle)
+PyObject* PythonObjectCache::getDOMObject(void* objectHandle)
 {
-    gpointer ret = domObjects().get(objectHandle);
+    PyObject* ret = domObjects().get(objectHandle);
     return ret;
 }
 
-gpointer WEBKITObjectCache::putDOMObject(void* objectHandle, gpointer wrapper)
+PyObject* PythonObjectCache::putDOMObject(void* objectHandle, PyObject* wrapper)
 {
     domObjects().set(objectHandle, wrapper);
     return wrapper;
 }
 
-void WEBKITObjectCache::forgetDOMObject(void* objectHandle)
+void PythonObjectCache::forgetDOMObject(void* objectHandle)
 {
     domObjects().take(objectHandle);
 }
 
-static gpointer createWrapper(Node* node);
+static PyObject* createWrapper(Node* node);
 
-gpointer toWEBKITNewlyCreated(Node* node)
+PyObject* toPythonNewlyCreated(Node* node)
 {
     if (!node)
         return NULL;
@@ -102,35 +98,37 @@ gpointer toWEBKITNewlyCreated(Node* node)
     return createWrapper(node);
 }
 
-gpointer toWEBKIT(Node* node)
+PyObject* toPython(Node* node)
 {
     if (!node)
         return NULL;
 
-    gpointer ret = WEBKITObjectCache::getDOMObject(node);
+    PyObject* ret = PythonObjectCache::getDOMObject(node);
     if (ret)
         return ret;
 
     return createWrapper(node);
 }
 
-static ALWAYS_INLINE gpointer createWrapper(Node* node)
+static ALWAYS_INLINE PyObject* createWrapper(Node* node)
 {
     ASSERT(node);
     ASSERT(!ScriptInterpreter::getDOMObject(node));
 
     Document* doc = node->document();
-    gpointer ret = NULL;
+    PyObject* ret = NULL;
 
     switch (node->nodeType()) {
         case Node::ELEMENT_NODE:
             if (node->isHTMLElement())
-                ret = createWebkitHTMLElementWrapper(static_cast<HTMLElement*>(node));
+                ret = createPythonHTMLElementWrapper(
+                                        static_cast<HTMLElement*>(node));
 #if ENABLE(SVG)
             else if (node->isSVGElement())
                 return NULL; /* XXX TODO - see #20586 */
 #ifdef __TODO_BUG_20586__ /* XXX TODO - see #20586 */
-                ret = createWEBKITSVGElementWrapper(static_cast<SVGElement*>(node));
+                ret = createPythonSVGElementWrapper(
+                                        static_cast<SVGElement*>(node));
 #endif
 #endif
             else
@@ -149,14 +147,16 @@ static ALWAYS_INLINE gpointer createWrapper(Node* node)
             ret = wrapEntity(static_cast<Entity*>(node));
             break;
         case Node::PROCESSING_INSTRUCTION_NODE:
-            ret = wrapProcessingInstruction(static_cast<ProcessingInstruction*>(node));
+            ret = wrapProcessingInstruction(
+                                    static_cast<ProcessingInstruction*>(node));
             break;
         case Node::COMMENT_NODE:
             ret = wrapComment(static_cast<Comment*>(node));
             break;
         case Node::DOCUMENT_NODE:
-            // we don't want to cache the document itself in the per-document dictionary
-            return toWEBKIT(static_cast<Document*>(node));
+            // we don't want to cache the document itself in
+            // the per-document dictionary
+            return toPython(static_cast<Document*>(node));
         case Node::DOCUMENT_TYPE_NODE:
             ret = wrapDocumentType(static_cast<DocumentType*>(node));
             break;
@@ -173,7 +173,7 @@ static ALWAYS_INLINE gpointer createWrapper(Node* node)
             ret = wrapNode(node);
     }
 
-    return WEBKITObjectCache::putDOMObject(node, ret);
+    return PythonObjectCache::putDOMObject(node, ret);
 }
 
 
