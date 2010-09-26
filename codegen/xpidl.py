@@ -1278,7 +1278,7 @@ class IDLDefsParser(defsparser.DefsParser):
             if isinstance(obj, Interface):
                 print "Interface", obj.name, obj.base
                 args = [ ("in-module", "Webkit"),
-                         ("gtype-id", obj.name), # XXX
+                         ("gtype-id", "core"+obj.name), # XXX
                          ("c-name", obj.nativename) # XXX
                        ]
                 if obj.base:

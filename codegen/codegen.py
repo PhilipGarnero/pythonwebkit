@@ -161,6 +161,16 @@ class Wrapper:
         '}\n\n'
         )
 
+    dealloc_tmpl = (
+        'void dealloc_%(classname)s(PyObject *self)\n'
+        '{\n'
+        '    WebCore::%(classname)s* cobj = core%(classname)s(self);\n'
+        '    WebKit::WEBKITObjectCache::forgetDOMObject(cobj);\n'
+        '    co->deref();\n'
+        '    PyMem_DEL(self);\n'
+        '}\n\n'
+        )
+
     parse_tmpl = (
         '    if (!PyArg_ParseTupleAndKeywords(args, kwargs,'
         '"%(typecodes)s:%(name)s"%(parselist)s))\n'
@@ -285,6 +295,7 @@ class Wrapper:
             substdict['tp_init'] = self.write_constructor()
         substdict['tp_methods'] = self.write_methods()
         substdict['tp_getset'] = self.write_getsets()
+        substdict['tp_dealloc'] = self.write_dealloc()
 
         # handle slots ...
         for slot in self.slots_list:
@@ -696,6 +707,13 @@ class Wrapper:
     }
 ''' % vars())
             self.fp.write('    return 0;\n}\n')
+
+    def write_dealloc(self):
+
+        txt = self.dealloc_tmpl % {'classname': self.objinfo.c_name}
+        self.fp.write(txt)
+
+        return 'dealloc_' + self.objinfo.c_name
 
     def write_getsets(self):
         lower_name = self.get_lower_name()
