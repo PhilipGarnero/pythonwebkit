@@ -25,39 +25,34 @@
  * JSHTMLCollectionCustom.cpp will also require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
 
+#include <Python.h>
+
 #include "CString.h"
-#include "WebkitBinding.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
-#include "WebkitHTMLCollectionPrivate.h"
-#include "WebkitHTMLOptionsCollectionPrivate.h"
+#include "PythonBinding.h"
+#include "HTMLCollectionPrivate.h"
 
 namespace WebKit {
 
 using namespace WebCore;
 
-gpointer toWEBKIT(HTMLCollection* collection)
+PyObject* toPython(HTMLCollection* collection)
 {
     if (!collection)
         return NULL;
 
-    gpointer gobj = WEBKITObjectCache::getDOMObject(collection);
+    PyObject* pobj = PythonObjectCache::getDOMObject(collection);
 
-    if (gobj)
-        return gobj;
+    if (pobj)
+        return pobj;
 
-    gpointer ret;
+    PyObject* ret;
     switch (collection->type()) {
         case SelectOptions:
             ret = wrapHTMLOptionsCollection(static_cast<HTMLOptionsCollection*>(collection));
@@ -81,7 +76,7 @@ gpointer toWEBKIT(HTMLCollection* collection)
             break;
     }
 
-    return WEBKITObjectCache::putDOMObject(collection, ret);
+    return PythonObjectCache::putDOMObject(collection, ret);
 }
 
 

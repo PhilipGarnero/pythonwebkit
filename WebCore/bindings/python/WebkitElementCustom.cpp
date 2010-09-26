@@ -25,31 +25,25 @@
  * require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
+
+#include <Python.h>
 
 #include "CString.h"
 #include "Event.h"
-#include "WebkitBinding.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
+#include "PythonBinding.h"
 #include "WebkitElement.h"
-#include "WebkitElementPrivate.h"
-#include "WebkitHTMLElementWrapperFactory.h"
+#include "PythonHTMLElementWrapperFactory.h"
 #include "HTMLElement.h"
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-#include "WebkitSVGElementWrapperFactoryPrivate.h"
-#include "WebkitSVGElementWrapperFactory.h"
+#include "PythonSVGElementWrapperFactory.h"
 #include "SVGElement.h"
 #endif
 #endif
@@ -58,17 +52,17 @@ namespace WebKit {
 
 using namespace WebCore;
 
-gpointer toWEBKIT(Element* element)
+PyObject* toPython(Element* element)
 {
     if (!element)
         return NULL;
 
     // shouldn't be one? ASSERT(!ScriptInterpreter::getDOMObject(element));
-    gpointer gobj = WEBKITObjectCache::getDOMObject(element);
-    if (gobj)
-        return gobj;
+    PyObject* pobj = PythonObjectCache::getDOMObject(element);
+    if (pobj)
+        return pobj;
 
-    gpointer ret;
+    PyObject* ret;
     Document* doc = element->document();
 
     if (element->isHTMLElement())
@@ -85,7 +79,7 @@ gpointer toWEBKIT(Element* element)
     else
         ret = wrapElement(element);
 
-    return WEBKITObjectCache::putDOMObject(element, ret);
+    return PythonObjectCache::putDOMObject(element, ret);
 }
 
 } // namespace WebKit

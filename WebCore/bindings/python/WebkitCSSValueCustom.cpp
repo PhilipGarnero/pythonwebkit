@@ -25,29 +25,25 @@
  * require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
 
+#include <Python.h>
+
 #include "CString.h"
-#include "WebkitBinding.h"
-#include "WebkitCSSValuePrivate.h"
-#include "WebkitCSSValueListPrivate.h"
-#include "WebkitCSSPrimitiveValuePrivate.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
+#include "PythonBinding.h"
+#include "WebkitCSSValue.h"
+#include "WebkitCSSValueList.h"
+#include "WebkitCSSPrimitiveValue.h"
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-#include "WebkitSVGColorPrivate.h"
-#include "WebkitSVGPaintPrivate.h"
+#include "WebkitSVGColor.h"
+#include "WebkitSVGPaint.h"
 #endif
 #endif
 
@@ -55,17 +51,17 @@ namespace WebKit {
 
 using namespace WebCore;
 
-gpointer toWEBKIT(CSSValue* value)
+PyObject* toPython(CSSValue* value)
 {
     if (!value)
         return NULL;
 
-    gpointer gobj = WEBKITObjectCache::getDOMObject(value);
+    PyObject* pobj = PythonObjectCache::getDOMObject(value);
 
-    if (gobj)
-        return gobj;
+    if (pobj)
+        return pobj;
 
-    gpointer ret;
+    PyObject* ret;
 
     if (value->isValueList())
         ret = wrapCSSValueList(static_cast<CSSValueList*>(value));
@@ -90,7 +86,7 @@ gpointer toWEBKIT(CSSValue* value)
     else
         ret = wrapCSSValue(value);
 
-    return WEBKITObjectCache::putDOMObject(value, ret);
+    return PythonObjectCache::putDOMObject(value, ret);
 }
 
 

@@ -25,48 +25,18 @@
  * require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
+
+#include <Python.h>
+#include "PythonBinding.h"
 
 #include "CString.h"
 #include "Event.h"
-#include "WebkitBinding.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
-#include "WebkitEvent.h"
-#include "WebkitEventPrivate.h"
-#include "WebkitKeyboardEvent.h"
-#include "WebkitKeyboardEventPrivate.h"
-#include "WebkitMessageEvent.h"
-#include "WebkitMessageEventPrivate.h"
-#include "WebkitMouseEvent.h"
-#include "WebkitMouseEventPrivate.h"
-#include "WebkitMutationEvent.h"
-#include "WebkitMutationEventPrivate.h"
-#include "WebkitOverflowEvent.h"
-#include "WebkitOverflowEventPrivate.h"
-#include "WebkitProgressEvent.h"
-#include "WebkitProgressEventPrivate.h"
-#include "WebkitTextEvent.h"
-#include "WebkitTextEventPrivate.h"
-#include "WebkitUIEvent.h"
-#include "WebkitUIEventPrivate.h"
-#include "WebkitWebKitAnimationEvent.h"
-#include "WebkitWebKitAnimationEventPrivate.h"
-#include "WebkitWebKitTransitionEvent.h"
-#include "WebkitWebKitTransitionEventPrivate.h"
-#include "WebkitWheelEvent.h"
-#include "WebkitWheelEventPrivate.h"
-#include "WebkitXMLHttpRequestProgressEvent.h"
-#include "WebkitXMLHttpRequestProgressEventPrivate.h"
 #include "KeyboardEvent.h"
 #include "MessageEvent.h"
 #include "MouseEvent.h"
@@ -81,14 +51,11 @@
 #include "XMLHttpRequestProgressEvent.h"
 
 #if ENABLE(DOM_STORAGE)
-#include "WebkitStorageEventPrivate.h"
 #include "StorageEvent.h"
 #endif
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-#include "WebkitSVGZoomEventPrivate.h"
-#include "WebkitSVGZoomEvent.h"
 #include "SVGZoomEvent.h"
 #endif
 #endif
@@ -97,16 +64,16 @@ namespace WebKit {
 
 using namespace WebCore;
 
-gpointer toWEBKIT(Event* event)
+PyObject* toPython(Event* event)
 {
     if (!event)
         return NULL;
 
-    gpointer gobj = WEBKITObjectCache::getDOMObject(event);
-    if (gobj)
-        return gobj;
+    PyObject* pobj = PythonObjectCache::getDOMObject(event);
+    if (pobj)
+        return pobj;
 
-    gpointer ret;
+    PyObject* ret;
     if (event->isUIEvent()) {
         if (event->isKeyboardEvent())
             ret = wrapKeyboardEvent(static_cast<KeyboardEvent*>(event));
@@ -150,7 +117,7 @@ gpointer toWEBKIT(Event* event)
     else
         ret = wrapEvent(event);
 
-    return WEBKITObjectCache::putDOMObject(event, ret);
+    return PythonObjectCache::putDOMObject(event, ret);
 }
 
 } // namespace WebKit

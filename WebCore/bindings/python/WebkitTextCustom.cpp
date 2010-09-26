@@ -25,22 +25,17 @@
  * require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
 
+#include <Python.h>
+
 #include "CString.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
-#include "WebkitBinding.h"
-#include "WebkitTextPrivate.h"
+#include "PythonBinding.h"
 #include "Text.h"
 
 namespace WebKit {
@@ -48,17 +43,17 @@ namespace WebKit {
 using namespace WebCore;
 
 
-gpointer toWEBKIT(Text* text)
+PyObject* toPython(Text* text)
 {
     if (!text)
         return NULL;
 
-    gpointer gobj = WEBKITObjectCache::getDOMObject(text);
-    if (gobj)
-        return gobj;
+    PyObject* pobj = PythonObjectCache::getDOMObject(text);
+    if (pobj)
+        return pobj;
 
-    gpointer ret = wrapText(text);
-    return WEBKITObjectCache::putDOMObject(text, ret);
+    PyObject* ret = wrapText(text);
+    return PythonObjectCache::putDOMObject(text, ret);
 }
 
 

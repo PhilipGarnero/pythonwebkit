@@ -25,27 +25,23 @@
  * will also require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
 
+#include <Python.h>
+
 #include "CString.h"
-#include "WebkitBinding.h"
-#include "WebkitDocumentPrivate.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
-#include "WebkitHTMLDocumentPrivate.h"
+#include "PythonBinding.h"
+#include "WebkitDocument.h"
+#include "WebkitHTMLDocument.h"
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* XXX TODO - see #20586 */
-#include "WebkitSVGDocumentPrivate.h"
+#include "WebkitSVGDocument.h"
 #endif
 #endif
 
@@ -53,16 +49,16 @@ namespace WebKit {
 
 using namespace WebCore;
 
-gpointer toWEBKIT(Document* doc)
+PyObject* toPython(Document* doc)
 {
     if (!doc)
         return NULL;
 
-    gpointer gobj = WEBKITObjectCache::getDOMObject(doc);
+    PyObject* pobj = PythonObjectCache::getDOMObject(doc);
     if (gobj)
-        return gobj;
+        return pobj;
 
-    gpointer ret;
+    PyObject* ret;
 
     if (doc->isHTMLDocument())
         ret = wrapHTMLDocument(static_cast<HTMLDocument*>(doc));
@@ -78,7 +74,7 @@ gpointer toWEBKIT(Document* doc)
     else
         ret = wrapDocument(doc);
 
-    return WEBKITObjectCache::putDOMObject(doc, ret);
+    return PythonObjectCache::putDOMObject(doc, ret);
 }
 
 

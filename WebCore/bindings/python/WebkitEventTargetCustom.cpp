@@ -25,32 +25,22 @@
  * require the EXACT same additions, here.
  *
  * FIXME: there should have been no need to duplicate the functionality behind
- * JSDOMBinding.cpp and call it WEBKITBinding.cpp in the first place, and
+ * JSDOMBinding.cpp and call it PythonBinding.cpp in the first place, and
  * there should be no need for this file; the functionality should be
  * merged into common code, as it does exactly the same thing.
  */
 
-#ifndef gpointer
-#define gpointer unsigned long
-#endif
-
 #include "config.h"
 
+#include <Python.h>
+
 #include "CString.h"
-#include "WebkitBinding.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
-#include "WebkitXMLHttpRequest.h"
-#include "WebkitXMLHttpRequestPrivate.h"
-#include "WebkitXMLHttpRequestUpload.h"
-#include "WebkitXMLHttpRequestUploadPrivate.h"
+#include "PythonBinding.h"
 #include "XMLHttpRequest.h"
 #include "XMLHttpRequestUpload.h"
 
 #if ENABLE(OFFLINE_WEB_APPLICATIONS)
 #include "DOMApplicationCache.h"
-#include "WebkitDOMApplicationCache.h"
-#include "WebkitDOMApplicationCachePrivate.h"
 #endif
 
 namespace WebKit {
@@ -58,9 +48,9 @@ namespace WebKit {
 using namespace WebCore;
 
 /* derived sources auto-generated */
-gpointer toWEBKIT(XMLHttpRequestUpload* obj);
+PyObject* toPython(XMLHttpRequestUpload* obj);
 
-gpointer toWEBKIT(EventTarget* target)
+PyObject* toPython(EventTarget* target)
 {
     if (!target)
         return NULL;
@@ -72,27 +62,27 @@ gpointer toWEBKIT(EventTarget* target)
     // returning a valid node.
     SVGElementInstance* instance = target->toSVGElementInstance();
     if (instance)
-        return toWEBKIT(exec, instance);
+        return toPython(exec, instance);
 #endif
 #endif
 
     Node* node = target->toNode();
     if (node)
-        return toWEBKIT(node);
+        return toPython(node);
 
     if (XMLHttpRequest* xhr = target->toXMLHttpRequest())
-        // XMLHttpRequest is always created via WEBKIT, so we don't need
+        // XMLHttpRequest is always created via Python, so we don't need
         // to use cacheDOMObject() here.
-        return WEBKITObjectCache::getDOMObject(xhr);
+        return PythonObjectCache::getDOMObject(xhr);
 
     if (XMLHttpRequestUpload* upload = target->toXMLHttpRequestUpload())
-        return toWEBKIT(upload);
+        return toPython(upload);
 
 #if ENABLE(OFFLINE_WEB_APPLICATIONS)
     if (DOMApplicationCache* cache = target->toDOMApplicationCache())
-        // DOMApplicationCache is always created via WEBKIT, so we don't
+        // DOMApplicationCache is always created via Python, so we don't
         // need to use cacheDOMObject() here.
-        return WEBKITObjectCache::getDOMObject(cache);
+        return PythonObjectCache::getDOMObject(cache);
 #endif
 
     ASSERT_NOT_REACHED();
