@@ -506,15 +506,15 @@ class ObjectArg(ArgType):
         else:
             if pdflt:
                 info.varlist.add(self.objname, '*' + pname + ' = ' + pdflt)
-                info.varlist.add('PyGObject', '*py_' + pname + ' = NULL')
+                info.varlist.add('PyIntObject', '*py_' + pname + ' = NULL')
                 info.codebefore.append(self.dflt % {'name':pname,
                                                     'cast':self.cast})
                 info.arglist.append(pname)
                 info.add_parselist('O!', ['&Py%s_Type' % self.objname,
                                          '&py_' + pname], [pname])
             else:
-                info.varlist.add('PyGObject', '*' + pname)
-                info.arglist.append('%s(%s->obj)' % (self.cast, pname))
+                info.varlist.add('PyIntObject', '*' + pname)
+                info.arglist.append('%s(%s)' % (self.cast, pname))
                 info.add_parselist('O!', ['&Py%s_Type' % self.objname,
                                           '&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):

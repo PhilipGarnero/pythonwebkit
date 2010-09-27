@@ -337,8 +337,8 @@ class Wrapper:
         substdict.setdefault('errorreturn', 'NULL')
 
         # for methods, we want the leading comma
-        if is_method:
-            info.arglist.append('')
+        #if is_method:
+            #info.arglist.append('')
 
         if function_obj.varargs:
             raise argtypes.ArgTypeNotFoundError("varargs functions not supported")
@@ -956,7 +956,7 @@ _wrap__get_symbol(PyObject *self, PyObject *args)
 class GObjectWrapper(Wrapper):
     constructor_tmpl = (
         'static int\n'
-        '_wrap_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
+        '_wrap_%(cname)s(PyIntObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
@@ -976,13 +976,13 @@ class GObjectWrapper(Wrapper):
 
     method_tmpl = (
         'static PyObject *\n'
-        '_wrap_%(typename)s_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
+        '_wrap_%(typename)s_%(cname)s(PyIntObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
         '%(codebefore)s'
         '    %(begin_allow_threads)s\n'
-        '    %(setreturn)s%(cname)s(%(cast)s(self->obj)%(arglist)s);\n'
+        '    %(setreturn)s%(cast)s(self)->%(cname)s(%(arglist)s);\n'
         '    %(end_allow_threads)s\n'
         '%(codeafter)s\n'
         '}\n\n'
@@ -994,9 +994,9 @@ class GObjectWrapper(Wrapper):
                                             '_TYPE_', '_', 1)
 
     def get_initial_class_substdict(self):
-        return { 'tp_basicsize'      : 'PyDOMObject',
-                 'tp_weaklistoffset' : 'offsetof(PyDOMObject, weakreflist)',
-                 'tp_dictoffset'     : 'offsetof(PyDOMObject, inst_dict)' }
+        return { 'tp_basicsize'      : 'PyIntObject',
+                 'tp_weaklistoffset' : '0', #'offsetof(PyIntObject, weakreflist)',
+                 'tp_dictoffset'     : '0'} #'offsetof(PyIntObject, inst_dict)' }
 
     def get_field_accessor(self, fieldname):
         castmacro = string.replace(self.objinfo.typecode, '_TYPE_', '_', 1)
@@ -1035,7 +1035,7 @@ class GObjectWrapper(Wrapper):
         self.objinfo.has_new_constructor_api = True
         out = self.fp
         print >> out, "static int"
-        print >> out, '_wrap_%s(PyDOMObject *self, PyObject *args,' \
+        print >> out, '_wrap_%s(PyIntObject *self, PyObject *args,' \
               ' PyObject *kwargs)\n{' % constructor.c_name
         if constructor.params:
             s = "    GType obj_type = pyg_type_from_object((PyObject *) self);"
@@ -1462,13 +1462,16 @@ typedef intobjargproc ssizeobjargproc;
 
     def write_type_declarations(self):
         #todo use 'static' if used only in one file
+        self.fp.write('/* ---------- includes ---------- */\n')
+        for obj in self.parser.objects:
+            if not self.overrides.is_type_ignored(obj.c_name):
+                self.fp.write('#include "%s.h"\n' % obj.c_name)
+        self.fp.write('\n')
+
         self.fp.write('/* ---------- forward type declarations ---------- */\n')
         for obj in self.parser.boxes:
             if not self.overrides.is_type_ignored(obj.c_name):
                 self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
-        #for ptype in self.include_types:
-        #    if not self.overrides.is_type_ignored(ptype):
-        #        self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + ptype + '_Type;\n')
         for obj in self.parser.objects:
             if not self.overrides.is_type_ignored(obj.c_name):
                 self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
