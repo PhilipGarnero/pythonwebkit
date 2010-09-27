@@ -599,6 +599,23 @@ print F "\nvoid init()
     close F;
 }
 
+sub printBindingElementWrapDecl
+{
+    my $F = shift;
+    my $prefix = shift;
+    my $suffix = shift;
+
+    my %tagsSeen;
+    for my $tagName (sort keys %tags) {
+        next if (temporaryWorkaroundSkipTag($tagName));
+        my $JSInterfaceName = $tags{$tagName}{"JSInterfaceName"};
+        next if defined($tagsSeen{$JSInterfaceName}) || usesDefaultJSWrapper($tagName);
+        $tagsSeen{$JSInterfaceName} = 1;
+
+        print F "PyObject* wrap${JSInterfaceName}(${JSInterfaceName}*);\n";
+    }
+}
+
 sub printBindingElementIncludes
 {
     my $F = shift;
@@ -894,7 +911,7 @@ sub usesDefaultJSWrapper
     return $tags{$name}{'JSInterfaceName'} eq $parameters{"namespace"} . "Element" || $tags{$name}{'JSInterfaceName'} eq "HTMLNoScriptElement";
 }
 
-sub printWrapperFunctionWebkitInterface
+sub printWrapperFunctionPythonInterface
 {
     my $F = shift;
     my $JSInterfaceName = shift;
@@ -942,7 +959,7 @@ END
 ;
             } 
             if ($binding eq 'Python') {
-                printWrapperFunctionWebkitInterface($F, $JSInterfaceName);
+                printWrapperFunctionPythonInterface($F, $JSInterfaceName);
             }
         } else {
             if ($binding eq 'JS') {
@@ -956,7 +973,7 @@ END
 ;
             } 
             if ($binding eq 'Python') {
-                printWrapperFunctionWebkitInterface($F, $JSInterfaceName);
+                printWrapperFunctionPythonInterface($F, $JSInterfaceName);
             }
         }
         if ($conditional) {
@@ -965,7 +982,7 @@ END
     }
 }
 
-sub printWrapperFactoryCppFileWebkitHeader
+sub printWrapperFactoryCppFilePythonHeader
 {
     my $F = shift;
     print F <<END
@@ -982,10 +999,10 @@ END
 ;
 }
 
-sub printWrapperFactoryCppFileWebkitFunctionHeader
+sub printWrapperFactoryCppFilePythonFunctionHeader
 {
     print F <<END
-PyObject* createWebkit$parameters{'namespace'}ElementWrapper(PassRefPtr<WebCore::$parameters{'namespace'}Element> element)
+PyObject* createPython$parameters{'namespace'}ElementWrapper(PassRefPtr<WebCore::$parameters{'namespace'}Element> element)
 {   
     static HashMap<WebCore::AtomicStringImpl*, Create$parameters{'namespace'}ElementWrapperFunction> map;
     if (map.isEmpty()) {
@@ -993,7 +1010,7 @@ END
 ;
 }
 
-sub printWrapperFactoryCppFileWebkitFooter
+sub printWrapperFactoryCppFilePythonFooter
 {
     my $F = shift;
     print F <<END
@@ -1019,28 +1036,25 @@ sub printWrapperFactoryCppFile
 
     printLicenseHeader($F);
 
+    if ($binding eq 'Python') {
+        print F "#include <Python.h>\n";
+    }
     print F "#include \"config.h\"\n\n";
 
     print F "#if $parameters{'guardFactoryWith'}\n\n" if $parameters{'guardFactoryWith'};
 
-    if ($binding eq 'Python') {
-        print F "#include \"webkit/WebkitNode.h\"\n";
-    }
     print F "#include \"$binding$parameters{'namespace'}ElementWrapperFactory.h\"\n";
 
     if ($binding eq 'JS') {
         printBindingElementIncludes($F, "", "");
     } 
-    if ($binding eq 'Python') {
-        printBindingElementIncludes($F, "webkit/", "");
-        print F "\n";
-        print F "#include \"webkit/WebkitHTMLElementPrivate.h\"\n";
-        printBindingElementIncludes($F, "webkit/", "Private");
-    }
-
     print F "\n#include \"$parameters{'namespace'}Names.h\"\n\n";
 
     printElementIncludes($F);
+
+    if ($binding eq 'Python') {
+        printBindingElementWrapDecl($F, "", "");
+    }
 
     print F "\n#include <wtf/StdLibExtras.h>\n\n";
     
@@ -1058,7 +1072,7 @@ END
 ;
     } 
     if ($binding eq 'Python') {
-        printWrapperFactoryCppFileWebkitHeader($F);
+        printWrapperFactoryCppFilePythonHeader($F);
     }
 
     printWrapperFunctions($F);
@@ -1074,7 +1088,7 @@ END
 ;
     } 
     if ($binding eq 'Python') {
-        printWrapperFactoryCppFileWebkitFunctionHeader($F);
+        printWrapperFactoryCppFilePythonFunctionHeader($F);
     }
 
     for my $tag (sort keys %tags) {
@@ -1113,7 +1127,7 @@ END
 ;
     } 
     if ($binding eq 'Python') {
-        printWrapperFactoryCppFileWebkitFooter($F);
+        printWrapperFactoryCppFilePythonFooter($F);
     }
 
     print F "#endif\n" if $parameters{'guardFactoryWith'};
@@ -1121,12 +1135,11 @@ END
     close F;
 }
 
-sub printWrapperFactoryHeaderFileWebkitBody
+sub printWrapperFactoryHeaderFilePythonBody
 {
     my $F = shift;
     print F <<END
 #include <Python.h>
-#include "WebkitNodePrivate.h"
 
 #include <wtf/Forward.h>
 
@@ -1135,7 +1148,7 @@ namespace WebCore {
 }
 
 namespace WebKit {
-    PyObject* createWebkit$parameters{'namespace'}ElementWrapper(PassRefPtr<WebCore::$parameters{'namespace'}Element>);
+    PyObject* createPython$parameters{'namespace'}ElementWrapper(PassRefPtr<WebCore::$parameters{'namespace'}Element>);
 }
  
 END
@@ -1177,7 +1190,7 @@ END
 ;
     } 
     if ($binding eq 'Python') {
-        printWrapperFactoryHeaderFileWebkitBody($F);
+        printWrapperFactoryHeaderFilePythonBody($F);
     }
 
     print F "#endif // $parameters{'guardFactoryWith'}\n\n" if $parameters{'guardFactoryWith'};

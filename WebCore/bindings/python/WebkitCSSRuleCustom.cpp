@@ -35,7 +35,7 @@
 #include <Python.h>
 
 #include "CString.h"
-#include "WebkitCSSRule.h"
+#include "CSSRule.h"
 #include "CSSCharsetRule.h"
 #include "CSSFontFaceRule.h"
 #include "CSSImportRule.h"
@@ -48,6 +48,15 @@
 namespace WebKit {
 
 using namespace WebCore;
+
+extern PyObject* wrapCSSStyleRule(CSSStyleRule*);
+extern PyObject* wrapCSSMediaRule(CSSMediaRule*);
+extern PyObject* wrapCSSFontFaceRule(CSSFontFaceRule*);
+extern PyObject* wrapCSSPageRule(CSSPageRule*);
+extern PyObject* wrapCSSImportRule(CSSImportRule*);
+extern PyObject* wrapCSSCharsetRule(CSSCharsetRule*);
+extern PyObject* wrapCSSVariablesRule(CSSVariablesRule*);
+extern PyObject* wrapCSSRule(CSSRule*);
 
 PyObject* toPython(CSSRule* rule)
 {
@@ -88,7 +97,7 @@ PyObject* toPython(CSSRule* rule)
     }
 
     return PythonObjectCache::putDOMObject(rule, ret);
-p
+}
 
 } // namespace WebKit
 

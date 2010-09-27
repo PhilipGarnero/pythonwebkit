@@ -25,12 +25,12 @@
 
 #include <Python.h>
 
+#include "CString.h"
 #include "CSSRule.h"
 #include "CSSValue.h"
 #include "Element.h"
 #include "Event.h"
 #include "EventTarget.h"
-#include "WebkitNode.h"
 #include "HTMLCollection.h"
 #include "Node.h"
 #include "StyleSheet.h"
@@ -39,13 +39,10 @@
 
 namespace WebCore {
 
-    class AtomicString;
     class Document;
     class Event;
     class Frame;
-    class KURL;
     class Node;
-    class String;
 
 #if ENABLE(SVG)
     class SVGElement;

@@ -4,6 +4,46 @@ HTML_FEATURES :=
 WEBCORE_CSS_PROPERTY_NAMES := $(WebCore)/css/CSSPropertyNames.in
 WEBCORE_CSS_VALUE_KEYWORDS := $(WebCore)/css/CSSValueKeywords.in
 
+_pywebkit_cppflags += \
+	-I$(srcdir)/WebCore/platform/network/soup \
+	-I$(top_builddir)/DerivedSources
+
+
+_pywebkit_sources += \
+	WebCore/bindings/python/PythonBinding.cpp \
+	WebCore/bindings/python/WebkitCSSRuleCustom.cpp \
+	WebCore/bindings/python/WebkitCSSValueCustom.cpp \
+	WebCore/bindings/python/WebkitDocumentCustom.cpp \
+	WebCore/bindings/python/WebkitElementCustom.cpp \
+	WebCore/bindings/python/WebkitEventCustom.cpp \
+	WebCore/bindings/python/WebkitEventTargetCustom.cpp \
+	WebCore/bindings/python/WebkitHTMLCollectionCustom.cpp \
+	WebCore/bindings/python/WebkitStyleSheetCustom.cpp \
+	WebCore/bindings/python/WebkitTextCustom.cpp
+
+_pywebkit_built_sources += \
+	DerivedSources/python/PyWebkit.cpp \
+	DerivedSources/PythonHTMLElementWrapperFactory.cpp \
+	DerivedSources/PythonHTMLElementWrapperFactory.h
+
+
+DerivedSources/PythonHTMLElementWrapperFactory.h: DerivedSources/PythonHTMLElementWrapperFactory.cpp;
+
+if HTML_FLAGS
+DerivedSources/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
+	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --extraDefines "$(HTML_FEATURES)" --wrapperFactory --outputDir "$(GENSOURCES)"
+else
+DerivedSources/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
+	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --wrapperFactory --outputDir "$(GENSOURCES)"
+endif # HTML_FLAGS
+
+
+DerivedSources/python/PyWebkit.cpp:
+	mkdir -p $(GENSOURCES_PYTHON)
+	$(PYTHON) codegen/xpidl.py WebCore/dom/Document.idl \
+	                  WebCore/dom/Node.idl \
+	                  WebCore/dom/Attr.idl
+
 webcore_cppflags += \
 	-I$(srcdir)/WebCore \
 	-I$(srcdir)/WebCore/accessibility \

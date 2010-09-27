@@ -1621,8 +1621,13 @@ typedef intobjargproc ssizeobjargproc;
 
     def write_extension_init(self):
         self.fp.write('/* initialise stuff extension classes */\n')
-        self.fp.write('void\n' + self.prefix + '_register_classes(PyObject *d)\n{\n')
+        self.fp.write('PyMODINIT_FUNC\n')
+        self.fp.write('init%s(void)\n' % self.prefix)
+        self.fp.write('{\n')
+        self.fp.write('    PyObject *m;\n')
         self.write_object_imports()
+        for obj, bases in self.get_classes():
+            self.write_class_base_link(obj, bases)
         self.fp.write(self.overrides.get_init() + '\n')
         self.fp.resetline()
 
@@ -1693,6 +1698,19 @@ typedef intobjargproc ssizeobjargproc;
         if obj.module.lower() != self.overrides.modulename:
             return True
         return False
+
+    def write_class_base_link(self, obj, bases, indent=1):
+        indent_str = ' ' * (indent * 4)
+        if not bases:
+            bases_str = 'PyInt_Type'
+        else:
+            bases_str = 'Py%s_Type' % bases[0]
+
+        self.fp.write("%sPy%s_Type.tp_base = &%s;\n" % \
+                    (indent_str, obj.c_name, bases_str))
+        self.fp.write("%sif (PyType_Ready(&Py%s_Type) < 0)\n" % \
+                      (indent_str, obj.c_name))
+        self.fp.write("%s    return;\n" % indent_str)
 
     def write_class(self, obj, bases, indent=1):
         indent_str = ' ' * (indent * 4)

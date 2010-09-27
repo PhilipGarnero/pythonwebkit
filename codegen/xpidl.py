@@ -1284,7 +1284,7 @@ class IDLDefsParser(defsparser.DefsParser):
                 if obj.base:
                     args.append( ("parent", obj.base[0]) )
                 else:
-                    args.append( ("parent", "DOMObject") )
+                    args.append( ("parent", "Int") )
                 self.define_object(obj.name, *args)
             for m in obj.members:
                 if isinstance(m, CDATA):

@@ -37,26 +37,26 @@
 #define HASH_MAP_PTR_SPEC_WORKAROUND 1
 #endif
 
+#include <Python.h>
+
 #include "config.h"
 
 #include "CString.h"
 #include "PythonBinding.h"
-#include "WebkitAttrPrivate.h"
-#include "WebkitCDATASectionPrivate.h"
-#include "WebkitCommentPrivate.h"
-#include "WebkitDocumentPrivate.h"
-#include "WebkitDocumentTypePrivate.h"
-#include "WebkitDocumentFragmentPrivate.h"
-#include "WebkitDOMObject.h"
-#include "WebkitDOMObjectPrivate.h"
-#include "WebkitHTMLElementWrapperFactory.h"
-#include "WebkitElementPrivate.h"
-#include "WebkitEntityPrivate.h"
-#include "WebkitEntityReferencePrivate.h"
-#include "WebkitNodePrivate.h"
-#include "WebkitNotationPrivate.h"
-#include "WebkitProcessingInstructionPrivate.h"
-#include "WebkitTextPrivate.h"
+#include "Attr.h"
+#include "CDATASection.h"
+#include "Comment.h"
+#include "Document.h"
+#include "DocumentType.h"
+#include "DocumentFragment.h"
+#include "PythonHTMLElementWrapperFactory.h"
+#include "Element.h"
+#include "Entity.h"
+#include "EntityReference.h"
+#include "Node.h"
+#include "Notation.h"
+#include "ProcessingInstruction.h"
+#include "Text.h"
 #include "HTMLElement.h"
 
 namespace WebKit {
@@ -109,6 +109,19 @@ PyObject* toPython(Node* node)
 
     return createWrapper(node);
 }
+
+extern PyObject* wrapElement(Element*);
+extern PyObject* wrapText(Text*);
+extern PyObject* wrapCDATASection(CDATASection*);
+extern PyObject* wrapAttr(Attr*);
+extern PyObject* wrapEntity(Entity*);
+extern PyObject* wrapProcessingInstruction(ProcessingInstruction*);
+extern PyObject* wrapComment(Comment*);
+extern PyObject* wrapDocumentType(DocumentType*);
+extern PyObject* wrapNotation(Notation*);
+extern PyObject* wrapDocumentFragment(DocumentFragment*);
+extern PyObject* wrapEntityReference(EntityReference*);
+extern PyObject* wrapNode(Node*);
 
 static ALWAYS_INLINE PyObject* createWrapper(Node* node)
 {
