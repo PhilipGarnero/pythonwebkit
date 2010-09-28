@@ -1420,7 +1420,8 @@ class SourceWriter:
         self.fp.write('/* -*- Mode: C; c-basic-offset: 4 -*- */\n\n')
         if py_ssize_t_clean:
             self.fp.write('#define PY_SSIZE_T_CLEAN\n')
-        self.fp.write('#include <Python.h>\n\n\n')
+        self.fp.write('#include <Python.h>\n')
+        self.fp.write('#include "config.h"\n\n\n')
         if py_ssize_t_clean:
             self.fp.write('''
 

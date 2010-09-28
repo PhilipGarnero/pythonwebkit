@@ -30,9 +30,9 @@
  * merged into common code, as it does exactly the same thing.
  */
 
-#include "config.h"
-
 #include <Python.h>
+
+#include "config.h"
 
 #include "CString.h"
 #include "CSSStyleSheet.h"
@@ -41,6 +41,9 @@
 namespace WebKit {
 
 using namespace WebCore;
+
+PyObject* wrapCSSStyleSheet(CSSStyleSheet*);
+PyObject* wrapStyleSheet(StyleSheet*);
 
 PyObject* toPython(StyleSheet* styleSheet)
 {

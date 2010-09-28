@@ -30,9 +30,10 @@
  * merged into common code, as it does exactly the same thing.
  */
 
+#include <Python.h>
+
 #include "config.h"
 
-#include <Python.h>
 #include "PythonBinding.h"
 
 #include "CString.h"
@@ -63,6 +64,27 @@
 namespace WebKit {
 
 using namespace WebCore;
+
+#if ENABLE(SVG)
+#ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
+PyObject* wrapSVGZoomEvent(SVGZoomEvent*);
+#endif
+#endif
+
+PyObject* wrapEvent(Event*);
+PyObject* wrapKeyboardEvent(KeyboardEvent*);
+PyObject* wrapTextEvent(TextEvent*);
+PyObject* wrapMouseEvent(MouseEvent*);
+PyObject* wrapWheelEvent(WheelEvent*);
+PyObject* wrapUIEvent(UIEvent*);
+PyObject* wrapMutationEvent(MutationEvent*);
+PyObject* wrapOverflowEvent(OverflowEvent*);
+PyObject* wrapMessageEvent(MessageEvent*);
+PyObject* wrapXMLHttpRequestProgressEvent(XMLHttpRequestProgressEvent*);
+PyObject* wrapProgressEvent(ProgressEvent*);
+PyObject* wrapStorageEvent(StorageEvent*);
+PyObject* wrapWebKitAnimationEvent(WebKitAnimationEvent*);
+PyObject* wrapWebKitTransitionEvent(WebKitTransitionEvent*);
 
 PyObject* toPython(Event* event)
 {

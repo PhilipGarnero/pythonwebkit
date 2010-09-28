@@ -30,18 +30,18 @@
  * merged into common code, as it does exactly the same thing.
  */
 
-#include "config.h"
-
 #include <Python.h>
+
+#include "config.h"
 
 #include "CString.h"
 #include "PythonBinding.h"
-#include "WebkitDocument.h"
-#include "WebkitHTMLDocument.h"
+#include "Document.h"
+#include "HTMLDocument.h"
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* XXX TODO - see #20586 */
-#include "WebkitSVGDocument.h"
+#include "SVGDocument.h"
 #endif
 #endif
 
@@ -49,13 +49,22 @@ namespace WebKit {
 
 using namespace WebCore;
 
+PyObject* wrapHTMLDocument(HTMLDocument*);
+PyObject* wrapDocument(Document*);
+
+#if ENABLE(SVG)
+#ifdef __TODO_BUG_20586__ /* XXX TODO - see #20586 */
+PyObject* wrapSVGDocument(SVGDocument*);
+#endif
+#endif
+
 PyObject* toPython(Document* doc)
 {
     if (!doc)
         return NULL;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(doc);
-    if (gobj)
+    if (pobj)
         return pobj;
 
     PyObject* ret;

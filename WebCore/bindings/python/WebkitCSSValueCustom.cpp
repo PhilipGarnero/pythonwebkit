@@ -30,26 +30,37 @@
  * merged into common code, as it does exactly the same thing.
  */
 
-#include "config.h"
-
 #include <Python.h>
+
+#include "config.h"
 
 #include "CString.h"
 #include "PythonBinding.h"
-#include "WebkitCSSValue.h"
-#include "WebkitCSSValueList.h"
-#include "WebkitCSSPrimitiveValue.h"
+#include "CSSValue.h"
+#include "CSSValueList.h"
+#include "CSSPrimitiveValue.h"
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-#include "WebkitSVGColor.h"
-#include "WebkitSVGPaint.h"
+#include "SVGColor.h"
+#include "SVGPaint.h"
 #endif
 #endif
 
 namespace WebKit {
 
 using namespace WebCore;
+
+#if ENABLE(SVG)
+#ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
+PyObject* wrapSVGPaint(SVGPaint*);
+PyObject* wrapSVGColor(SVGColor*);
+#endif
+#endif
+
+PyObject* wrapCSSValue(CSSValue*);
+PyObject* wrapCSSValueList(CSSValueList*);
+PyObject* wrapCSSPrimitiveValue(CSSPrimitiveValue*);
 
 PyObject* toPython(CSSValue* value)
 {

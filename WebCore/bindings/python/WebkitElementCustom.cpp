@@ -30,14 +30,14 @@
  * merged into common code, as it does exactly the same thing.
  */
 
-#include "config.h"
-
 #include <Python.h>
+
+#include "config.h"
 
 #include "CString.h"
 #include "Event.h"
 #include "PythonBinding.h"
-#include "WebkitElement.h"
+#include "Element.h"
 #include "PythonHTMLElementWrapperFactory.h"
 #include "HTMLElement.h"
 
@@ -51,6 +51,8 @@
 namespace WebKit {
 
 using namespace WebCore;
+
+PyObject* wrapElement(Element*);
 
 PyObject* toPython(Element* element)
 {
@@ -66,13 +68,13 @@ PyObject* toPython(Element* element)
     Document* doc = element->document();
 
     if (element->isHTMLElement())
-        ret = createWebkitHTMLElementWrapper(static_cast<HTMLElement*>(element));
+        ret = createPythonHTMLElementWrapper(static_cast<HTMLElement*>(element));
 #if ENABLE(SVG)
     else if (element->isSVGElement())
     {
         return NULL; /* TODO - see #20586 */
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-        return createWebkitSVGElementWrapper(static_cast<SVGElement*>(element));
+        return createPythonSVGElementWrapper(static_cast<SVGElement*>(element));
 #endif
     }
 #endif

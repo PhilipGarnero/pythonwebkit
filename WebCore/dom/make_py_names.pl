@@ -472,7 +472,7 @@ sub printNamesHeaderFile
     my $lowerNamespace = lc($parameters{'namespacePrefix'});
     print F "#ifndef DOM_$parameters{'namespace'}NAMES_HIDE_GLOBALS\n";
     print F "// Namespace\n";
-    print F "extern const WebCore::AtomicString ${lowerNamespace}NamespaceURI;\n\n";
+    print F "extern const AtomicString ${lowerNamespace}NamespaceURI;\n\n";
 
     if (keys %tags) {
         print F "// Tags\n";
@@ -612,7 +612,16 @@ sub printBindingElementWrapDecl
         next if defined($tagsSeen{$JSInterfaceName}) || usesDefaultJSWrapper($tagName);
         $tagsSeen{$JSInterfaceName} = 1;
 
-        print F "PyObject* wrap${JSInterfaceName}(${JSInterfaceName}*);\n";
+        my $conditional = $tags{$tagName}{"conditional"};
+        if ($conditional) {
+            my $conditionalString = "ENABLE(" . join(") && ENABLE(", split(/&/, $conditional)) . ")";
+            print F "#if ${conditionalString}\n";
+        }
+
+        print F "PyObject* wrap${JSInterfaceName}(WebCore::${JSInterfaceName}*);\n";
+        if ($conditional) {
+            print F "#endif\n\n";
+        }
     }
 }
 
@@ -916,6 +925,8 @@ sub printWrapperFunctionPythonInterface
     my $F = shift;
     my $JSInterfaceName = shift;
     print F <<END
+PyObject* wrap${JSInterfaceName}(${JSInterfaceName}*);
+
 static PyObject* create${JSInterfaceName}Wrapper(PassRefPtr<$parameters{'namespace'}Element> element)
 {
     return wrap${JSInterfaceName}(static_cast<${JSInterfaceName}*>(element.get()));
@@ -1002,9 +1013,10 @@ END
 sub printWrapperFactoryCppFilePythonFunctionHeader
 {
     print F <<END
+PyObject* wrap$parameters{'namespace'}Element($parameters{'namespace'}Element*);
 PyObject* createPython$parameters{'namespace'}ElementWrapper(PassRefPtr<WebCore::$parameters{'namespace'}Element> element)
 {   
-    static HashMap<WebCore::AtomicStringImpl*, Create$parameters{'namespace'}ElementWrapperFunction> map;
+    static HashMap<AtomicStringImpl*, Create$parameters{'namespace'}ElementWrapperFunction> map;
     if (map.isEmpty()) {
 END
 ;
@@ -1057,6 +1069,7 @@ sub printWrapperFactoryCppFile
     }
 
     print F "\n#include <wtf/StdLibExtras.h>\n\n";
+    print F "\n#include <wtf/HashMap.h>\n\n";
     
     if ($binding eq 'JS') {
         print F <<END
@@ -1081,7 +1094,7 @@ END
         print F <<END
 JSNode* createJS$parameters{'namespace'}Wrapper(ExecState* exec, JSDOMGlobalObject* globalObject, PassRefPtr<$parameters{'namespace'}Element> element)
 {   
-    typedef HashMap<WebCore::AtomicStringImpl*, Create$parameters{'namespace'}ElementWrapperFunction> FunctionMap;
+    typedef HashMap<AtomicStringImpl*, Create$parameters{'namespace'}ElementWrapperFunction> FunctionMap;
     DEFINE_STATIC_LOCAL(FunctionMap, map, ());
     if (map.isEmpty()) {
 END

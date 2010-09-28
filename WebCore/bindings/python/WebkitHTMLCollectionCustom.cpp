@@ -30,17 +30,21 @@
  * merged into common code, as it does exactly the same thing.
  */
 
-#include "config.h"
-
 #include <Python.h>
+
+#include "config.h"
 
 #include "CString.h"
 #include "PythonBinding.h"
-#include "HTMLCollectionPrivate.h"
+#include "HTMLCollection.h"
+#include "HTMLOptionsCollection.h"
 
 namespace WebKit {
 
 using namespace WebCore;
+
+PyObject* wrapHTMLCollection(HTMLCollection*);
+PyObject* wrapHTMLOptionsCollection(HTMLOptionsCollection*);
 
 PyObject* toPython(HTMLCollection* collection)
 {

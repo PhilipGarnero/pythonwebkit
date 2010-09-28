@@ -1317,7 +1317,6 @@ if __name__ == '__main__':
             os.mkdir("DerivedSources/python")
         except OSError:
             pass
-        outfilename="DerivedSources/python/%s.c" % fn
         cmd = 'cpp -DLANGUAGE_PYTHON=1 %s' % f.replace(" ", "\ ")
         proc = subprocess.Popen(cmd,
                            stdin=subprocess.PIPE,
@@ -1330,7 +1329,7 @@ if __name__ == '__main__':
 
         p.startParsing(stdout_value, filename=f)
         codegen.register_types(p)
-    fo = codegen.FileOutput(open("PyWebkit.cpp", "w"))
+    fo = codegen.FileOutput(open("DerivedSources/python/PyWebkit.cpp", "w"))
     sw = codegen.SourceWriter(p, o, "Webkit", fo)
     sw.write()
     fo.close()

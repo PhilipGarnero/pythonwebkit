@@ -30,9 +30,9 @@
  * merged into common code, as it does exactly the same thing.
  */
 
-#include "config.h"
-
 #include <Python.h>
+
+#include "config.h"
 
 #include "CString.h"
 #include "PythonBinding.h"
@@ -42,6 +42,7 @@ namespace WebKit {
 
 using namespace WebCore;
 
+PyObject* wrapText(Text*);
 
 PyObject* toPython(Text* text)
 {

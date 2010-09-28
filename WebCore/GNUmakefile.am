@@ -5,6 +5,7 @@ WEBCORE_CSS_PROPERTY_NAMES := $(WebCore)/css/CSSPropertyNames.in
 WEBCORE_CSS_VALUE_KEYWORDS := $(WebCore)/css/CSSValueKeywords.in
 
 _pywebkit_cppflags += \
+	$(CAIRO_CFLAGS) \
 	-I$(srcdir)/WebCore/platform/network/soup \
 	-I$(top_builddir)/DerivedSources
 
@@ -38,8 +39,8 @@ DerivedSources/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names
 endif # HTML_FLAGS
 
 
-DerivedSources/python/PyWebkit.cpp:
-	mkdir -p $(GENSOURCES_PYTHON)
+DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py
+	mkdir -p $(GENSOURCES)/python
 	$(PYTHON) codegen/xpidl.py WebCore/dom/Document.idl \
 	                  WebCore/dom/Node.idl \
 	                  WebCore/dom/Attr.idl

@@ -3,6 +3,11 @@
 *.perspective*
 *.pyc
 build/
+.deps
+.libs
+.dirstamp
+*.lo
+*.o
 /WebKitBuild/
 autoinstall.cache.d
 WebKitTools/Scripts/webkitpy/thirdparty/autoinstalled
