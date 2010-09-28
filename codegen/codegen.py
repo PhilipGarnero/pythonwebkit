@@ -164,8 +164,8 @@ class Wrapper:
     dealloc_tmpl = (
         'void dealloc_%(classname)s(PyObject *self)\n'
         '{\n'
-        '    WebCore::%(classname)s* cobj = core%(classname)s(self);\n'
-        '    WebKit::WEBKITObjectCache::forgetDOMObject(cobj);\n'
+        '    WebKit::PythonObjectCache::forgetDOMObject(cobj);\n'
+        '    WTF::PassRefPtr<WebCore::%(classname)s*> cobj = core%(classname)s(self);\n'
         '    co->deref();\n'
         '    PyMem_DEL(self);\n'
         '}\n\n'
@@ -277,6 +277,8 @@ class Wrapper:
             return
         self.fp.write('\n/* ----------- %s ----------- */\n\n' %
                       self.objinfo.c_name)
+        self.fp.write('namespace WebKit {\n')
+        self.fp.write('using namespace WebCore;\n')
         substdict = self.get_initial_class_substdict()
         if not substdict.has_key('tp_flags'):
             substdict['tp_flags'] = 'Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE'
@@ -315,6 +317,9 @@ class Wrapper:
         self.fp.write(self.type_tmpl % substdict)
 
         self.write_virtuals()
+
+        self.fp.write('} // namespace WebKit\n')
+        self.fp.write('\n')
 
     def find_function_ptypes(self, function_obj, handle_return=0):
 
@@ -1371,21 +1376,21 @@ class GPointerWrapper(GBoxedWrapper):
 class SourceWriter:
 
     wrapcore_tmpl = (
-        'WebCore::%(classname)s* core%(classname)s(PyObject* request)\n'
+        'WTF::PassRefPtr<WebCore::%(classname)s*> core%(classname)s(PyIntObject* request)\n'
         '{\n'
         '    long coreptr = PyInt_AS_LONG(request);\n'
-        '    return static_cast<WebCore::%(classname)s*>(coreptr);\n'
+        '    return static_cast<WebCore::%(classname)s*>((void*)coreptr);\n'
         '}\n\n'
         )
 
     wrapnode_tmpl = (
         'PyObject* wrap%(classname)s(WebCore::%(classname)s* coreObject)\n'
         '{\n'
-        '    long coreptr = static_cast<long>(coreObject);\n'
+        '    long coreptr = (long)(static_cast<void*>(coreObject));\n'
         '    coreObject->ref();\n'
         '    return PyInt_FromLong(coreptr);\n'
         '}\n\n'
-        'PyObject toPython(WebCore::%(classname)s*);\n\n'
+        'PyObject* toPython(WebCore::%(classname)s*);\n\n'
         )
 
     def __init__(self, parser, overrides, prefix, fp=FileOutput(sys.stdout)):
