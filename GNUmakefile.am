@@ -172,8 +172,8 @@ _pywebkit_cppflags += \
    -I$(top_builddir)/DerivedSources
 
 _pywebkit_la_LDFLAGS = \
-   $(shell python-config --libs) \
-	-export-symbols-regex initpywebkit
+	-export-symbols-regex initpywebkit \
+	-module -avoid-version
 
 
 _pywebkit_la_SOURCES = \
@@ -183,29 +183,29 @@ nodist__pywebkit_la_SOURCES = \
    $(_pywebkit_built_sources) 
 
 _pywebkit_la_CPPFLAGS = \
-   $(global_cppflags) \
-   $(webcore_cppflags) \
-   $(GLOBALDEPS_CFLAGS) \
-   $(WEBKITDEPS_CFLAGS) \
-   $(ENCHANT_CFLAGS) \
-   $(LIBSOUP_CFLAGS) \
-   $(javascriptcore_cppflags) \
-   $(_pywebkit_cppflags) 
+    $(global_cppflags) \
+    $(webcore_cppflags) \
+    $(GLOBALDEPS_CFLAGS) \
+    $(WEBKITDEPS_CFLAGS) \
+    $(ENCHANT_CFLAGS) \
+    $(LIBSOUP_CFLAGS) \
+    $(javascriptcore_cppflags) \
+    $(_pywebkit_cppflags) 
 
 _pywebkit_la_LIBADD = \
-   $(GLOBALDEPS_LIBS) \
-   $(WEBKITDEPS_LIBS) \
-   $(XT_LIBS) \
-   $(LIBCURL_LIBS) \
-   $(LIBSOUP_LIBS) \
-   $(FREETYPE_LIBS) \
-   $(UNICODE_LIBS) \
-   $(SQLITE3_LIBS) \
-   $(GSTREAMER_LIBS) \
-   $(LIBXSLT_LIBS) \
-   $(HILDON_LIBS) \
-   $(JPEG_LIBS) \
-   -lpthread
+    libJavaScriptCore.la \
+    $(GLOBALDEPS_LIBS) \
+    $(WEBKITDEPS_LIBS) \
+    $(XT_LIBS) \
+    $(LIBCURL_LIBS) \
+    $(LIBSOUP_LIBS) \
+    $(FREETYPE_LIBS) \
+    $(UNICODE_LIBS) \
+    $(SQLITE3_LIBS) \
+    $(GSTREAMER_LIBS) \
+    $(LIBXSLT_LIBS) \
+    $(HILDON_LIBS) \
+    $(JPEG_LIBS)
 
 
 # WebKit

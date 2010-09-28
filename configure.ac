@@ -13,6 +13,9 @@ m4_define([webkit_user_agent_minor_version], [7])
 
 AC_INIT([WebKit],[webkit_major_version.webkit_minor_version.webkit_micro_version],[http://bugs.webkit.org/])
 
+AM_PATH_PYTHON(2.5)
+AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
+
 AC_CONFIG_MACRO_DIR([autotools])
 AC_CONFIG_AUX_DIR([autotools])
 AC_SUBST(ACLOCAL_AMFLAGS, "-I autotools")
