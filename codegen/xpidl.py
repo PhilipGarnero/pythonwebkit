@@ -1337,7 +1337,7 @@ if __name__ == '__main__':
         p.startParsing(stdout_value, filename=f)
         codegen.register_types(p)
     fo = codegen.FileOutput(open("DerivedSources/python/PyWebkit.cpp", "w"))
-    sw = codegen.SourceWriter(p, o, "Webkit", fo)
+    sw = codegen.SourceWriter(p, o, "pywebkit", fo)
     sw.write()
     fo.close()
 

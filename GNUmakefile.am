@@ -173,7 +173,8 @@ _pywebkit_cppflags += \
 
 _pywebkit_la_LDFLAGS = \
    $(shell python-config --libs) \
-	-pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions
+	-export-symbols-regex initpywebkit
+
 
 _pywebkit_la_SOURCES = \
    $(_pywebkit_sources) 

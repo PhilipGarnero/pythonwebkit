@@ -137,7 +137,14 @@ class Wrapper:
         '    (allocfunc)%(tp_alloc)s,           /* tp_alloc */\n'
         '    (newfunc)%(tp_new)s,               /* tp_new */\n'
         '    (freefunc)%(tp_free)s,             /* tp_free */\n'
-        '    (inquiry)%(tp_is_gc)s              /* tp_is_gc */\n'
+        '    (inquiry)%(tp_is_gc)s,              /* tp_is_gc */\n'
+        '    NULL,                              /* tp_bases */\n'
+        '    NULL,                              /* tp_mro */\n'
+        '    NULL,                              /* tp_cache */\n'
+        '    NULL,                              /* tp_subclasses */\n'
+        '    NULL,                              /* tp_weaklist */\n'
+        '    NULL,                              /* tp_del */\n'
+        '    NULL                               /* tp_version_tag */\n'
         '};\n\n'
         )
 
@@ -1130,7 +1137,7 @@ class GObjectWrapper(Wrapper):
                 % len(constructor.params))
         else:
             out.write(
-                "    static const char* kwlist[] = { NULL };\n"
+                "    static char* kwlist[] = { NULL };\n"
                 "\n")
 
             if constructor.deprecated is not None:
@@ -1451,9 +1458,10 @@ class SourceWriter:
         self.fp.write('#include "KURL.h"\n\n\n')
         self.fp.write('#include "PlatformString.h"\n\n\n')
         self.fp.write('#include <wtf/text/CString.h>\n\n\n')
+        self.fp.write('#include <wtf/Forward.h>\n\n\n')
         self.fp.write("""\
-inline char* cpUTF8(WTF::String const& s) { return s.utf8().data(); }
-inline char* cpUTF8(WebCore::KURL const& s) { return copyAsGchar(s.string()); }
+char* cpUTF8(WTF::String const& s) { return (char*)(s.utf8().data()); }
+char* cpUTF8(WebCore::KURL const& s) { return (char*)(s.string().utf8().data()); }
 """)
 
         if py_ssize_t_clean:
@@ -1663,6 +1671,10 @@ typedef intobjargproc ssizeobjargproc;
         self.write_object_imports()
         for obj, bases in self.get_classes():
             self.write_class_base_link(obj, bases)
+        self.fp.write('    m = Py_InitModule3("%s", NULL, "%s module");\n' % \
+                (self.prefix, self.prefix))
+        self.fp.write("    if (m == NULL) return;\n")
+
         self.fp.write(self.overrides.get_init() + '\n')
         self.fp.resetline()
 
@@ -1762,9 +1774,12 @@ typedef intobjargproc ssizeobjargproc;
         else:
             bases_str = 'NULL'
 
+        self.fp.write('%(indent)sPy_INCREF(&Py%(c_name)s_Type);\n'
+                % dict(indent=indent_str, c_name=obj.c_name))
         self.fp.write(
-                '%(indent)spygobject_register_class(d, "%(c_name)s", %(typecode)s, &Py%(c_name)s_Type, %(bases)s);\n'
-                % dict(indent=indent_str, c_name=obj.c_name, typecode=obj.typecode, bases=bases_str))
+                '%(indent)sPyModule_AddObject(m, "%(py_name)s", (PyObject*) &Py%(c_name)s_Type);\n'
+                % dict(indent=indent_str, c_name=obj.c_name,
+                       py_name=self.prefix))
 
         if obj.has_new_constructor_api:
             self.fp.write(
