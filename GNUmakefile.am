@@ -149,65 +149,6 @@ libJavaScriptCore_la_CPPFLAGS = \
 	$(global_cppflags) \
 	$(javascriptcore_cppflags)
 
-# _pywebkit
-pkgpyexecdir = $(pyexecdir)
-pkgpyexec_LTLIBRARIES = _pywebkit.la
-
-_pywebkit_built_sources :=
-_pywebkit_sources :=
-_pywebkit_h_api :=
-_pywebkit_cppflags := -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -fPIC
-_pywebkit_ladir = $(prefix)/include/webkit-@WEBKITGTK_API_VERSION@/python
-_pywebkit_la_HEADERS = \
-        $(_pywebkit_h_api) 
-
-_pywebkit_cppflags += \
-   $(global_cppflags) \
-   $(shell python-config --includes) \
-   -I$(srcdir)/WebKit/gtk \
-   -I$(top_builddir)/WebKit/gtk \
-   -I$(top_builddir)/WebKit/webkit \
-   -I$(srcdir)/WebKit/gtk/webkit \
-   -I$(top_builddir)/DerivedSources/python \
-   -I$(top_builddir)/DerivedSources
-
-_pywebkit_la_LDFLAGS = \
-	-module -avoid-version
-
-#	-export-symbols-regex initpywebkit 
-
-_pywebkit_la_SOURCES = \
-   $(_pywebkit_sources) 
-
-nodist__pywebkit_la_SOURCES = \
-   $(_pywebkit_built_sources) 
-
-_pywebkit_la_CPPFLAGS = \
-    $(global_cppflags) \
-    $(webcore_cppflags) \
-    $(GLOBALDEPS_CFLAGS) \
-    $(WEBKITDEPS_CFLAGS) \
-    $(ENCHANT_CFLAGS) \
-    $(LIBSOUP_CFLAGS) \
-    $(javascriptcore_cppflags) \
-    $(_pywebkit_cppflags) 
-
-_pywebkit_la_LIBADD = \
-    libJavaScriptCore.la \
-    $(GLOBALDEPS_LIBS) \
-    $(WEBKITDEPS_LIBS) \
-    $(XT_LIBS) \
-    $(LIBCURL_LIBS) \
-    $(LIBSOUP_LIBS) \
-    $(FREETYPE_LIBS) \
-    $(UNICODE_LIBS) \
-    $(SQLITE3_LIBS) \
-    $(GSTREAMER_LIBS) \
-    $(LIBXSLT_LIBS) \
-    $(HILDON_LIBS) \
-    $(JPEG_LIBS)
-
-
 # WebKit
 nodist_EXTRA_libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_SOURCES = \
 	$(webcore_built_nosources)
@@ -287,6 +228,73 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LDFL
 libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIBADD = \
 	-lpthread \
 	libJavaScriptCore.la \
+	$(webcore_ldflags) \
+	$(CAIRO_LIBS) \
+	$(COVERAGE_LDFLAGS) \
+	$(ENCHANT_LIBS) \
+	$(FREETYPE_LIBS) \
+	$(GAIL_LIBS) \
+	$(GEOCLUE_LIBS) \
+	$(GLIB_LIBS) \
+	$(GSTREAMER_LIBS) \
+	$(GTK_LIBS) \
+	$(HILDON_LIBS) \
+	$(JPEG_LIBS) \
+	$(LIBSOUP_LIBS) \
+	$(LIBXML_LIBS) \
+	$(LIBXSLT_LIBS) \
+	$(PANGO_LIBS) \
+	$(PNG_LIBS) \
+	$(SQLITE3_LIBS) \
+	$(UNICODE_LIBS) \
+	$(XT_LIBS)
+
+# _pywebkit
+pkgpyexecdir = $(pyexecdir)
+pkgpyexec_LTLIBRARIES = _pywebkit.la
+
+_pywebkit_built_sources :=
+_pywebkit_sources :=
+_pywebkit_h_api :=
+_pywebkit_cppflags := -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -fPIC
+_pywebkit_ladir = $(prefix)/include/webkit-@WEBKITGTK_API_VERSION@/python
+_pywebkit_la_HEADERS = \
+        $(_pywebkit_h_api) 
+
+_pywebkit_cppflags += \
+   $(global_cppflags) \
+   $(shell python-config --includes) \
+   -I$(srcdir)/WebKit/gtk \
+   -I$(top_builddir)/WebKit/gtk \
+   -I$(top_builddir)/WebKit/webkit \
+   -I$(srcdir)/WebKit/gtk/webkit \
+   -I$(top_builddir)/DerivedSources/python \
+   -I$(top_builddir)/DerivedSources
+
+_pywebkit_la_LDFLAGS = \
+	-module -avoid-version
+
+#	-export-symbols-regex initpywebkit 
+
+_pywebkit_la_SOURCES = \
+   $(_pywebkit_sources) 
+
+nodist__pywebkit_la_SOURCES = \
+   $(_pywebkit_built_sources) 
+
+_pywebkit_la_CPPFLAGS = \
+	$(global_cppflags) \
+	$(webcore_cppflags) \
+	$(GLOBALDEPS_CFLAGS) \
+	$(WEBKITDEPS_CFLAGS) \
+	$(ENCHANT_CFLAGS) \
+	$(LIBSOUP_CFLAGS) \
+	$(javascriptcore_cppflags) \
+	$(_pywebkit_cppflags) 
+
+_pywebkit_la_LIBADD = \
+	libJavaScriptCore.la \
+	libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la\
 	$(webcore_ldflags) \
 	$(CAIRO_LIBS) \
 	$(COVERAGE_LDFLAGS) \

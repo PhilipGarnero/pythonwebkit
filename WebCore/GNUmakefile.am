@@ -48,6 +48,8 @@ DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py
 	$(PYTHON) codegen/xpidl.py WebCore/dom/Document.idl \
 	                  WebCore/dom/Node.idl \
 	                  WebCore/html/HTMLHRElement.idl \
+	                  WebCore/html/HTMLElement.idl \
+	                  WebCore/dom/Element.idl \
 	                  WebCore/dom/Attr.idl
 
 webcore_cppflags += \
