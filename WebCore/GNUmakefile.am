@@ -25,8 +25,6 @@ _pywebkit_sources += \
 
 _pywebkit_built_sources += \
 	DerivedSources/python/PyWebkit.cpp \
-	DerivedSources/WebCore/HTMLNames.cpp \
-	DerivedSources/WebCore/HTMLNames.h \
 	DerivedSources/PythonHTMLElementWrapperFactory.cpp \
 	DerivedSources/PythonHTMLElementWrapperFactory.h
 
@@ -43,14 +41,11 @@ endif # HTML_FLAGS
 
 DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
 
-DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py
+DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py \
+    $(srcdir)/codegen/idl_files.txt \
+    $(shell cat $(srcdir)/codegen/idl_files.txt)
 	mkdir -p $(GENSOURCES)/python
-	$(PYTHON) codegen/xpidl.py WebCore/dom/Document.idl \
-	                  WebCore/dom/Node.idl \
-	                  WebCore/html/HTMLHRElement.idl \
-	                  WebCore/html/HTMLElement.idl \
-	                  WebCore/dom/Element.idl \
-	                  WebCore/dom/Attr.idl
+	$(PYTHON) codegen/xpidl.py $(shell cat $(srcdir)/codegen/idl_files.txt)
 
 webcore_cppflags += \
 	-I$(srcdir)/WebCore \

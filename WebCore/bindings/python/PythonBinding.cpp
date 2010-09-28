@@ -128,7 +128,6 @@ static ALWAYS_INLINE PyObject* createWrapper(Node* node)
     ASSERT(node);
     ASSERT(!ScriptInterpreter::getDOMObject(node));
 
-    Document* doc = node->document();
     PyObject* ret = NULL;
 
     switch (node->nodeType()) {

@@ -1276,7 +1276,6 @@ class IDLDefsParser(defsparser.DefsParser):
         x = p.parse(input, filename=self.filename)
         for obj in x.productions:
             if isinstance(obj, Interface):
-                print "Interface", obj.name, obj.base
                 args = [ ("in-module", "Webkit"),
                          ("gtype-id", "core"+obj.name), # XXX
                          ("c-name", obj.nativename) # XXX
@@ -1308,7 +1307,7 @@ class IDLDefsParser(defsparser.DefsParser):
                     mth.raises = m.raises
                     mth.return_param = return_param
         # debug output
-        self.write_defs()
+        #self.write_defs()
 
 if __name__ == '__main__':
     p = IDLDefsParser(None)
@@ -1318,7 +1317,6 @@ if __name__ == '__main__':
         print "Parsing %s" % f
         (pth, fn) = os.path.split(f)
         (fn, ext) = os.path.splitext(fn)
-        print pth, fn, ext
         try:
             os.mkdir("DerivedSources")
             os.mkdir("DerivedSources/python")
