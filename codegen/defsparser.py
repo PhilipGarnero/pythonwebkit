@@ -78,6 +78,7 @@ class DefsParser(IncludeParser):
         mdef = apply(MethodDef, args)
         self.functions.append(mdef)
         self.c_name[mdef.c_name] = mdef
+        return mdef
     def define_virtual(self, *args):
         vdef = apply(VirtualDef, args)
         self.virtuals.append(vdef)

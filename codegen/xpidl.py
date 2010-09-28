@@ -1291,15 +1291,22 @@ class IDLDefsParser(defsparser.DefsParser):
                     continue
                 if isinstance(m, Method):
                     params = ['parameters']
+                    return_param = None
                     for p in m.params:
+                        rt = p.attributes.has_key("Return")
                         p = (typeMap(p.type), p.name) # XXX sort out attributes
                         params.append(p)
-                    self.define_method(m.name,
+                        if rt:
+                            return_param = p
+                    mth = self.define_method(m.name,
                                     ('of-object', obj.name),
                                     ('return-type', typeMap(m.type)),
                                     ("c-name", m.name), # XXX
                                     tuple(params)
                                       )
+                    mth.attributes = m.attributes
+                    mth.raises = m.raises
+                    mth.return_param = return_param
         # debug output
         self.write_defs()
 

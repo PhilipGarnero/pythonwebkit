@@ -164,9 +164,9 @@ class Wrapper:
     dealloc_tmpl = (
         'void dealloc_%(classname)s(PyObject *self)\n'
         '{\n'
+        '    WebCore::%(classname)s* cobj = core%(classname)s((PyIntObject*)self);\n'
         '    WebKit::PythonObjectCache::forgetDOMObject(cobj);\n'
-        '    WTF::PassRefPtr<WebCore::%(classname)s*> cobj = core%(classname)s(self);\n'
-        '    co->deref();\n'
+        '    cobj->deref();\n'
         '    PyMem_DEL(self);\n'
         '}\n\n'
         )
@@ -332,7 +332,8 @@ class Wrapper:
 
     def write_function_wrapper(self, function_obj, template,
                                handle_return=0, is_method=0, kwargs_needed=0,
-                               substdict=None):
+                               substdict=None,
+                               exception_needed=0):
         '''This function is the guts of all functions that generate
         wrappers for functions, methods and constructors.'''
         if not substdict: substdict = {}
@@ -355,14 +356,32 @@ class Wrapper:
             handler.write_param(param.ptype, param.pname, param.pdflt,
                                 param.pnull, info)
 
+        if exception_needed:
+            info.arglist.append("ec")
+            info.codebefore.append("    WebCore::ExceptionCode ec = 0;")
+
         substdict['setreturn'] = ''
         print "function", self.objinfo.c_name, function_obj.c_name
         if handle_return:
             if function_obj.ret not in ('none', None):
-                substdict['setreturn'] = 'ret = '
-            handler = argtypes.matcher.get(function_obj.ret)
-            handler.write_return(function_obj.ret,
-                                 function_obj.caller_owns_return, info)
+                if (self.objinfo.c_name == 'Node' and function_obj.c_name in
+                    ['insertBefore', 'replaceChild',
+                     'removeChild', 'appendChild']):
+                    substdict['setreturn'] = 'bool ok = '
+                    info.codeafter.append('    /* TODO: raise exception */\n')
+                    info.codeafter.append('    if (!ok) return NULL;\n')
+                    res = function_obj.return_param[1] # XXX assumption!
+                    info.codeafter.append('    return (PyObject*)%s;\n' % res)
+                else:
+                    substdict['setreturn'] = 'ret = '
+                    if function_obj.return_param is None:
+                        handler = argtypes.matcher.get(function_obj.ret)
+                        handler.write_return(function_obj.ret,
+                                             function_obj.caller_owns_return, info)
+                    else:
+                        handler = argtypes.matcher.get(function_obj.return_param[0])
+                        handler.write_return(function_obj.return_param[0],
+                                             function_obj.caller_owns_return, info)
 
         if function_obj.deprecated != None:
             deprecated = self.deprecated_tmpl % {
@@ -534,7 +553,8 @@ class Wrapper:
                     # write constructor from template ...
                     code, methflags = self.write_function_wrapper(meth,
                         self.method_tmpl, handle_return=1, is_method=1,
-                        substdict=self.get_initial_method_substdict(meth))
+                        substdict=self.get_initial_method_substdict(meth),
+                        exception_needed=meth.raises)
                     self.fp.write(code)
                 methods.append(self.methdef_tmpl %
                                { 'name':  fixname(meth.name),
@@ -1110,7 +1130,7 @@ class GObjectWrapper(Wrapper):
                 % len(constructor.params))
         else:
             out.write(
-                "    static char* kwlist[] = { NULL };\n"
+                "    static const char* kwlist[] = { NULL };\n"
                 "\n")
 
             if constructor.deprecated is not None:
@@ -1376,7 +1396,7 @@ class GPointerWrapper(GBoxedWrapper):
 class SourceWriter:
 
     wrapcore_tmpl = (
-        'WTF::PassRefPtr<WebCore::%(classname)s*> core%(classname)s(PyIntObject* request)\n'
+        'WebCore::%(classname)s *core%(classname)s(PyIntObject* request)\n'
         '{\n'
         '    long coreptr = PyInt_AS_LONG(request);\n'
         '    return static_cast<WebCore::%(classname)s*>((void*)coreptr);\n'
@@ -1427,6 +1447,15 @@ class SourceWriter:
             self.fp.write('#define PY_SSIZE_T_CLEAN\n')
         self.fp.write('#include <Python.h>\n')
         self.fp.write('#include "config.h"\n\n\n')
+        self.fp.write('#include "PythonBinding.h"\n\n\n')
+        self.fp.write('#include "KURL.h"\n\n\n')
+        self.fp.write('#include "PlatformString.h"\n\n\n')
+        self.fp.write('#include <wtf/text/CString.h>\n\n\n')
+        self.fp.write("""\
+inline char* cpUTF8(WTF::String const& s) { return s.utf8().data(); }
+inline char* cpUTF8(WebCore::KURL const& s) { return copyAsGchar(s.string()); }
+""")
+
         if py_ssize_t_clean:
             self.fp.write('''
 

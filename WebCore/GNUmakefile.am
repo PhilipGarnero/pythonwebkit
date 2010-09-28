@@ -7,6 +7,7 @@ WEBCORE_CSS_VALUE_KEYWORDS := $(WebCore)/css/CSSValueKeywords.in
 _pywebkit_cppflags += \
 	$(CAIRO_CFLAGS) \
 	-I$(srcdir)/WebCore/platform/network/soup \
+	-I$(srcdir)/WebCore/bindings/python \
 	-I$(top_builddir)/DerivedSources
 
 

@@ -100,28 +100,17 @@ class StringArg(ArgType):
             info.varlist.add('char', '*' + pname + ' = ' + pdflt)
         else:
             info.varlist.add('char', '*' + pname)
-        info.arglist.append(pname)
+        info.arglist.append("cvt_"+pname)
+        info.codebefore.append('    WTF::String cvt_%s = WTF::String::fromUTF8(%s);\n' % \
+                            (pname, pname))
         if pnull:
             info.add_parselist('z', ['&' + pname], [pname])
         else:
             info.add_parselist('s', ['&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
-        if ownsreturn:
-            # have to free result ...
-            info.varlist.add('gchar', '*ret')
-            info.codeafter.append('    if (ret) {\n' +
-                                  '        PyObject *py_ret = PyString_FromString(ret);\n' +
-                                  '        g_free(ret);\n' +
-                                  '        return py_ret;\n' +
-                                  '    }\n' +
-                                  '    Py_INCREF(Py_None);\n' +
-                                  '    return Py_None;')
-        else:
-            info.varlist.add('const gchar', '*ret')
-            info.codeafter.append('    if (ret)\n' +
-                                  '        return PyString_FromString(ret);\n'+
-                                  '    Py_INCREF(Py_None);\n' +
-                                  '    return Py_None;')
+        info.varlist.add('WTF::String', 'ret')
+        info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret));\n' +
+                              '    return py_ret;')
 
 class UCharArg(ArgType):
     # allows strings with embedded NULLs.
@@ -153,6 +142,7 @@ class CharArg(ArgType):
     def write_return(self, ptype, ownsreturn, info):
         info.varlist.add('gchar', 'ret')
         info.codeafter.append('    return PyString_FromStringAndSize(&ret, 1);')
+
 class GUniCharArg(ArgType):
     ret_tmpl = ('#if !defined(Py_UNICODE_SIZE) || Py_UNICODE_SIZE == 2\n'
                 '    if (ret > 0xffff) {\n'
@@ -525,7 +515,7 @@ class ObjectArg(ArgType):
                 const, typename = typename.split('const-')
             except ValueError:
                 const = ''
-        info.varlist.add(typename, '*ret')
+        info.varlist.add("WTF::PassRefPtr<WebCore::%s>" % typename, 'ret')
         if ownsreturn:
             info.varlist.add('PyObject', '*py_ret')
             info.codeafter.append('    py_ret = pygobject_new((GObject *)ret);\n'
@@ -534,7 +524,7 @@ class ObjectArg(ArgType):
                                   '    return py_ret;')
         else:
             info.codeafter.append('    /* wrap handles NULL checking */\n' +
-                                  '    return wrap%s(ret);' % typename) 
+                                  '    return wrap%s(ret.get());' % typename) 
 
 class BoxedArg(ArgType):
     # haven't done support for default args.  Is it needed?
