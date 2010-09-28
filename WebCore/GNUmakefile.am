@@ -25,6 +25,8 @@ _pywebkit_sources += \
 
 _pywebkit_built_sources += \
 	DerivedSources/python/PyWebkit.cpp \
+	DerivedSources/WebCore/HTMLNames.cpp \
+	DerivedSources/WebCore/HTMLNames.h \
 	DerivedSources/PythonHTMLElementWrapperFactory.cpp \
 	DerivedSources/PythonHTMLElementWrapperFactory.h
 
@@ -39,11 +41,13 @@ DerivedSources/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names
 	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --wrapperFactory --outputDir "$(GENSOURCES)"
 endif # HTML_FLAGS
 
+DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
 
 DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py
 	mkdir -p $(GENSOURCES)/python
 	$(PYTHON) codegen/xpidl.py WebCore/dom/Document.idl \
 	                  WebCore/dom/Node.idl \
+	                  WebCore/html/HTMLHRElement.idl \
 	                  WebCore/dom/Attr.idl
 
 webcore_cppflags += \

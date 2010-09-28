@@ -172,9 +172,9 @@ _pywebkit_cppflags += \
    -I$(top_builddir)/DerivedSources
 
 _pywebkit_la_LDFLAGS = \
-	-export-symbols-regex initpywebkit \
 	-module -avoid-version
 
+#	-export-symbols-regex initpywebkit 
 
 _pywebkit_la_SOURCES = \
    $(_pywebkit_sources) 
