@@ -1420,6 +1420,24 @@ class SourceWriter:
         '    coreObject->ref();\n'
         '    return PyInt_FromLong(coreptr);\n'
         '}\n\n'
+        )
+
+    topython_tmpl = \
+"""\
+PyObject* toPython(WebCore::%(classname)s* obj)
+{
+    if (!obj)
+        return NULL;
+
+    if (PyObject* ret = PythonObjectCache::getDOMObject(obj))
+        return ret;
+
+    return PythonObjectCache::putDOMObject(obj, WebKit::pywrap%(classname)s(obj));
+}
+
+"""
+    
+    topython_manual_tmpl = (
         'PyObject* toPython(WebCore::%(classname)s*);\n\n'
         )
 
@@ -1503,6 +1521,15 @@ typedef intobjargproc ssizeobjargproc;
                 self.fp.write(txt)
                 txt = self.wrapcore_tmpl % {'classname': obj.c_name}
                 self.fp.write(txt)
+            if obj.c_name not in \
+                    ["Node", "Document", "HTMLCollection", "SVGPathSeg",
+                     "StyleSheet", "CSSRule", "CSSValue", "Object", "Event",
+                     "Element", "Text"]:
+                txt = self.topython_tmpl % {'classname': obj.c_name}
+            else:
+                txt = self.topython_manual_tmpl % {'classname': obj.c_name}
+            self.fp.write(txt)
+
         self.fp.write('} // namespace WebKit\n')
         self.fp.write('\n')
 
