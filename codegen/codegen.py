@@ -1414,7 +1414,7 @@ class SourceWriter:
         )
 
     wrapnode_tmpl = (
-        'PyObject* wrap%(classname)s(WebCore::%(classname)s* coreObject)\n'
+        'PyObject* pywrap%(classname)s(WebCore::%(classname)s* coreObject)\n'
         '{\n'
         '    long coreptr = (long)(static_cast<void*>(coreObject));\n'
         '    coreObject->ref();\n'
