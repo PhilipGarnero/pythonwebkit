@@ -270,9 +270,18 @@ class LongArg(ArgType):
         info.codeafter.append('    return PyInt_FromLong(ret);\n')
 
 class BoolArg(IntArg):
+    def write_param(self, ptype, pname, pdflt, pnull, info):
+        if pdflt:
+            info.varlist.add('int', pname + ' = ' + pdflt)
+        else:
+            info.varlist.add('int', pname)
+        info.arglist.append("cvt_"+pname)
+        info.codebefore.append('    bool cvt_%s = (bool)%s;\n' % \
+                            (pname, pname))
+        info.add_parselist('i', ['&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
-        info.varlist.add('int', 'ret')
-        info.codeafter.append('    return PyBool_FromLong(ret);\n')
+        info.varlist.add('bool', 'ret')
+        info.codeafter.append('    return PyBool_FromLong((long)ret);\n')
 
 class TimeTArg(ArgType):
     def write_param(self, ptype, pname, pdflt, pnull, info):
@@ -983,6 +992,7 @@ matcher.register('guint', arg)
 
 arg = BoolArg()
 matcher.register('gboolean', arg)
+matcher.register('bool', arg)
 
 arg = TimeTArg()
 matcher.register('time_t', arg)

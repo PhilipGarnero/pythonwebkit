@@ -388,6 +388,10 @@ class Wrapper:
                         handler = argtypes.matcher.get(function_obj.return_param[0])
                         handler.write_return(function_obj.return_param[0],
                                              function_obj.caller_owns_return, info)
+            else:
+                handler = argtypes.matcher.get(function_obj.ret)
+                handler.write_return(function_obj.ret,
+                                     function_obj.caller_owns_return, info)
 
         if function_obj.deprecated != None:
             deprecated = self.deprecated_tmpl % {

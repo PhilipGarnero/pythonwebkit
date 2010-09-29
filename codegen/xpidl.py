@@ -1248,7 +1248,7 @@ tmap = {
   "float": "float",
     "CompareHow": "WebCore::Range::CompareHow ",
     "double": "double",
-    "boolean": "int",
+    "boolean": "bool",
     "char": "char",
     "long": "long",
     "short": "short",
@@ -1259,7 +1259,7 @@ tmap = {
     "unsigned long": "unsigned long",
     "unsigned long long": "unsigned long long",
     "unsigned short": "unsigned short",
-    "void": "void",
+    "void": "none",
     "EventTarget": "Node*",
     "DOMString": "char*"
 }
@@ -1302,8 +1302,7 @@ class IDLDefsParser(defsparser.DefsParser):
                                     ("c-name", m.name), # XXX
                                     tuple(params)
                            ]
-                    if m.type != 'void':
-                        args.append( ('return-type', typeMap(m.type)) )
+                    args.append( ('return-type', typeMap(m.type)) )
 
                     mth = self.define_method(m.name, *args)
                     mth.attributes = m.attributes

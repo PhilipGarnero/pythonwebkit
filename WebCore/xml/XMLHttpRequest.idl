@@ -74,9 +74,13 @@ module xml {
             raises(DOMException);
 
         // void send();
-        // void send(in DOMString data);
-        [Custom] void send(in Document data)
+#if (defined(LANGUAGE_PYTHON) && LANGUAGE_PYTHON)
+        void send(in DOMString data)
             raises(DOMException);
+#else
+         [Custom] void send(in Document data)
+             raises(DOMException);
+#endif
 
         void abort();
 

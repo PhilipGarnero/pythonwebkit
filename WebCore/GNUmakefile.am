@@ -42,6 +42,7 @@ endif # HTML_FLAGS
 DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
 
 DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py \
+    codegen/argtypes.py \
     $(srcdir)/codegen/idl_files.txt \
     $(shell cat $(srcdir)/codegen/idl_files.txt)
 	mkdir -p $(GENSOURCES)/python
