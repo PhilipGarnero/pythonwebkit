@@ -1524,7 +1524,7 @@ typedef intobjargproc ssizeobjargproc;
             if obj.c_name not in \
                     ["Node", "Document", "HTMLCollection", "SVGPathSeg",
                      "StyleSheet", "CSSRule", "CSSValue", "Object", "Event",
-                     "Element", "Text"]:
+                     "Element", "Text", "EventTarget"]:
                 txt = self.topython_tmpl % {'classname': obj.c_name}
             else:
                 txt = self.topython_manual_tmpl % {'classname': obj.c_name}
