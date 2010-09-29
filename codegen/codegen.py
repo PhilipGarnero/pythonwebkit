@@ -294,7 +294,7 @@ class Wrapper:
             substdict['classname'] = '%s.%s' % (self.overrides.modulename,
                                            self.objinfo.name)
         else:
-            substdict['classname'] = self.objinfo.name
+            substdict['classname'] = '%s.%s' % (self.prefix, self.objinfo.name)
         substdict['tp_doc'] = self.objinfo.docstring
 
         # Maybe this could be done in a nicer way, but I'll leave it as it is
@@ -1611,6 +1611,7 @@ typedef intobjargproc ssizeobjargproc;
             for item in items:
                 instance = klass(self.parser, item, self.overrides, self.fp)
                 include_types.update(instance.find_include_ptypes())
+                instance.prefix = self.prefix
                 instance.write_class()
                 self.fp.write('\n')
 

@@ -1276,7 +1276,7 @@ class IDLDefsParser(defsparser.DefsParser):
         x = p.parse(input, filename=self.filename)
         for obj in x.productions:
             if isinstance(obj, Interface):
-                args = [ ("in-module", "Webkit"),
+                args = [ ("in-module", "_pywebkit"),
                          ("gtype-id", "core"+obj.name), # XXX
                          ("c-name", obj.nativename) # XXX
                        ]
