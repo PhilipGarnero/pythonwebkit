@@ -168,3 +168,4 @@ WebCore/css/WebKitCSSKeyframeRule.idl
 WebCore/css/WebKitCSSKeyframesRule.idl
 WebCore/css/WebKitCSSMatrix.idl
 WebCore/css/WebKitCSSTransformValue.idl
+WebCore/storage/StorageEvent.idl
