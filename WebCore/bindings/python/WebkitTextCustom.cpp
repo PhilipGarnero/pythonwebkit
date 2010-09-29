@@ -42,7 +42,7 @@ namespace WebKit {
 
 using namespace WebCore;
 
-PyObject* wrapText(Text*);
+PyObject* pywrapText(Text*);
 
 PyObject* toPython(Text* text)
 {
@@ -53,7 +53,7 @@ PyObject* toPython(Text* text)
     if (pobj)
         return pobj;
 
-    PyObject* ret = wrapText(text);
+    PyObject* ret = pywrapText(text);
     return PythonObjectCache::putDOMObject(text, ret);
 }
 

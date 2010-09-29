@@ -49,14 +49,14 @@ namespace WebKit {
 
 using namespace WebCore;
 
-extern PyObject* wrapCSSStyleRule(CSSStyleRule*);
-extern PyObject* wrapCSSMediaRule(CSSMediaRule*);
-extern PyObject* wrapCSSFontFaceRule(CSSFontFaceRule*);
-extern PyObject* wrapCSSPageRule(CSSPageRule*);
-extern PyObject* wrapCSSImportRule(CSSImportRule*);
-extern PyObject* wrapCSSCharsetRule(CSSCharsetRule*);
-extern PyObject* wrapCSSVariablesRule(CSSVariablesRule*);
-extern PyObject* wrapCSSRule(CSSRule*);
+extern PyObject* pywrapCSSStyleRule(CSSStyleRule*);
+extern PyObject* pywrapCSSMediaRule(CSSMediaRule*);
+extern PyObject* pywrapCSSFontFaceRule(CSSFontFaceRule*);
+extern PyObject* pywrapCSSPageRule(CSSPageRule*);
+extern PyObject* pywrapCSSImportRule(CSSImportRule*);
+extern PyObject* pywrapCSSCharsetRule(CSSCharsetRule*);
+extern PyObject* pywrapCSSVariablesRule(CSSVariablesRule*);
+extern PyObject* pywrapCSSRule(CSSRule*);
 
 PyObject* toPython(CSSRule* rule)
 {
@@ -71,28 +71,28 @@ PyObject* toPython(CSSRule* rule)
     PyObject* ret;
     switch (rule->type()) {
         case CSSRule::STYLE_RULE:
-            ret = wrapCSSStyleRule(static_cast<CSSStyleRule*>(rule));
+            ret = pywrapCSSStyleRule(static_cast<CSSStyleRule*>(rule));
             break;
         case CSSRule::MEDIA_RULE:
-            ret = wrapCSSMediaRule(static_cast<CSSMediaRule*>(rule));
+            ret = pywrapCSSMediaRule(static_cast<CSSMediaRule*>(rule));
             break;
         case CSSRule::FONT_FACE_RULE:
-            ret = wrapCSSFontFaceRule(static_cast<CSSFontFaceRule*>(rule));
+            ret = pywrapCSSFontFaceRule(static_cast<CSSFontFaceRule*>(rule));
             break;
         case CSSRule::PAGE_RULE:
-            ret = wrapCSSPageRule(static_cast<CSSPageRule*>(rule));
+            ret = pywrapCSSPageRule(static_cast<CSSPageRule*>(rule));
             break;
         case CSSRule::IMPORT_RULE:
-            ret = wrapCSSImportRule(static_cast<CSSImportRule*>(rule));
+            ret = pywrapCSSImportRule(static_cast<CSSImportRule*>(rule));
             break;
         case CSSRule::CHARSET_RULE:
-            ret = wrapCSSCharsetRule(static_cast<CSSCharsetRule*>(rule));
+            ret = pywrapCSSCharsetRule(static_cast<CSSCharsetRule*>(rule));
             break;
         case CSSRule::VARIABLES_RULE:
-            ret = wrapCSSVariablesRule(static_cast<CSSVariablesRule*>(rule));
+            ret = pywrapCSSVariablesRule(static_cast<CSSVariablesRule*>(rule));
             break;
         default:
-            ret = wrapCSSRule(rule);
+            ret = pywrapCSSRule(rule);
             break;
     }
 

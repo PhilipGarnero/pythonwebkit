@@ -53,14 +53,14 @@ using namespace WebCore;
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-PyObject* wrapSVGPaint(SVGPaint*);
-PyObject* wrapSVGColor(SVGColor*);
+PyObject* pywrapSVGPaint(SVGPaint*);
+PyObject* pywrapSVGColor(SVGColor*);
 #endif
 #endif
 
-PyObject* wrapCSSValue(CSSValue*);
-PyObject* wrapCSSValueList(CSSValueList*);
-PyObject* wrapCSSPrimitiveValue(CSSPrimitiveValue*);
+PyObject* pywrapCSSValue(CSSValue*);
+PyObject* pywrapCSSValueList(CSSValueList*);
+PyObject* pywrapCSSPrimitiveValue(CSSPrimitiveValue*);
 
 PyObject* toPython(CSSValue* value)
 {
@@ -75,27 +75,27 @@ PyObject* toPython(CSSValue* value)
     PyObject* ret;
 
     if (value->isValueList())
-        ret = wrapCSSValueList(static_cast<CSSValueList*>(value));
+        ret = pywrapCSSValueList(static_cast<CSSValueList*>(value));
 #if ENABLE(SVG)
     else if (value->isSVGPaint())
     {
         return NULL; /* TODO - see #20586 */
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-        ret = wrapSVGPaint(static_cast<SVGPaint*>(value));
+        ret = pywrapSVGPaint(static_cast<SVGPaint*>(value));
 #endif
     }
     else if (value->isSVGColor())
     {
         return NULL; /* TODO - see #20586 */
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-        ret = wrapSVGColor(static_cast<SVGColor*>(value));
+        ret = pywrapSVGColor(static_cast<SVGColor*>(value));
 #endif
     }
 #endif
     else if (value->isPrimitiveValue())
-        ret = wrapCSSPrimitiveValue(static_cast<CSSPrimitiveValue*>(value));
+        ret = pywrapCSSPrimitiveValue(static_cast<CSSPrimitiveValue*>(value));
     else
-        ret = wrapCSSValue(value);
+        ret = pywrapCSSValue(value);
 
     return PythonObjectCache::putDOMObject(value, ret);
 }

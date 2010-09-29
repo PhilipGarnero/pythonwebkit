@@ -43,8 +43,8 @@ namespace WebKit {
 
 using namespace WebCore;
 
-PyObject* wrapHTMLCollection(HTMLCollection*);
-PyObject* wrapHTMLOptionsCollection(HTMLOptionsCollection*);
+PyObject* pywrapHTMLCollection(HTMLCollection*);
+PyObject* pywrapHTMLOptionsCollection(HTMLOptionsCollection*);
 
 PyObject* toPython(HTMLCollection* collection)
 {
@@ -59,7 +59,7 @@ PyObject* toPython(HTMLCollection* collection)
     PyObject* ret;
     switch (collection->type()) {
         case SelectOptions:
-            ret = wrapHTMLOptionsCollection(static_cast<HTMLOptionsCollection*>(collection));
+            ret = pywrapHTMLOptionsCollection(static_cast<HTMLOptionsCollection*>(collection));
             break;
         /* FIXME: rather than delete this code and make it awkward for
          * whomever has to add it back in to work out what is going on,
@@ -72,11 +72,11 @@ PyObject* toPython(HTMLCollection* collection)
          */
 #ifdef __FIXME_ADD_IN_HTMLCOLLECTION_DOC_ALL_SUPPORT_LATER__
         case HTMLCollection::DocAll:
-            ret = wrapHTMLCollection(static_cast<HTMLCollection*>(collection));
+            ret = pywrapHTMLCollection(static_cast<HTMLCollection*>(collection));
             break;
 #endif
         default:
-            ret = wrapHTMLCollection(static_cast<HTMLCollection*>(collection));
+            ret = pywrapHTMLCollection(static_cast<HTMLCollection*>(collection));
             break;
     }
 

@@ -77,10 +77,10 @@ PyObject* PythonObjectCache::getDOMObject(void* objectHandle)
     return ret;
 }
 
-PyObject* PythonObjectCache::putDOMObject(void* objectHandle, PyObject* wrapper)
+PyObject* PythonObjectCache::putDOMObject(void* objectHandle, PyObject* pywrapper)
 {
-    domObjects().set(objectHandle, wrapper);
-    return wrapper;
+    domObjects().set(objectHandle, pywrapper);
+    return pywrapper;
 }
 
 void PythonObjectCache::forgetDOMObject(void* objectHandle)
@@ -110,18 +110,18 @@ PyObject* toPython(Node* node)
     return createWrapper(node);
 }
 
-extern PyObject* wrapElement(Element*);
-extern PyObject* wrapText(Text*);
-extern PyObject* wrapCDATASection(CDATASection*);
-extern PyObject* wrapAttr(Attr*);
-extern PyObject* wrapEntity(Entity*);
-extern PyObject* wrapProcessingInstruction(ProcessingInstruction*);
-extern PyObject* wrapComment(Comment*);
-extern PyObject* wrapDocumentType(DocumentType*);
-extern PyObject* wrapNotation(Notation*);
-extern PyObject* wrapDocumentFragment(DocumentFragment*);
-extern PyObject* wrapEntityReference(EntityReference*);
-extern PyObject* wrapNode(Node*);
+extern PyObject* pywrapElement(Element*);
+extern PyObject* pywrapText(Text*);
+extern PyObject* pywrapCDATASection(CDATASection*);
+extern PyObject* pywrapAttr(Attr*);
+extern PyObject* pywrapEntity(Entity*);
+extern PyObject* pywrapProcessingInstruction(ProcessingInstruction*);
+extern PyObject* pywrapComment(Comment*);
+extern PyObject* pywrapDocumentType(DocumentType*);
+extern PyObject* pywrapNotation(Notation*);
+extern PyObject* pywrapDocumentFragment(DocumentFragment*);
+extern PyObject* pywrapEntityReference(EntityReference*);
+extern PyObject* pywrapNode(Node*);
 
 static ALWAYS_INLINE PyObject* createWrapper(Node* node)
 {
@@ -144,45 +144,45 @@ static ALWAYS_INLINE PyObject* createWrapper(Node* node)
 #endif
 #endif
             else
-                ret = wrapElement(static_cast<Element*>(node));
+                ret = pywrapElement(static_cast<Element*>(node));
             break;
         case Node::ATTRIBUTE_NODE:
-            ret = wrapAttr(static_cast<Attr*>(node));
+            ret = pywrapAttr(static_cast<Attr*>(node));
             break;
         case Node::TEXT_NODE:
-            ret = wrapText(static_cast<Text*>(node));
+            ret = pywrapText(static_cast<Text*>(node));
             break;
         case Node::CDATA_SECTION_NODE:
-            ret = wrapCDATASection(static_cast<CDATASection*>(node));
+            ret = pywrapCDATASection(static_cast<CDATASection*>(node));
             break;
         case Node::ENTITY_NODE:
-            ret = wrapEntity(static_cast<Entity*>(node));
+            ret = pywrapEntity(static_cast<Entity*>(node));
             break;
         case Node::PROCESSING_INSTRUCTION_NODE:
-            ret = wrapProcessingInstruction(
+            ret = pywrapProcessingInstruction(
                                     static_cast<ProcessingInstruction*>(node));
             break;
         case Node::COMMENT_NODE:
-            ret = wrapComment(static_cast<Comment*>(node));
+            ret = pywrapComment(static_cast<Comment*>(node));
             break;
         case Node::DOCUMENT_NODE:
             // we don't want to cache the document itself in
             // the per-document dictionary
             return toPython(static_cast<Document*>(node));
         case Node::DOCUMENT_TYPE_NODE:
-            ret = wrapDocumentType(static_cast<DocumentType*>(node));
+            ret = pywrapDocumentType(static_cast<DocumentType*>(node));
             break;
         case Node::NOTATION_NODE:
-            ret = wrapNotation(static_cast<Notation*>(node));
+            ret = pywrapNotation(static_cast<Notation*>(node));
             break;
         case Node::DOCUMENT_FRAGMENT_NODE:
-            ret = wrapDocumentFragment(static_cast<DocumentFragment*>(node));
+            ret = pywrapDocumentFragment(static_cast<DocumentFragment*>(node));
             break;
         case Node::ENTITY_REFERENCE_NODE:
-            ret = wrapEntityReference(static_cast<EntityReference*>(node));
+            ret = pywrapEntityReference(static_cast<EntityReference*>(node));
             break;
         default:
-            ret = wrapNode(node);
+            ret = pywrapNode(node);
     }
 
     return PythonObjectCache::putDOMObject(node, ret);

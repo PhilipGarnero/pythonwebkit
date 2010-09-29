@@ -49,12 +49,12 @@ namespace WebKit {
 
 using namespace WebCore;
 
-PyObject* wrapHTMLDocument(HTMLDocument*);
-PyObject* wrapDocument(Document*);
+PyObject* pywrapHTMLDocument(HTMLDocument*);
+PyObject* pywrapDocument(Document*);
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* XXX TODO - see #20586 */
-PyObject* wrapSVGDocument(SVGDocument*);
+PyObject* pywrapSVGDocument(SVGDocument*);
 #endif
 #endif
 
@@ -70,18 +70,18 @@ PyObject* toPython(Document* doc)
     PyObject* ret;
 
     if (doc->isHTMLDocument())
-        ret = wrapHTMLDocument(static_cast<HTMLDocument*>(doc));
+        ret = pywrapHTMLDocument(static_cast<HTMLDocument*>(doc));
 #if ENABLE(SVG)
     else if (doc->isSVGDocument())
     {
         return NULL; /* XXX TODO - see #20586 */
 #ifdef __TODO_BUG_20586__ /* XXX TODO - see #20586 */
-        ret = wrapSVGDocument(static_cast<SVGDocument*>(doc));
+        ret = pywrapSVGDocument(static_cast<SVGDocument*>(doc));
 #endif
     }
 #endif
     else
-        ret = wrapDocument(doc);
+        ret = pywrapDocument(doc);
 
     return PythonObjectCache::putDOMObject(doc, ret);
 }

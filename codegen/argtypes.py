@@ -552,7 +552,7 @@ class ObjectArg(ArgType):
                                   '    return py_ret;')
         else:
             info.codeafter.append('    /* wrap handles NULL checking */\n' +
-                                  '    return wrap%s(ret.get());' % typename) 
+                                  '    return pywrap%s(ret.get());' % typename) 
 
 class BoxedArg(ArgType):
     # haven't done support for default args.  Is it needed?

@@ -52,7 +52,7 @@ namespace WebKit {
 
 using namespace WebCore;
 
-PyObject* wrapElement(Element*);
+PyObject* pywrapElement(Element*);
 
 PyObject* toPython(Element* element)
 {
@@ -79,7 +79,7 @@ PyObject* toPython(Element* element)
     }
 #endif
     else
-        ret = wrapElement(element);
+        ret = pywrapElement(element);
 
     return PythonObjectCache::putDOMObject(element, ret);
 }

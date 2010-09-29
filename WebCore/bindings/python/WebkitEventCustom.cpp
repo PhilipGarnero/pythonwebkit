@@ -67,24 +67,24 @@ using namespace WebCore;
 
 #if ENABLE(SVG)
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-PyObject* wrapSVGZoomEvent(SVGZoomEvent*);
+PyObject* pywrapSVGZoomEvent(SVGZoomEvent*);
 #endif
 #endif
 
-PyObject* wrapEvent(Event*);
-PyObject* wrapKeyboardEvent(KeyboardEvent*);
-PyObject* wrapTextEvent(TextEvent*);
-PyObject* wrapMouseEvent(MouseEvent*);
-PyObject* wrapWheelEvent(WheelEvent*);
-PyObject* wrapUIEvent(UIEvent*);
-PyObject* wrapMutationEvent(MutationEvent*);
-PyObject* wrapOverflowEvent(OverflowEvent*);
-PyObject* wrapMessageEvent(MessageEvent*);
-PyObject* wrapXMLHttpRequestProgressEvent(XMLHttpRequestProgressEvent*);
-PyObject* wrapProgressEvent(ProgressEvent*);
-PyObject* wrapStorageEvent(StorageEvent*);
-PyObject* wrapWebKitAnimationEvent(WebKitAnimationEvent*);
-PyObject* wrapWebKitTransitionEvent(WebKitTransitionEvent*);
+PyObject* pywrapEvent(Event*);
+PyObject* pywrapKeyboardEvent(KeyboardEvent*);
+PyObject* pywrapTextEvent(TextEvent*);
+PyObject* pywrapMouseEvent(MouseEvent*);
+PyObject* pywrapWheelEvent(WheelEvent*);
+PyObject* pywrapUIEvent(UIEvent*);
+PyObject* pywrapMutationEvent(MutationEvent*);
+PyObject* pywrapOverflowEvent(OverflowEvent*);
+PyObject* pywrapMessageEvent(MessageEvent*);
+PyObject* pywrapXMLHttpRequestProgressEvent(XMLHttpRequestProgressEvent*);
+PyObject* pywrapProgressEvent(ProgressEvent*);
+PyObject* pywrapStorageEvent(StorageEvent*);
+PyObject* pywrapWebKitAnimationEvent(WebKitAnimationEvent*);
+PyObject* pywrapWebKitTransitionEvent(WebKitTransitionEvent*);
 
 PyObject* toPython(Event* event)
 {
@@ -98,46 +98,46 @@ PyObject* toPython(Event* event)
     PyObject* ret;
     if (event->isUIEvent()) {
         if (event->isKeyboardEvent())
-            ret = wrapKeyboardEvent(static_cast<KeyboardEvent*>(event));
+            ret = pywrapKeyboardEvent(static_cast<KeyboardEvent*>(event));
         else if (event->isTextEvent())
-            ret = wrapTextEvent(static_cast<TextEvent*>(event));
+            ret = pywrapTextEvent(static_cast<TextEvent*>(event));
         else if (event->isMouseEvent())
-            ret = wrapMouseEvent(static_cast<MouseEvent*>(event));
+            ret = pywrapMouseEvent(static_cast<MouseEvent*>(event));
         else if (event->isWheelEvent())
-            ret = wrapWheelEvent(static_cast<WheelEvent*>(event));
+            ret = pywrapWheelEvent(static_cast<WheelEvent*>(event));
 #if ENABLE(SVG)
         else if (event->isSVGZoomEvent())
         {
             return NULL; /* TODO - see #20586 */
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
-            ret = wrapSVGZoomEvent(static_cast<SVGZoomEvent*>(event), 0);
+            ret = pywrapSVGZoomEvent(static_cast<SVGZoomEvent*>(event), 0);
 #endif
         }
 #endif
         else
-            ret = wrapUIEvent(static_cast<UIEvent*>(event));
+            ret = pywrapUIEvent(static_cast<UIEvent*>(event));
     } else if (event->isMutationEvent())
-        ret = wrapMutationEvent(static_cast<MutationEvent*>(event));
+        ret = pywrapMutationEvent(static_cast<MutationEvent*>(event));
     else if (event->isOverflowEvent())
-        ret = wrapOverflowEvent(static_cast<OverflowEvent*>(event));
+        ret = pywrapOverflowEvent(static_cast<OverflowEvent*>(event));
     else if (event->isMessageEvent())
-        ret = wrapMessageEvent(static_cast<MessageEvent*>(event));
+        ret = pywrapMessageEvent(static_cast<MessageEvent*>(event));
     else if (event->isProgressEvent()) {
         if (event->isXMLHttpRequestProgressEvent())
-            ret = wrapXMLHttpRequestProgressEvent(static_cast<XMLHttpRequestProgressEvent*>(event));
+            ret = pywrapXMLHttpRequestProgressEvent(static_cast<XMLHttpRequestProgressEvent*>(event));
         else
-            ret = wrapProgressEvent(static_cast<ProgressEvent*>(event));
+            ret = pywrapProgressEvent(static_cast<ProgressEvent*>(event));
     }
 #if ENABLE(DOM_STORAGE)
     else if (event->isStorageEvent())
-        ret = wrapStorageEvent(static_cast<StorageEvent*>(event));
+        ret = pywrapStorageEvent(static_cast<StorageEvent*>(event));
 #endif
     else if (event->isWebKitAnimationEvent())
-        ret = wrapWebKitAnimationEvent(static_cast<WebKitAnimationEvent*>(event));
+        ret = pywrapWebKitAnimationEvent(static_cast<WebKitAnimationEvent*>(event));
     else if (event->isWebKitTransitionEvent())
-        ret = wrapWebKitTransitionEvent(static_cast<WebKitTransitionEvent*>(event));
+        ret = pywrapWebKitTransitionEvent(static_cast<WebKitTransitionEvent*>(event));
     else
-        ret = wrapEvent(event);
+        ret = pywrapEvent(event);
 
     return PythonObjectCache::putDOMObject(event, ret);
 }

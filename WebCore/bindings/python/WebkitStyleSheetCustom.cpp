@@ -42,8 +42,8 @@ namespace WebKit {
 
 using namespace WebCore;
 
-PyObject* wrapCSSStyleSheet(CSSStyleSheet*);
-PyObject* wrapStyleSheet(StyleSheet*);
+PyObject* pywrapCSSStyleSheet(CSSStyleSheet*);
+PyObject* pywrapStyleSheet(StyleSheet*);
 
 PyObject* toPython(StyleSheet* styleSheet)
 {
@@ -56,9 +56,9 @@ PyObject* toPython(StyleSheet* styleSheet)
 
     PyObject* ret;
     if (styleSheet->isCSSStyleSheet())
-        ret = wrapCSSStyleSheet(static_cast<CSSStyleSheet*>(styleSheet));
+        ret = pywrapCSSStyleSheet(static_cast<CSSStyleSheet*>(styleSheet));
     else
-        ret = wrapStyleSheet(styleSheet);
+        ret = pywrapStyleSheet(styleSheet);
 
     return PythonObjectCache::putDOMObject(styleSheet, ret);
 }
