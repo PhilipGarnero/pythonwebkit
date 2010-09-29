@@ -1297,12 +1297,15 @@ class IDLDefsParser(defsparser.DefsParser):
                         params.append(p)
                         if rt:
                             return_param = p
-                    mth = self.define_method(m.name,
+                    args = [
                                     ('of-object', obj.name),
-                                    ('return-type', typeMap(m.type)),
                                     ("c-name", m.name), # XXX
                                     tuple(params)
-                                      )
+                           ]
+                    if m.type != 'void':
+                        args.append( ('return-type', typeMap(m.type)) )
+
+                    mth = self.define_method(m.name, *args)
                     mth.attributes = m.attributes
                     mth.raises = m.raises
                     mth.return_param = return_param

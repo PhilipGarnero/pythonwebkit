@@ -508,7 +508,6 @@ class ObjectArg(ArgType):
                 info.add_parselist('O!', ['&Py%s_Type' % self.objname,
                                           '&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
-        print ptype, ownsreturn, info
         if ptype.endswith('*'):
             typename = ptype[:-1]
             try:
@@ -991,6 +990,7 @@ matcher.register('guint32', UInt32Arg())
 
 arg = ULongArg()
 matcher.register('gulong', arg)
+matcher.register('unsigned long', arg)
 
 arg = Int64Arg()
 matcher.register('gint64', arg)

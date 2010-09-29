@@ -368,7 +368,6 @@ class Wrapper:
             info.codebefore.append("    WebCore::ExceptionCode ec = 0;")
 
         substdict['setreturn'] = ''
-        print "function", self.objinfo.c_name, function_obj.c_name
         if handle_return:
             if function_obj.ret not in ('none', None):
                 if (self.objinfo.c_name == 'Node' and function_obj.c_name in
@@ -1780,16 +1779,6 @@ typedef intobjargproc ssizeobjargproc;
                 '%(indent)sPyModule_AddObject(m, "%(py_name)s", (PyObject*) &Py%(c_name)s_Type);\n'
                 % dict(indent=indent_str, c_name=obj.c_name,
                        py_name=self.prefix))
-
-        if obj.has_new_constructor_api:
-            self.fp.write(
-                indent_str + 'pyg_set_object_has_new_constructor(%s);\n' %
-                obj.typecode)
-        else:
-            print >> sys.stderr, (
-                "Warning: Constructor for %s needs to be updated to new API\n"
-                "         See http://live.gnome.org/PyGTK_2fWhatsNew28"
-                "#update-constructors") % obj.c_name
 
         if obj.class_init_func is not None:
             self.fp.write(
