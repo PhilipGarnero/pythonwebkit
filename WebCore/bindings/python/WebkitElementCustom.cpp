@@ -65,7 +65,6 @@ PyObject* toPython(Element* element)
         return pobj;
 
     PyObject* ret;
-    Document* doc = element->document();
 
     if (element->isHTMLElement())
         ret = createPythonHTMLElementWrapper(static_cast<HTMLElement*>(element));
