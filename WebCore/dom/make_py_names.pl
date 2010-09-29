@@ -925,11 +925,11 @@ sub printWrapperFunctionPythonInterface
     my $F = shift;
     my $JSInterfaceName = shift;
     print F <<END
-PyObject* wrap${JSInterfaceName}(${JSInterfaceName}*);
+PyObject* pywrap${JSInterfaceName}(${JSInterfaceName}*);
 
 static PyObject* create${JSInterfaceName}Wrapper(PassRefPtr<$parameters{'namespace'}Element> element)
 {
-    return wrap${JSInterfaceName}(static_cast<${JSInterfaceName}*>(element.get()));
+    return pywrap${JSInterfaceName}(static_cast<${JSInterfaceName}*>(element.get()));
 }
 
 END
@@ -1013,7 +1013,7 @@ END
 sub printWrapperFactoryCppFilePythonFunctionHeader
 {
     print F <<END
-PyObject* wrap$parameters{'namespace'}Element($parameters{'namespace'}Element*);
+PyObject* pywrap$parameters{'namespace'}Element($parameters{'namespace'}Element*);
 PyObject* createPython$parameters{'namespace'}ElementWrapper(PassRefPtr<WebCore::$parameters{'namespace'}Element> element)
 {   
     static HashMap<AtomicStringImpl*, Create$parameters{'namespace'}ElementWrapperFunction> map;
@@ -1031,7 +1031,7 @@ sub printWrapperFactoryCppFilePythonFooter
         map.get(element->localName().impl());
     if (createWrapperFunction)
         return createWrapperFunction(element);
-    return wrap$parameters{'namespace'}Element(element.get());
+    return pywrap$parameters{'namespace'}Element(element.get());
 }
 
 }
