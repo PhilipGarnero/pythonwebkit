@@ -1786,9 +1786,12 @@ typedef intobjargproc ssizeobjargproc;
 
         self.fp.write("%sPy%s_Type.tp_base = &%s;\n" % \
                     (indent_str, obj.c_name, bases_str))
-        self.fp.write("%sif (PyType_Ready(&Py%s_Type) < 0)\n" % \
+        self.fp.write("%sif (PyType_Ready(&Py%s_Type) < 0) {\n" % \
                       (indent_str, obj.c_name))
+        #self.fp.write('%s    printf("Py%s_Type not ready");\n' % \
+        #              (indent_str, obj.c_name))
         self.fp.write("%s    return;\n" % indent_str)
+        self.fp.write("%s}\n" % indent_str)
 
     def write_class(self, obj, bases, indent=1):
         indent_str = ' ' * (indent * 4)
@@ -1808,7 +1811,7 @@ typedef intobjargproc ssizeobjargproc;
         self.fp.write('%(indent)sPy_INCREF(&Py%(c_name)s_Type);\n'
                 % dict(indent=indent_str, c_name=obj.c_name))
         self.fp.write(
-                '%(indent)sPyModule_AddObject(m, "%(py_name)s", (PyObject*) &Py%(c_name)s_Type);\n'
+                '%(indent)sPyModule_AddObject(m, "%(c_name)s", (PyObject*) &Py%(c_name)s_Type);\n'
                 % dict(indent=indent_str, c_name=obj.c_name,
                        py_name=self.prefix))
 
