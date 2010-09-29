@@ -93,6 +93,26 @@ class NoneArg(ArgType):
         info.codeafter.append('    Py_INCREF(Py_None);\n' +
                               '    return Py_None;')
 
+class URLStringArg(ArgType):
+    def write_param(self, ptype, pname, pdflt, pnull, info):
+        if pdflt != None:
+            if pdflt != 'NULL': pdflt = '"' + pdflt + '"'
+            info.varlist.add('char', '*' + pname + ' = ' + pdflt)
+        else:
+            info.varlist.add('char', '*' + pname)
+        info.arglist.append("cvt_"+pname)
+        # BIG UGLY HACK! yuk!
+        info.codebefore.append('    WebCore::KURL cvt_%s = coreXMLHttpRequest(self)->scriptExecutionContext()->completeURL(WTF::String::fromUTF8(%s));\n' % \
+                            (pname, pname))
+        if pnull:
+            info.add_parselist('z', ['&' + pname], [pname])
+        else:
+            info.add_parselist('s', ['&' + pname], [pname])
+    def write_return(self, ptype, ownsreturn, info):
+        info.varlist.add('WTF::String', 'ret')
+        info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret));\n' +
+                              '    return py_ret;')
+
 class StringArg(ArgType):
     def write_param(self, ptype, pname, pdflt, pnull, info):
         if pdflt != None:
@@ -941,6 +961,9 @@ matcher = ArgMatcher()
 arg = NoneArg()
 matcher.register(None, arg)
 matcher.register('none', arg)
+
+arg = URLStringArg()
+matcher.register('kurl', arg)
 
 arg = StringArg()
 matcher.register('char*', arg)

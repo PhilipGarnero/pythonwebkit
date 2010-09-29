@@ -61,6 +61,7 @@ module events {
         readonly attribute long             keyCode;
         readonly attribute long             charCode;
         
+#if !defined(LANGUAGE_PYTHON) || !LANGUAGE_PYTHON
         void initKeyboardEvent(in DOMString type, 
                                in boolean canBubble, 
                                in boolean cancelable, 
@@ -71,6 +72,7 @@ module events {
                                in boolean altKey,
                                in boolean shiftKey,
                                in boolean metaKey);
+#endif
 #endif
 
     };

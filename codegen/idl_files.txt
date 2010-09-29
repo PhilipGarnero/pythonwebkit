@@ -5,12 +5,9 @@ WebCore/dom/CDATASection.idl
 WebCore/dom/CharacterData.idl
 WebCore/dom/ClientRect.idl
 WebCore/dom/ClientRectList.idl
-WebCore/dom/Clipboard.idl
 WebCore/dom/Comment.idl
 WebCore/dom/CompositionEvent.idl
 WebCore/dom/CustomEvent.idl
-WebCore/dom/DeviceMotionEvent.idl
-WebCore/dom/DeviceOrientationEvent.idl
 WebCore/dom/DocumentFragment.idl
 WebCore/dom/Document.idl
 WebCore/dom/DocumentType.idl

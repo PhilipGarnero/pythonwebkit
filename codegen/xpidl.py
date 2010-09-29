@@ -1289,11 +1289,35 @@ class IDLDefsParser(defsparser.DefsParser):
                 if isinstance(m, CDATA):
                     continue
                 if isinstance(m, Method):
+                    if obj.name == 'EventListener' \
+                       and m.name == 'handleEvent':
+                        # XXX HACK! skip it for now
+                        continue
+                    if obj.name == 'DOMWindow' and m.name == 'open':
+                        # XXX HACK! skip it for now
+                        continue
+                    if obj.name == 'HTMLMediaElement' \
+                       and m.name in ['pause', 'play', 'load']:
+                        # XXX HACK! skip it for now - needs gesture check
+                        continue
+                    
+                    if obj.name == 'HTMLVideoElement' \
+                       and m.name in ['webkitEnterFullScreen',
+                                      'webkitEnterFullscreen']:
+                        # XXX HACK! skip it for now - needs gesture check
+                        continue
+                    
                     params = ['parameters']
                     return_param = None
                     for p in m.params:
                         rt = p.attributes.has_key("Return")
-                        p = (typeMap(p.type), p.name) # XXX sort out attributes
+                        if p.name == 'url' and obj.name == 'XMLHttpRequest' \
+                           and m.name == 'open':
+                            # HACK! XMLHTTPRequest.open url is WebCore::KURL
+                            p = ('kurl', p.name)
+                        else:
+                            p = (typeMap(p.type), p.name)
+                            # XXX TODO: sort out attributes
                         params.append(p)
                         if rt:
                             return_param = p
