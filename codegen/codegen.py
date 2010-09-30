@@ -1379,8 +1379,8 @@ class SourceWriter:
     wrapcore_tmpl = (
         'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
         '{\n'
-        '    long coreptr = ((PyDOMObject*)request)->ptr;\n'
-        '    return static_cast<WebCore::%(classname)s*>((void*)coreptr);\n'
+        '    void *coreptr = ((PyDOMObject*)request)->ptr;\n'
+        '    return static_cast<WebCore::%(classname)s*>(coreptr);\n'
         '}\n\n'
         )
 
