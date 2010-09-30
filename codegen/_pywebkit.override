@@ -45,7 +45,7 @@ DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
     long ptr;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,"l!:shoddy.DOMObject.setptr",
-                                     kwlist, &source))
+                                     kwlist, &ptr))
         return NULL;
 
     self->ptr = (void*)ptr;
@@ -105,7 +105,7 @@ static PyTypeObject PyDOMObject_Type = {
 
 static PyObject* PyDOMObject_new(void *ptr)
 {
-    register PyDOMObject *v = PyObject_NEW(PyDOMObject, PyDOMObject_Type);
+    register PyDOMObject *v = PyObject_NEW(PyDOMObject, &PyDOMObject_Type);
     v->ptr = ptr;
     return (PyObject *) v;
 }
