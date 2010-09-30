@@ -27,10 +27,10 @@ body
 typedef struct {
     PyObject_HEAD
     void * ptr;
-} DOMObject;
+} PyDOMObject;
 
 static int
-DOMObject_init(DOMObject *self, PyObject *args, PyObject *kwds)
+DOMObject_init(PyDOMObject *self, PyObject *args, PyObject *kwds)
 {
     if (PyList_Type.tp_init((PyObject *)self, args, kwds) < 0)
         return -1;
@@ -39,7 +39,7 @@ DOMObject_init(DOMObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-DOMObject_setptr(DOMObject *self, PyObject *args, PyObject *kwargs)
+DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "ptr", NULL };
     long ptr;
@@ -53,8 +53,8 @@ DOMObject_setptr(DOMObject *self, PyObject *args, PyObject *kwargs)
     return Py_None;
 }
 
-static PyMethodDef DOMObject2_methods[] = {
-    {"setptr", (PyCFunction)DOMObject2_set, METH_VARARGS|METH_KEYWORDS,
+static PyMethodDef DOMObject_methods[] = {
+    {"setptr", (PyCFunction)DOMObject_setptr, METH_VARARGS|METH_KEYWORDS,
      PyDoc_STR("set pointer")},
     {NULL,	NULL},
 };
@@ -64,7 +64,7 @@ static PyTypeObject PyDOMObjectType = {
     PyObject_HEAD_INIT(NULL)
     0,                       /* ob_size */
     "_pywebkit.DOMObject",   /* tp_name */
-    sizeof(DOMObject),       /* tp_basicsize */
+    sizeof(PyDOMObject),       /* tp_basicsize */
     0,                       /* tp_itemsize */
     0,                       /* tp_dealloc */
     0,                       /* tp_print */
@@ -103,19 +103,18 @@ static PyTypeObject PyDOMObjectType = {
     0,                       /* tp_new */
 };
 
-static void initdomobject(PyObject *m)
-{
-    if (PyType_Ready(&PyDOMObjectType) < 0)
-        return;
-
-    Py_INCREF(&PyDOMObjectType);
-    PyModule_AddObject(m, "DOMObject", (PyObject *) &PyDOMObjectType);
-}
-
 static PyObject* PyDOMObject_new(void *ptr)
 {
-    register DOMObject *v = PyObject_NEW(DOMObject, PyDOMObject_type);
+    register PyDOMObject *v = PyObject_NEW(PyDOMObject, PyDOMObject_Type);
     v->ptr = ptr;
     return (PyObject *) v;
 }
+
+%%
+init
+    if (PyType_Ready(&PyDOMObject_Type) < 0)
+        return;
+
+    Py_INCREF(&PyDOMObject_Type);
+    PyModule_AddObject(m, "DOMObject", (PyObject *) &PyDOMObject_Type);
 

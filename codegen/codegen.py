@@ -171,7 +171,7 @@ class Wrapper:
     dealloc_tmpl = (
         'void dealloc_%(classname)s(PyObject *self)\n'
         '{\n'
-        '    WebCore::%(classname)s* cobj = core%(classname)s((PyIntObject*)self);\n'
+        '    WebCore::%(classname)s* cobj = core%(classname)s((PyDOMObject*)self);\n'
         '    WebKit::PythonObjectCache::forgetDOMObject(cobj);\n'
         '    cobj->deref();\n'
         '    PyMem_DEL(self);\n'
@@ -962,7 +962,7 @@ _wrap__get_symbol(PyObject *self, PyObject *args)
 class GObjectWrapper(Wrapper):
     constructor_tmpl = (
         'static int\n'
-        '_wrap_%(cname)s(PyIntObject *self%(extraparams)s)\n'
+        '_wrap_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
@@ -982,7 +982,7 @@ class GObjectWrapper(Wrapper):
 
     method_tmpl = (
         'static PyObject *\n'
-        '_wrap_%(typename)s_%(cname)s(PyIntObject *self%(extraparams)s)\n'
+        '_wrap_%(typename)s_%(cname)s(PyDOMObject *self%(extraparams)s)\n'
         '{\n'
         '%(varlist)s'
         '%(parseargs)s'
@@ -1000,9 +1000,9 @@ class GObjectWrapper(Wrapper):
                                             '_TYPE_', '_', 1)
 
     def get_initial_class_substdict(self):
-        return { 'tp_basicsize'      : 'DOMObject',
-                 'tp_weaklistoffset' : '0', #'offsetof(PyIntObject, weakreflist)',
-                 'tp_dictoffset'     : '0'} #'offsetof(PyIntObject, inst_dict)' }
+        return { 'tp_basicsize'      : 'PyDOMObject',
+                 'tp_weaklistoffset' : '0', 
+                 'tp_dictoffset'     : '0'} 
 
     def get_field_accessor(self, fieldname):
         castmacro = string.replace(self.objinfo.typecode, '_TYPE_', '_', 1)
@@ -1379,7 +1379,7 @@ class SourceWriter:
     wrapcore_tmpl = (
         'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
         '{\n'
-        '    long coreptr = ((DOMObject*)request)->ptr;\n'
+        '    long coreptr = ((PyDOMObject*)request)->ptr;\n'
         '    return static_cast<WebCore::%(classname)s*>((void*)coreptr);\n'
         '}\n\n'
         )
@@ -1751,7 +1751,7 @@ typedef intobjargproc ssizeobjargproc;
     def write_class_base_link(self, obj, bases, indent=1):
         indent_str = ' ' * (indent * 4)
         if not bases:
-            bases_str = 'PyInt_Type'
+            bases_str = 'PyDOMObject_Type'
         else:
             bases_str = 'Py%s_Type' % bases[0]
 
