@@ -529,12 +529,12 @@ class ObjectArg(ArgType):
                 info.codebefore.append(self.dflt % {'name':pname,
                                                     'cast':self.cast})
                 info.arglist.append(pname)
-                info.add_parselist('O!', ['&Py%s_Type' % self.objname,
+                info.add_parselist('O!', ['&PyDOM%s_Type' % self.objname,
                                          '&py_' + pname], [pname])
             else:
                 info.varlist.add('PyDOMObject', '*' + pname)
                 info.arglist.append('%s(%s)' % (self.cast, pname))
-                info.add_parselist('O!', ['&Py%s_Type' % self.objname,
+                info.add_parselist('O!', ['&PyDOM%s_Type' % self.objname,
                                           '&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
         if ptype.endswith('*'):

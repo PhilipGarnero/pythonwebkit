@@ -95,7 +95,7 @@ class FileOutput:
 
 class Wrapper:
     type_tmpl = (
-        'PyTypeObject G_GNUC_INTERNAL Py%(typename)s_Type = {\n'
+        'PyTypeObject G_GNUC_INTERNAL PyDOM%(typename)s_Type = {\n'
         '    PyObject_HEAD_INIT(NULL)\n'
         '    0,                                 /* ob_size */\n'
         '    "%(classname)s",                   /* tp_name */\n'
@@ -138,13 +138,13 @@ class Wrapper:
         '    (newfunc)%(tp_new)s,               /* tp_new */\n'
         '    (freefunc)%(tp_free)s,             /* tp_free */\n'
         '    (inquiry)%(tp_is_gc)s,              /* tp_is_gc */\n'
-        '    NULL,                              /* tp_bases */\n'
-        '    NULL,                              /* tp_mro */\n'
-        '    NULL,                              /* tp_cache */\n'
-        '    NULL,                              /* tp_subclasses */\n'
-        '    NULL,                              /* tp_weaklist */\n'
-        '    NULL,                              /* tp_del */\n'
-        '    NULL                               /* tp_version_tag */\n'
+        '    0,                                 /* tp_bases */\n'
+        '    0,                                 /* tp_mro */\n'
+        '    0,                                 /* tp_cache */\n'
+        '    0,                                 /* tp_subclasses */\n'
+        '    0,                                 /* tp_weaklist */\n'
+        '    0,                                 /* tp_del */\n'
+        '    0                                  /* tp_version_tag */\n'
         '};\n\n'
         )
 
@@ -305,6 +305,7 @@ class Wrapper:
         substdict['tp_methods'] = self.write_methods()
         substdict['tp_getset'] = self.write_getsets()
         substdict['tp_dealloc'] = self.write_dealloc()
+        substdict['tp_new'] = 'DOMObject_new'
 
         # handle slots ...
         for slot in self.slots_list:
@@ -447,7 +448,7 @@ class Wrapper:
 static int
 %(classname)s_init(%(classname)s *self, PyObject *args, PyObject *kwds)
 {
-    if (Py%(base)s_Type.tp_init((PyObject *)self, args, kwds) < 0)
+    if (PyDOM%(base)s_Type.tp_init((PyObject *)self, args, kwds) < 0)
         return -1;
     return 0;
 }
@@ -455,6 +456,8 @@ static int
 
         classname = self.objinfo.name
         base = self.objinfo.parent
+        if base == 'DOMObject':
+            base = 'Object'
         code = pyinit_tmpl % dict(classname=classname, base=base)
         self.fp.write(code)
         return classname + "_init"
@@ -574,7 +577,7 @@ static int
         methods += self.write_virtual_accessors()
 
         if methods:
-            methoddefs = '_Py%s_methods' % self.objinfo.c_name
+            methoddefs = '_PyDOM%s_methods' % self.objinfo.c_name
             # write the PyMethodDef structure
             methods.append('    { NULL, NULL, 0, NULL }\n')
             self.fp.write('static const PyMethodDef %s[] = {\n' % methoddefs)
@@ -1518,7 +1521,7 @@ typedef intobjargproc ssizeobjargproc;
                 self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
         for obj in self.parser.objects:
             if not self.overrides.is_type_ignored(obj.c_name):
-                self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
+                self.fp.write('PyTypeObject G_GNUC_INTERNAL PyDOM' + obj.c_name + '_Type;\n')
         for interface in self.parser.interfaces:
             if not self.overrides.is_type_ignored(interface.c_name):
                 self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + interface.c_name + '_Type;\n')
@@ -1670,6 +1673,8 @@ typedef intobjargproc ssizeobjargproc;
         self.fp.write('init%s(void)\n' % self.prefix)
         self.fp.write('{\n')
         self.fp.write('    PyObject *m;\n')
+        self.fp.write('    if (PyType_Ready(&PyDOMObject_Type) < 0) return;\n')
+        self.fp.write('\n')
         self.write_object_imports()
         for obj, bases in self.get_classes():
             self.write_class_base_link(obj, bases)
@@ -1750,14 +1755,14 @@ typedef intobjargproc ssizeobjargproc;
 
     def write_class_base_link(self, obj, bases, indent=1):
         indent_str = ' ' * (indent * 4)
-        if not bases:
+        if not bases or bases[0] == 'DOMObject':
             bases_str = 'PyDOMObject_Type'
         else:
-            bases_str = 'Py%s_Type' % bases[0]
+            bases_str = 'PyDOM%s_Type' % bases[0]
 
-        self.fp.write("%sPy%s_Type.tp_base = &%s;\n" % \
+        self.fp.write("%sPyDOM%s_Type.tp_base = &%s;\n" % \
                     (indent_str, obj.c_name, bases_str))
-        self.fp.write("%sif (PyType_Ready(&Py%s_Type) < 0) {\n" % \
+        self.fp.write("%sif (PyType_Ready(&PyDOM%s_Type) < 0) {\n" % \
                       (indent_str, obj.c_name))
         #self.fp.write('%s    printf("Py%s_Type not ready");\n' % \
         #              (indent_str, obj.c_name))
@@ -1771,7 +1776,7 @@ typedef intobjargproc ssizeobjargproc;
 
             for base in bases:
                 if self._can_direct_ref(base):
-                    bases_str += ', &Py%s_Type' % base
+                    bases_str += ', &PyDOM%s_Type' % base
                 else:
                     baseobj = get_object_by_name(base)
                     bases_str += ', PyObject_GetAttrString(m, "%s")' % baseobj.name
@@ -1779,10 +1784,10 @@ typedef intobjargproc ssizeobjargproc;
         else:
             bases_str = 'NULL'
 
-        self.fp.write('%(indent)sPy_INCREF(&Py%(c_name)s_Type);\n'
+        self.fp.write('%(indent)sPy_INCREF(&PyDOM%(c_name)s_Type);\n'
                 % dict(indent=indent_str, c_name=obj.c_name))
         self.fp.write(
-                '%(indent)sPyModule_AddObject(m, "%(c_name)s", (PyObject*) &Py%(c_name)s_Type);\n'
+                '%(indent)sPyModule_AddObject(m, "%(c_name)s", (PyObject*) &PyDOM%(c_name)s_Type);\n'
                 % dict(indent=indent_str, c_name=obj.c_name,
                        py_name=self.prefix))
 

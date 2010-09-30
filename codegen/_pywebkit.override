@@ -123,9 +123,6 @@ static PyObject* PyDOMObject_new(void *ptr)
 
 %%
 init
-    if (PyType_Ready(&PyDOMObject_Type) < 0)
-        return;
-
     Py_INCREF(&PyDOMObject_Type);
     PyModule_AddObject(m, "DOMObject", (PyObject *) &PyDOMObject_Type);
 
