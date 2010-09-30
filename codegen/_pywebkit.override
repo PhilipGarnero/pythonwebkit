@@ -29,11 +29,22 @@ typedef struct {
     void * ptr;
 } PyDOMObject;
 
+static PyObject *
+DOMObject_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    PyDOMObject *self;
+
+    self = (PyDOMObject *)type->tp_alloc(type, 0);
+    if (self != NULL) {
+        self->ptr = NULL;
+    }
+
+    return (PyObject *)self;
+}
+
 static int
 DOMObject_init(PyDOMObject *self, PyObject *args, PyObject *kwds)
 {
-    if (PyList_Type.tp_init((PyObject *)self, args, kwds) < 0)
-        return -1;
     self->ptr = NULL;
     return 0;
 }
@@ -100,7 +111,7 @@ static PyTypeObject PyDOMObject_Type = {
     0,                       /* tp_dictoffset */
     (initproc)DOMObject_init,   /* tp_init */
     0,                       /* tp_alloc */
-    0,                       /* tp_new */
+    DOMObject_new,           /* tp_new */
 };
 
 static PyObject* PyDOMObject_new(void *ptr)
