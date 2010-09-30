@@ -322,11 +322,14 @@ class Wrapper:
                 if not substdict.has_key(slot):
                     substdict[slot] = '0'
 
+        self.fp.write('} // namespace WebKit\n')
+
+        self.fp.write('extern "C" {\n\n')
         self.fp.write(self.type_tmpl % substdict)
+        self.fp.write('}; // extern "C"\n')
 
         self.write_virtuals()
 
-        self.fp.write('} // namespace WebKit\n')
         self.fp.write('\n')
 
     def find_function_ptypes(self, function_obj, handle_return=0):
@@ -460,7 +463,7 @@ static int
             base = 'Object'
         code = pyinit_tmpl % dict(classname=classname, base=base)
         self.fp.write(code)
-        return classname + "_init"
+        return "WebKit::" + classname + "_init"
 
     def write_noconstructor(self):
         # this is a hack ...
@@ -542,7 +545,7 @@ static int
                     self.fp.write(code)
                 methods.append(self.methdef_tmpl %
                                { 'name':  fixname(meth.name),
-                                 'cname': '_wrap_%s_%s' % (klass, method_name),
+                                 'cname': 'WebKit::_wrap_%s_%s' % (klass, method_name),
                                  'flags': methflags,
                                  'docstring': meth.docstring })
                 methods_coverage.declare_wrapped()
@@ -577,12 +580,17 @@ static int
         methods += self.write_virtual_accessors()
 
         if methods:
+            self.fp.write('} // namespace WebKit\n')
             methoddefs = '_PyDOM%s_methods' % self.objinfo.c_name
             # write the PyMethodDef structure
             methods.append('    { NULL, NULL, 0, NULL }\n')
+            self.fp.write('extern "C" {\n\n')
             self.fp.write('static const PyMethodDef %s[] = {\n' % methoddefs)
             self.fp.write(string.join(methods, ''))
             self.fp.write('};\n\n')
+            self.fp.write('}; // extern "C"\n')
+            self.fp.write('namespace WebKit {\n')
+            self.fp.write('using namespace WebCore;\n')
         else:
             methoddefs = 'NULL'
         return methoddefs
@@ -722,7 +730,7 @@ static int
         txt = self.dealloc_tmpl % {'classname': self.objinfo.c_name}
         self.fp.write(txt)
 
-        return 'dealloc_' + self.objinfo.c_name
+        return 'WebKit::dealloc_' + self.objinfo.c_name
 
     def write_getsets(self):
         lower_name = self.get_lower_name()
@@ -1003,7 +1011,7 @@ class GObjectWrapper(Wrapper):
                                             '_TYPE_', '_', 1)
 
     def get_initial_class_substdict(self):
-        return { 'tp_basicsize'      : 'PyDOMObject',
+        return { 'tp_basicsize'      : 'PyDOM%s' % self.objinfo.name,
                  'tp_weaklistoffset' : '0', 
                  'tp_dictoffset'     : '0'} 
 
@@ -1439,12 +1447,12 @@ PyObject* toPython(WebCore::%(classname)s* obj)
             self.write_enums()
         self.write_extension_init()
         self.write_registers()
-        
         argtypes.py_ssize_t_clean = False
 
     def write_headers(self, py_ssize_t_clean):
         self.fp.write('/* -- THIS FILE IS GENERATED - DO NOT EDIT */')
         self.fp.write('/* -*- Mode: C; c-basic-offset: 4 -*- */\n\n')
+        
         if py_ssize_t_clean:
             self.fp.write('#define PY_SSIZE_T_CLEAN\n')
         self.fp.write('#include <Python.h>\n')
@@ -1502,6 +1510,7 @@ typedef intobjargproc ssizeobjargproc;
                 txt = self.topython_tmpl % {'classname': obj.c_name}
             else:
                 txt = self.topython_manual_tmpl % {'classname': obj.c_name}
+            self.fp.write("#define PyDOM%s PyDOMObject\n" % obj.c_name)
             self.fp.write(txt)
 
         self.fp.write('} // namespace WebKit\n')
@@ -1516,16 +1525,18 @@ typedef intobjargproc ssizeobjargproc;
         self.fp.write('\n')
 
         self.fp.write('/* ---------- forward type declarations ---------- */\n')
+        self.fp.write('extern "C" {\n\n')
         for obj in self.parser.boxes:
             if not self.overrides.is_type_ignored(obj.c_name):
-                self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + obj.c_name + '_Type;\n')
+                self.fp.write('PyTypeObject *PtrPy' + obj.c_name + '_Type;\n')
         for obj in self.parser.objects:
             if not self.overrides.is_type_ignored(obj.c_name):
-                self.fp.write('PyTypeObject G_GNUC_INTERNAL PyDOM' + obj.c_name + '_Type;\n')
+                self.fp.write('PyTypeObject *PtrPyDOM' + obj.c_name + '_Type;\n')
         for interface in self.parser.interfaces:
             if not self.overrides.is_type_ignored(interface.c_name):
-                self.fp.write('PyTypeObject G_GNUC_INTERNAL Py' + interface.c_name + '_Type;\n')
+                self.fp.write('PyTypeObject *PtrPy' + interface.c_name + '_Type;\n')
         self.fp.write('\n')
+        self.fp.write('}; // extern "C"\n')
 
     def write_body(self):
         self.fp.write(self.overrides.get_body())
@@ -1760,12 +1771,12 @@ typedef intobjargproc ssizeobjargproc;
         else:
             bases_str = 'PyDOM%s_Type' % bases[0]
 
+        self.fp.write("%sPtrPyDOM%s_Type = &PyDOM%s_Type;\n" % \
+                    (indent_str, obj.c_name, obj.c_name))
         self.fp.write("%sPyDOM%s_Type.tp_base = &%s;\n" % \
                     (indent_str, obj.c_name, bases_str))
         self.fp.write("%sif (PyType_Ready(&PyDOM%s_Type) < 0) {\n" % \
                       (indent_str, obj.c_name))
-        #self.fp.write('%s    printf("Py%s_Type not ready");\n' % \
-        #              (indent_str, obj.c_name))
         self.fp.write("%s    return;\n" % indent_str)
         self.fp.write("%s}\n" % indent_str)
 
