@@ -55,7 +55,7 @@ DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = { "ptr", NULL };
     long ptr;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"l!:shoddy.DOMObject.setptr",
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"l:shoddy.DOMObject.setptr",
                                      kwlist, &ptr))
         return NULL;
 
