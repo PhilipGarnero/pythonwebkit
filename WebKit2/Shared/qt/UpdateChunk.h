@@ -27,6 +27,7 @@
 #ifndef UpdateChunk_h
 #define UpdateChunk_h
 
+#include "MappedMemory.h"
 #include <QImage>
 #include <WebCore/IntRect.h>
 
@@ -36,8 +37,6 @@ class ArgumentDecoder;
 }
 
 namespace WebKit {
-
-class MappedMemory;
 
 class UpdateChunk {
 public:

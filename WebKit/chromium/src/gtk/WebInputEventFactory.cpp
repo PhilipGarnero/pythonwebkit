@@ -52,7 +52,7 @@ bool countsAsDoubleClick(gint timeDiff, gint xDiff, gint yDiff)
     gint doubleClickDistance = 5;
     g_object_get(G_OBJECT(settings),
                  "gtk-double-click-time", &doubleClickTime,
-                 "gtk-double-click-distance", &doubleClickDistance, 0);
+                 "gtk-double-click-distance", &doubleClickDistance, NULL);
     return timeDiff <= doubleClickTime && abs(xDiff) <= doubleClickDistance && abs(yDiff) <= doubleClickDistance;
 }
 
@@ -85,6 +85,10 @@ static int gdkStateToWebEventModifiers(guint state)
         modifiers |= WebInputEvent::MiddleButtonDown;
     if (state & GDK_BUTTON3_MASK)
         modifiers |= WebInputEvent::RightButtonDown;
+    if (state & GDK_LOCK_MASK)
+        modifiers |= WebInputEvent::CapsLockOn;
+    if (state & GDK_MOD2_MASK)
+        modifiers |= WebInputEvent::NumLockOn;
     return modifiers;
 }
 

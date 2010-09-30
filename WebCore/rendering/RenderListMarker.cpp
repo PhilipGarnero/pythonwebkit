@@ -1257,7 +1257,7 @@ void RenderListMarker::paint(PaintInfo& paintInfo, int tx, int ty)
 
     const Font& font = style()->font();
     const UChar suffix = listMarkerSuffix(type, m_listItem->value());
-    if (style()->direction() == LTR) {
+    if (style()->isLeftToRightDirection()) {
         int width = font.width(textRun);
         context->drawText(style()->font(), textRun, marker.location());
         UChar suffixSpace[2] = { suffix, ' ' };
@@ -1274,13 +1274,12 @@ void RenderListMarker::paint(PaintInfo& paintInfo, int tx, int ty)
 void RenderListMarker::layout()
 {
     ASSERT(needsLayout());
-    ASSERT(!prefWidthsDirty());
-
+ 
     if (isImage()) {
         setWidth(m_image->imageSize(this, style()->effectiveZoom()).width());
         setHeight(m_image->imageSize(this, style()->effectiveZoom()).height());
     } else {
-        setWidth(minPrefWidth());
+        setWidth(minPreferredLogicalWidth());
         setHeight(style()->font().height());
     }
 
@@ -1308,9 +1307,9 @@ void RenderListMarker::imageChanged(WrappedImagePtr o, const IntRect*)
         repaint();
 }
 
-void RenderListMarker::calcPrefWidths()
+void RenderListMarker::computePreferredLogicalWidths()
 {
-    ASSERT(prefWidthsDirty());
+    ASSERT(preferredLogicalWidthsDirty());
 
     m_text = "";
 
@@ -1321,8 +1320,8 @@ void RenderListMarker::calcPrefWidths()
         // until we support the CSS3 marker pseudoclass to allow control over the width and height of the marker box.
         int bulletWidth = font.ascent() / 2;
         m_image->setImageContainerSize(IntSize(bulletWidth, bulletWidth));
-        m_minPrefWidth = m_maxPrefWidth = m_image->imageSize(this, style()->effectiveZoom()).width();
-        setPrefWidthsDirty(false);
+        m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = m_image->imageSize(this, style()->effectiveZoom()).width();
+        setPreferredLogicalWidthsDirty(false);
         updateMargins();
         return;
     }
@@ -1428,10 +1427,10 @@ void RenderListMarker::calcPrefWidths()
             break;
     }
 
-    m_minPrefWidth = width;
-    m_maxPrefWidth = width;
+    m_minPreferredLogicalWidth = width;
+    m_maxPreferredLogicalWidth = width;
 
-    setPrefWidthsDirty(false);
+    setPreferredLogicalWidthsDirty(false);
     
     updateMargins();
 }
@@ -1445,7 +1444,7 @@ void RenderListMarker::updateMargins()
 
     if (isInside()) {
         if (isImage()) {
-            if (style()->direction() == LTR)
+            if (style()->isLeftToRightDirection())
                 marginRight = cMarkerPadding;
             else
                 marginLeft = cMarkerPadding;
@@ -1453,11 +1452,11 @@ void RenderListMarker::updateMargins()
             case Disc:
             case Circle:
             case Square:
-                if (style()->direction() == LTR) {
+                if (style()->isLeftToRightDirection()) {
                     marginLeft = -1;
-                    marginRight = font.ascent() - minPrefWidth() + 1;
+                    marginRight = font.ascent() - minPreferredLogicalWidth() + 1;
                 } else {
-                    marginLeft = font.ascent() - minPrefWidth() + 1;
+                    marginLeft = font.ascent() - minPreferredLogicalWidth() + 1;
                     marginRight = -1;
                 }
                 break;
@@ -1465,9 +1464,9 @@ void RenderListMarker::updateMargins()
                 break;
         }
     } else {
-        if (style()->direction() == LTR) {
+        if (style()->isLeftToRightDirection()) {
             if (isImage())
-                marginLeft = -minPrefWidth() - cMarkerPadding;
+                marginLeft = -minPreferredLogicalWidth() - cMarkerPadding;
             else {
                 int offset = font.ascent() * 2 / 3;
                 switch (style()->listStyleType()) {
@@ -1479,7 +1478,7 @@ void RenderListMarker::updateMargins()
                     case NoneListStyle:
                         break;
                     default:
-                        marginLeft = m_text.isEmpty() ? 0 : -minPrefWidth() - offset / 2;
+                        marginLeft = m_text.isEmpty() ? 0 : -minPreferredLogicalWidth() - offset / 2;
                 }
             }
         } else {
@@ -1491,7 +1490,7 @@ void RenderListMarker::updateMargins()
                     case Disc:
                     case Circle:
                     case Square:
-                        marginLeft = offset + cMarkerPadding + 1 - minPrefWidth();
+                        marginLeft = offset + cMarkerPadding + 1 - minPreferredLogicalWidth();
                         break;
                     case NoneListStyle:
                         break;
@@ -1500,7 +1499,7 @@ void RenderListMarker::updateMargins()
                 }
             }
         }
-        marginRight = -marginLeft - minPrefWidth();
+        marginRight = -marginLeft - minPreferredLogicalWidth();
     }
 
     style()->setMarginLeft(Length(marginLeft, Fixed));
@@ -1521,6 +1520,25 @@ int RenderListMarker::baselinePosition(bool, bool) const
         return font.ascent() + (lineHeight(false) - font.height())/2;
     }
     return height();
+}
+
+String RenderListMarker::suffix() const
+{
+    EListStyleType type = style()->listStyleType();
+    const UChar suffix = listMarkerSuffix(type, m_listItem->value());
+
+    Vector<UChar> resultVector;
+    resultVector.append(suffix);
+
+    // If the suffix is not ' ', an extra space is needed
+    if (suffix != ' ') {
+        if (style()->isLeftToRightDirection())
+            resultVector.append(' ');
+        else
+            resultVector.prepend(' ');
+    }
+
+    return String::adopt(resultVector);
 }
 
 bool RenderListMarker::isInside() const

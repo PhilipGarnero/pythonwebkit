@@ -97,11 +97,14 @@ private:
     virtual void setCursor(const WebCore::Cursor&);
     virtual void registerEditCommand(PassRefPtr<WebEditCommandProxy>, UndoOrRedo);
     virtual void clearAllEditCommands();
+    virtual void setEditCommandState(const WTF::String&, bool, int);
 
 #if USE(ACCELERATED_COMPOSITING)
     virtual void pageDidEnterAcceleratedCompositing();
     virtual void pageDidLeaveAcceleratedCompositing();
 #endif
+
+    virtual HWND nativeWindow();
 
     // WebCore::WindowMessageListener
     virtual void windowReceivedMessage(HWND, UINT message, WPARAM, LPARAM);

@@ -653,11 +653,7 @@ void V8Proxy::didLeaveScriptContext()
     // If we've just left a script context and indexed database has been
     // instantiated, we must let its transaction coordinator know so it can terminate
     // any not-yet-started transactions.
-    if (IDBPendingTransactionMonitor::hasPendingTransactions()) {
-        ASSERT(page->group().hasIDBFactory());
-        page->group().idbFactory()->abortPendingTransactions(IDBPendingTransactionMonitor::pendingTransactions());
-        IDBPendingTransactionMonitor::clearPendingTransactions();
-    }
+    IDBPendingTransactionMonitor::abortPendingTransactions();
 #endif // ENABLE(INDEXED_DATABASE)
     // If we've just left a top level script context and local storage has been
     // instantiated, we must ensure that any storage locks have been freed.
@@ -832,25 +828,17 @@ void V8Proxy::registerExtensionWithV8(v8::Extension* extension)
 bool V8Proxy::registeredExtensionWithV8(v8::Extension* extension)
 {
     for (size_t i = 0; i < m_extensions.size(); ++i) {
-        if (m_extensions[i].extension == extension)
+        if (m_extensions[i] == extension)
             return true;
     }
 
     return false;
 }
 
-void V8Proxy::registerExtension(v8::Extension* extension, const String& schemeRestriction)
+void V8Proxy::registerExtension(v8::Extension* extension)
 {
     registerExtensionWithV8(extension);
-    V8ExtensionInfo info = {schemeRestriction, 0, extension};
-    m_extensions.append(info);
-}
-
-void V8Proxy::registerExtension(v8::Extension* extension, int extensionGroup)
-{
-    registerExtensionWithV8(extension);
-    V8ExtensionInfo info = {String(), extensionGroup, extension};
-    m_extensions.append(info);
+    m_extensions.append(extension);
 }
 
 bool V8Proxy::setContextDebugId(int debugId)

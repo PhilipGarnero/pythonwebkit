@@ -32,6 +32,8 @@
 #include <QGraphicsView>
 #include <QKeyEvent>
 
+class QWKPreferences;
+
 class QWKPagePrivate : WebKit::PageClient {
 public:
     QWKPagePrivate(QWKPage*, WKPageNamespaceRef);
@@ -67,22 +69,34 @@ public:
     void updateAction(QWKPage::WebAction action);
     void updateNavigationActions();
     void updateEditorActions();
+    void setEditCommandState(const WTF::String&, bool, int);
 
     void _q_webActionTriggered(bool checked);
 
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
     void touchEvent(QTouchEvent*);
-#endif
-
-    QAction* actions[QWKPage::WebActionCount];
 
     QWKPage* q;
+
+    QAction* actions[QWKPage::WebActionCount];
+    QWKPreferences* preferences;
+
     RefPtr<WebKit::WebPageProxy> page;
+    WKPageNamespaceRef pageNamespaceRef;
 
     QWKPage::CreateNewPageFn createNewPageFn;
 
     QPoint tripleClick;
     QBasicTimer tripleClickTimer;
 };
+
+class QtViewportConfigurationPrivate : public QSharedData {
+public:
+    QtViewportConfigurationPrivate(QWKPage::ViewportConfiguration* qq)
+        : q(qq)
+    { }
+
+    QWKPage::ViewportConfiguration* q;
+};
+
 
 #endif /* qkpage_p_h */

@@ -336,7 +336,7 @@ public:
     virtual void didDisplayInsecureContent() { }
     virtual void didRunInsecureContent(SecurityOrigin*) { }
     virtual PassRefPtr<Frame> createFrame(const KURL&, const String&, HTMLFrameOwnerElement*, const String&, bool, int, int) { return 0; }
-    virtual void didTransferChildFrameToNewDocument() { }
+    virtual void didTransferChildFrameToNewDocument(Page*) { }
     virtual PassRefPtr<Widget> createPlugin(const IntSize&, HTMLPlugInElement*, const KURL&, const Vector<String>&, const Vector<String>&, const String&, bool) { return 0; }
     virtual PassRefPtr<Widget> createJavaAppletWidget(const IntSize&, HTMLAppletElement*, const KURL&, const Vector<String>&, const Vector<String>&) { return 0; }
 #if ENABLE(PLUGIN_PROXY_FOR_VIDEO)
@@ -359,6 +359,7 @@ public:
     virtual void didCreateScriptContextForFrame() { }
     virtual void didDestroyScriptContextForFrame() { }
     virtual void didCreateIsolatedScriptContext() { }
+    virtual bool allowScriptExtension(const String& extensionName, int extensionGroup) { return false; }
 #endif
 
 #if PLATFORM(MAC)
@@ -542,6 +543,7 @@ public:
     virtual void startUpdating() { }
     virtual void stopUpdating() { }
     virtual DeviceMotionData* currentDeviceMotion() const { return 0; }
+    virtual void deviceMotionControllerDestroyed() { }
 };
 
 class EmptyDeviceOrientationClient : public DeviceOrientationClient {
@@ -550,6 +552,7 @@ public:
     virtual void startUpdating() { }
     virtual void stopUpdating() { }
     virtual DeviceOrientation* lastOrientation() const { return 0; }
+    virtual void deviceOrientationControllerDestroyed() { }
 };
 
 }

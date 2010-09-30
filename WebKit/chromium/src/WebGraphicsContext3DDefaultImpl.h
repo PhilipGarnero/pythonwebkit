@@ -33,8 +33,10 @@
 
 #if ENABLE(3D_CANVAS)
 
+#include "GLSLANG/ShaderLang.h"
 #include "WebGraphicsContext3D.h"
 
+#include <wtf/HashMap.h>
 #include <wtf/ListHashSet.h>
 #include <wtf/OwnPtr.h>
 
@@ -60,8 +62,6 @@ public:
     //----------------------------------------------------------------------
     // WebGraphicsContext3D methods
     virtual bool initialize(WebGraphicsContext3D::Attributes attributes, WebView*, bool);
-    // FIXME: remove once compositor is switched over to GraphicsContext3D.
-    virtual bool initialize(WebGraphicsContext3D::Attributes attributes, WebView*);
     virtual bool makeContextCurrent();
 
     virtual int width();
@@ -273,6 +273,8 @@ public:
 private:
     WebGraphicsContext3D::Attributes m_attributes;
     bool m_initialized;
+    bool m_renderDirectlyToWebView;
+
     unsigned int m_texture;
     unsigned int m_fbo;
     unsigned int m_depthStencilBuffer;
@@ -298,12 +300,14 @@ private:
     // not be honored based on the capabilities of the OpenGL implementation.
     void validateAttributes();
 
+    // Resolve the given rectangle of the multisampled framebuffer if necessary.
+    void resolveMultisampledFramebuffer(unsigned x, unsigned y, unsigned width, unsigned height);
+
     // Note: we aren't currently using this information, but we will
     // need to in order to verify that all enabled vertex arrays have
     // a valid buffer bound -- to avoid crashes on certain cards.
     unsigned int m_boundArrayBuffer;
-    class VertexAttribPointerState {
-    public:
+    struct VertexAttribPointerState {
         VertexAttribPointerState();
 
         bool enabled;
@@ -325,6 +329,44 @@ private:
     ListHashSet<unsigned long> m_syntheticErrors;
 
     OwnPtr<gfx::GLContext> m_glContext;
+
+    // ANGLE related.
+    struct ShaderSourceEntry {
+        ShaderSourceEntry(unsigned long shaderType)
+                : type(shaderType)
+                , source(0)
+                , log(0)
+                , translatedSource(0)
+                , isValid(false)
+        {
+        }
+
+        ~ShaderSourceEntry()
+        {
+            if (source)
+                fastFree(source);
+            if (log)
+                fastFree(log);
+            if (translatedSource)
+                fastFree(translatedSource);
+        }
+
+        unsigned long type;
+        char* source;
+        char* log;
+        char* translatedSource;
+        bool isValid;
+    };
+
+    bool angleCreateCompilers();
+    void angleDestroyCompilers();
+    bool angleValidateShaderSource(ShaderSourceEntry& entry);
+
+    typedef HashMap<WebGLId, ShaderSourceEntry*> ShaderSourceMap;
+    ShaderSourceMap m_shaderSourceMap;
+
+    ShHandle m_fragmentCompiler;
+    ShHandle m_vertexCompiler;
 };
 
 } // namespace WebKit

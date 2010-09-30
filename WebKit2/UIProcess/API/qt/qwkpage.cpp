@@ -21,33 +21,43 @@
 #include "qwkpage.h"
 #include "qwkpage_p.h"
 
+#include "qwkpreferences_p.h"
+
 #include "ClientImpl.h"
 #include "LocalizedStrings.h"
+#include "NativeWebKeyboardEvent.h"
+#include "WebContext.h"
 #include "WebEventFactoryQt.h"
+#include "WebPlatformStrategies.h"
 #include "WKStringQt.h"
 #include "WKURLQt.h"
+#include "ViewportArguments.h"
 #include <QAction>
 #include <QApplication>
 #include <QGraphicsSceneMouseEvent>
 #include <QStyle>
+#include <QTouchEvent>
 #include <QtDebug>
 #include <WebKit2/WKFrame.h>
 #include <WebKit2/WKRetainPtr.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
-#include <QTouchEvent>
-#endif
 
 using namespace WebKit;
 using namespace WebCore;
 
 QWKPagePrivate::QWKPagePrivate(QWKPage* qq, WKPageNamespaceRef namespaceRef)
     : q(qq)
+    , preferences(0)
     , createNewPageFn(0)
 {
+    // We want to use the LocalizationStrategy at the UI side as well.
+    // FIXME: this should be avoided.
+    WebPlatformStrategies::initialize();
+
     memset(actions, 0, sizeof(actions));
     page = toWK(namespaceRef)->createWebPage();
     page->setPageClient(this);
+    pageNamespaceRef = namespaceRef;
 }
 
 QWKPagePrivate::~QWKPagePrivate()
@@ -57,7 +67,8 @@ QWKPagePrivate::~QWKPagePrivate()
 
 void QWKPagePrivate::init(const QSize& viewportSize, PassOwnPtr<DrawingAreaProxy> proxy)
 {
-    page->initializeWebPage(IntSize(viewportSize), proxy);
+    page->setDrawingArea(proxy);
+    page->initializeWebPage(IntSize(viewportSize));
 }
 
 void QWKPagePrivate::setCursor(const WebCore::Cursor& cursor)
@@ -95,14 +106,12 @@ void QWKPagePrivate::paint(QPainter* painter, QRect area)
 
 void QWKPagePrivate::keyPressEvent(QKeyEvent* ev)
 {
-    WebKeyboardEvent keyboardEvent = WebEventFactory::createWebKeyboardEvent(ev);
-    page->keyEvent(keyboardEvent);
+    page->handleKeyboardEvent(NativeWebKeyboardEvent(ev));
 }
 
 void QWKPagePrivate::keyReleaseEvent(QKeyEvent* ev)
 {
-    WebKeyboardEvent keyboardEvent = WebEventFactory::createWebKeyboardEvent(ev);
-    page->keyEvent(keyboardEvent);
+    page->handleKeyboardEvent(NativeWebKeyboardEvent(ev));
 }
 
 void QWKPagePrivate::mouseMoveEvent(QGraphicsSceneMouseEvent* ev)
@@ -118,31 +127,31 @@ void QWKPagePrivate::mouseMoveEvent(QGraphicsSceneMouseEvent* ev)
     lastPos = ev->pos();
 
     WebMouseEvent mouseEvent = WebEventFactory::createWebMouseEvent(ev, 0);
-    page->mouseEvent(mouseEvent);
+    page->handleMouseEvent(mouseEvent);
 }
 
 void QWKPagePrivate::mousePressEvent(QGraphicsSceneMouseEvent* ev)
 {
     if (tripleClickTimer.isActive() && (ev->pos() - tripleClick).manhattanLength() < QApplication::startDragDistance()) {
         WebMouseEvent mouseEvent = WebEventFactory::createWebMouseEvent(ev, 3);
-        page->mouseEvent(mouseEvent);
+        page->handleMouseEvent(mouseEvent);
         return;
     }
 
     WebMouseEvent mouseEvent = WebEventFactory::createWebMouseEvent(ev, 1);
-    page->mouseEvent(mouseEvent);
+    page->handleMouseEvent(mouseEvent);
 }
 
 void QWKPagePrivate::mouseReleaseEvent(QGraphicsSceneMouseEvent* ev)
 {
     WebMouseEvent mouseEvent = WebEventFactory::createWebMouseEvent(ev, 0);
-    page->mouseEvent(mouseEvent);
+    page->handleMouseEvent(mouseEvent);
 }
 
 void QWKPagePrivate::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* ev)
 {
     WebMouseEvent mouseEvent = WebEventFactory::createWebMouseEvent(ev, 2);
-    page->mouseEvent(mouseEvent);
+    page->handleMouseEvent(mouseEvent);
 
     tripleClickTimer.start(QApplication::doubleClickInterval(), q);
     tripleClick = ev->pos().toPoint();
@@ -151,7 +160,11 @@ void QWKPagePrivate::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* ev)
 void QWKPagePrivate::wheelEvent(QGraphicsSceneWheelEvent* ev)
 {
     WebWheelEvent wheelEvent = WebEventFactory::createWebWheelEvent(ev);
-    page->wheelEvent(wheelEvent);
+    page->handleWheelEvent(wheelEvent);
+}
+
+void QWKPagePrivate::setEditCommandState(const WTF::String&, bool, int)
+{
 }
 
 void QWKPagePrivate::updateAction(QWKPage::WebAction action)
@@ -213,15 +226,11 @@ void QWKPagePrivate::_q_webActionTriggered(bool checked)
 }
 #endif // QT_NO_ACTION
 
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
-
 void QWKPagePrivate::touchEvent(QTouchEvent* event)
 {
     WebTouchEvent touchEvent = WebEventFactory::createWebTouchEvent(event);
-    page->touchEvent(touchEvent);
+    page->handleTouchEvent(touchEvent);
 }
-
-#endif
 
 QWKPage::QWKPage(WKPageNamespaceRef namespaceRef)
     : d(new QWKPagePrivate(this, namespaceRef))
@@ -239,6 +248,7 @@ QWKPage::QWKPage(WKPageNamespaceRef namespaceRef)
         qt_wk_didReceiveTitleForFrame,
         qt_wk_didFirstLayoutForFrame,
         qt_wk_didFirstVisuallyNonEmptyLayoutForFrame,
+        qt_wk_didRemoveFrameFromHierarchy,
         qt_wk_didStartProgress,
         qt_wk_didChangeProgress,
         qt_wk_didFinishProgress,
@@ -259,7 +269,9 @@ QWKPage::QWKPage(WKPageNamespaceRef namespaceRef)
         0,  /* runJavaScriptConfirm */
         0,  /* runJavaScriptPrompt */
         0,  /* setStatusText */
-        0   /* contentsSizeChanged */
+        0,  /* mouseDidMoveOverElement */
+        0,  /* contentsSizeChanged */
+        0   /* didNotHandleKeyEvent */
     };
     WKPageSetPageUIClient(pageRef(), &uiClient);
 }
@@ -267,6 +279,78 @@ QWKPage::QWKPage(WKPageNamespaceRef namespaceRef)
 QWKPage::~QWKPage()
 {
     delete d;
+}
+
+QWKPage::ViewportConfiguration::ViewportConfiguration()
+    : d(0)
+    , m_initialScaleFactor(-1.0)
+    , m_minimumScaleFactor(-1.0)
+    , m_maximumScaleFactor(-1.0)
+    , m_devicePixelRatio(-1.0)
+    , m_isUserScalable(true)
+    , m_isValid(false)
+{
+
+}
+
+QWKPage::ViewportConfiguration::ViewportConfiguration(const QWKPage::ViewportConfiguration& other)
+    : d(other.d)
+    , m_initialScaleFactor(other.m_initialScaleFactor)
+    , m_minimumScaleFactor(other.m_minimumScaleFactor)
+    , m_maximumScaleFactor(other.m_maximumScaleFactor)
+    , m_devicePixelRatio(other.m_devicePixelRatio)
+    , m_isUserScalable(other.m_isUserScalable)
+    , m_isValid(other.m_isValid)
+    , m_size(other.m_size)
+{
+
+}
+
+QWKPage::ViewportConfiguration::~ViewportConfiguration()
+{
+
+}
+
+QWKPage::ViewportConfiguration& QWKPage::ViewportConfiguration::operator=(const QWKPage::ViewportConfiguration& other)
+{
+    if (this != &other) {
+        d = other.d;
+        m_initialScaleFactor = other.m_initialScaleFactor;
+        m_minimumScaleFactor = other.m_minimumScaleFactor;
+        m_maximumScaleFactor = other.m_maximumScaleFactor;
+        m_devicePixelRatio = other.m_devicePixelRatio;
+        m_isUserScalable = other.m_isUserScalable;
+        m_isValid = other.m_isValid;
+        m_size = other.m_size;
+    }
+
+    return *this;
+}
+
+QWKPage::ViewportConfiguration QWKPage::viewportConfigurationForSize(QSize availableSize) const
+{
+    static int desktopWidth = 980;
+    static int deviceDPI = 160;
+
+    // FIXME: Add a way to get these data via the platform plugin and fall back
+    // to the size of the view.
+    int deviceWidth = 480;
+    int deviceHeight = 864;
+
+    ViewportArguments args;
+
+    WebCore::ViewportConfiguration conf = WebCore::findConfigurationForViewportData(args, desktopWidth, deviceWidth, deviceHeight, deviceDPI, availableSize);
+
+    ViewportConfiguration result;
+
+    result.m_isValid = true;
+    result.m_size = conf.layoutViewport;
+    result.m_initialScaleFactor = conf.initialScale;
+    result.m_minimumScaleFactor = conf.minimumScale;
+    result.m_maximumScaleFactor = conf.maximumScale;
+    result.m_devicePixelRatio = conf.devicePixelRatio;
+
+    return result;
 }
 
 void QWKPage::timerEvent(QTimerEvent* ev)
@@ -281,6 +365,16 @@ void QWKPage::timerEvent(QTimerEvent* ev)
 WKPageRef QWKPage::pageRef() const
 {
     return toRef(d->page.get());
+}
+
+QWKPreferences* QWKPage::preferences() const
+{
+    if (!d->preferences) {
+        WKContextRef contextRef = WKPageNamespaceGetContext(d->pageNamespaceRef);
+        d->preferences = QWKPreferencesPrivate::createPreferences(contextRef);
+    }
+
+    return d->preferences;
 }
 
 void QWKPage::setCreateNewPageFunction(CreateNewPageFn function)

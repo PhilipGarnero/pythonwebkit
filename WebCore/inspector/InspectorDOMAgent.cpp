@@ -43,6 +43,7 @@
 #include "CSSStyleRule.h"
 #include "CSSStyleSelector.h"
 #include "CSSStyleSheet.h"
+#include "CharacterData.h"
 #include "ContainerNode.h"
 #include "Cookie.h"
 #include "CookieJar.h"
@@ -186,6 +187,8 @@ public:
             if (!ec)
                 resultCollector.add(node);
         }
+#else
+        UNUSED_PARAM(resultCollector);
 #endif
     }
 };
@@ -1118,6 +1121,14 @@ void InspectorDOMAgent::didModifyDOMAttr(Element* element)
         return;
 
     m_frontend->attributesUpdated(id, buildArrayForElementAttributes(element));
+}
+
+void InspectorDOMAgent::characterDataModified(CharacterData* characterData)
+{
+    long id = m_documentNodeToIdMap.get(characterData);
+    if (!id)
+        return;
+    m_frontend->characterDataModified(id, characterData->data());
 }
 
 bool InspectorDOMAgent::hasBreakpoint(Node* node, long type)

@@ -476,6 +476,8 @@ public:
     float effectiveZoom() const { return rareInheritedData->m_effectiveZoom; }
 
     TextDirection direction() const { return static_cast<TextDirection>(inherited_flags._direction); }
+    bool isLeftToRightDirection() const { return direction() == LTR; }
+
     Length lineHeight() const { return inherited->line_height; }
     int computedLineHeight() const
     {
@@ -598,6 +600,10 @@ public:
     Length marginAfter() const;
     Length marginStart() const;
     Length marginEnd() const;
+    Length marginStartUsing(const RenderStyle* otherStyle) const;
+    Length marginEndUsing(const RenderStyle* otherStyle) const;
+    Length marginBeforeUsing(const RenderStyle* otherStyle) const;
+    Length marginAfterUsing(const RenderStyle* otherStyle) const;
 
     LengthBox paddingBox() const { return surround->padding; }
     Length paddingTop() const { return surround->padding.top(); }
@@ -661,8 +667,8 @@ public:
     EUserDrag userDrag() const { return static_cast<EUserDrag>(rareNonInheritedData->userDrag); }
     EUserSelect userSelect() const { return static_cast<EUserSelect>(rareInheritedData->userSelect); }
     bool textOverflow() const { return rareNonInheritedData->textOverflow; }
-    EMarginCollapse marginTopCollapse() const { return static_cast<EMarginCollapse>(rareNonInheritedData->marginTopCollapse); }
-    EMarginCollapse marginBottomCollapse() const { return static_cast<EMarginCollapse>(rareNonInheritedData->marginBottomCollapse); }
+    EMarginCollapse marginBeforeCollapse() const { return static_cast<EMarginCollapse>(rareNonInheritedData->marginBeforeCollapse); }
+    EMarginCollapse marginAfterCollapse() const { return static_cast<EMarginCollapse>(rareNonInheritedData->marginAfterCollapse); }
     EWordBreak wordBreak() const { return static_cast<EWordBreak>(rareInheritedData->wordBreak); }
     EWordWrap wordWrap() const { return static_cast<EWordWrap>(rareInheritedData->wordWrap); }
     ENBSPMode nbspMode() const { return static_cast<ENBSPMode>(rareInheritedData->nbspMode); }
@@ -741,6 +747,8 @@ public:
     EBlockFlowDirection blockFlow() const { return static_cast<EBlockFlowDirection>(inherited_flags._blockFlow); }
     bool isVerticalBlockFlow() const { return blockFlow() == TopToBottomBlockFlow || blockFlow() == BottomToTopBlockFlow; }
 
+    ESpeak speak() { return static_cast<ESpeak>(rareInheritedData->speak); }
+        
 // attribute setter methods
 
     void setDisplay(EDisplay v) { noninherited_flags._effectiveDisplay = v; }
@@ -1001,8 +1009,8 @@ public:
     void setUserDrag(EUserDrag d) { SET_VAR(rareNonInheritedData, userDrag, d); }
     void setUserSelect(EUserSelect s) { SET_VAR(rareInheritedData, userSelect, s); }
     void setTextOverflow(bool b) { SET_VAR(rareNonInheritedData, textOverflow, b); }
-    void setMarginTopCollapse(EMarginCollapse c) { SET_VAR(rareNonInheritedData, marginTopCollapse, c); }
-    void setMarginBottomCollapse(EMarginCollapse c) { SET_VAR(rareNonInheritedData, marginBottomCollapse, c); }
+    void setMarginBeforeCollapse(EMarginCollapse c) { SET_VAR(rareNonInheritedData, marginBeforeCollapse, c); }
+    void setMarginAfterCollapse(EMarginCollapse c) { SET_VAR(rareNonInheritedData, marginAfterCollapse, c); }
     void setWordBreak(EWordBreak b) { SET_VAR(rareInheritedData, wordBreak, b); }
     void setWordWrap(EWordWrap b) { SET_VAR(rareInheritedData, wordWrap, b); }
     void setNBSPMode(ENBSPMode b) { SET_VAR(rareInheritedData, nbspMode, b); }
@@ -1033,6 +1041,7 @@ public:
     void setTransformOriginX(Length l) { SET_VAR(rareNonInheritedData.access()->m_transform, m_x, l); }
     void setTransformOriginY(Length l) { SET_VAR(rareNonInheritedData.access()->m_transform, m_y, l); }
     void setTransformOriginZ(float f) { SET_VAR(rareNonInheritedData.access()->m_transform, m_z, f); }
+    void setSpeak(ESpeak s) { SET_VAR(rareInheritedData, speak, s); }
     // End CSS3 Setters
 
     // Apple-specific property setters
@@ -1214,14 +1223,15 @@ public:
     static EUserDrag initialUserDrag() { return DRAG_AUTO; }
     static EUserSelect initialUserSelect() { return SELECT_TEXT; }
     static bool initialTextOverflow() { return false; }
-    static EMarginCollapse initialMarginTopCollapse() { return MCOLLAPSE; }
-    static EMarginCollapse initialMarginBottomCollapse() { return MCOLLAPSE; }
+    static EMarginCollapse initialMarginBeforeCollapse() { return MCOLLAPSE; }
+    static EMarginCollapse initialMarginAfterCollapse() { return MCOLLAPSE; }
     static EWordBreak initialWordBreak() { return NormalWordBreak; }
     static EWordWrap initialWordWrap() { return NormalWordWrap; }
     static ENBSPMode initialNBSPMode() { return NBNORMAL; }
     static EKHTMLLineBreak initialKHTMLLineBreak() { return LBNORMAL; }
     static EMatchNearestMailBlockquoteColor initialMatchNearestMailBlockquoteColor() { return BCNORMAL; }
     static const AtomicString& initialHighlight() { return nullAtom; }
+    static ESpeak initialSpeak() { return SpeakNormal; }
     static Hyphens initialHyphens() { return HyphensManual; }
     static const AtomicString& initialHyphenationString() { return nullAtom; }
     static const AtomicString& initialHyphenationLocale() { return nullAtom; }

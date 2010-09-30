@@ -37,8 +37,8 @@ AC_SUBST(WEBKIT_USER_AGENT_MINOR_VERSION)
 AC_CONFIG_SRCDIR([WebCore/config.h])
 
 dnl # Libtool library version, not to confuse with API version
-dnl # see http://www.gnu.org/software/libtool/manual/html_node/Libtool-versioning.html#Libtool-versioning
-LIBWEBKITGTK_VERSION=1:0:1
+dnl # see http://www.gnu.org/software/libtool/manual/html_node/Libtool-versioning.html
+LIBWEBKITGTK_VERSION=2:0:2
 AC_SUBST([LIBWEBKITGTK_VERSION])
 
 AM_INIT_AUTOMAKE([foreign subdir-objects tar-ustar])
@@ -169,6 +169,17 @@ if test "$png_ok" != yes; then
   fi
 fi
 AC_SUBST([PNG_LIBS])
+
+
+if test "$os_win32" = "yes"; then
+  WINMM_LIBS=-lwinmm
+  SHLWAPI_LIBS=-lshlwapi
+  OLE32_LIBS=-lole32
+fi
+AC_SUBST([WINMM_LIBS])
+AC_SUBST([SHLWAPI_LIBS])
+AC_SUBST([OLE32_LIBS])
+
 
 # determine the GTK+ version to use
 AC_MSG_CHECKING([the GTK+ version to use])
@@ -708,8 +719,24 @@ if test "$enable_jit" = "yes"; then
             enable_jit="no (CPU '$host_cpu' not supported)"
         ;;
     esac
+else
+        AC_DEFINE([ENABLE_JIT], [0], [Define to enable JIT])
 fi
 AC_MSG_RESULT([$enable_jit])
+
+# Opcode stats
+AC_MSG_CHECKING([whether to enable opcode stats])
+AC_ARG_ENABLE([opcode-stats],
+  [AS_HELP_STRING([--enable-opcode-stats], [Enable Opcode statistics (default: disabled)])],
+  [], [enable_opcode_stats=no])
+AC_MSG_RESULT([$enable_opcode_stats])
+
+if test "$enable_opcode_stats" = "yes"; then
+  if test "$enable_jit" = "yes"; then
+    AC_MSG_ERROR([JIT must be disabled for Opcode stats to work.])
+  fi
+  AC_DEFINE([ENABLE_OPCODE_STATS], [1], [Define to enable Opcode statistics])
+fi
 
 # GObject Introspection
 AC_MSG_CHECKING([whether to enable GObject introspection support])
@@ -839,7 +866,10 @@ if test "$enable_video" = "yes"; then
                      gstreamer-interfaces-0.10
                      gstreamer-pbutils-0.10
                      gstreamer-plugins-base-0.10 >= $GSTREAMER_PLUGINS_BASE_REQUIRED_VERSION
-                     gstreamer-video-0.10])
+                     gstreamer-video-0.10],
+                     [have_gstreamer=yes],
+                     [have_gstreamer=no])
+
    AC_SUBST([GSTREAMER_CFLAGS])
    AC_SUBST([GSTREAMER_LIBS])
 fi
@@ -882,6 +912,9 @@ AM_CONDITIONAL([USE_PANGO], [test "$with_font_backend" = "pango"])
 
 # GLib/GIO feature conditionals
 AM_CONDITIONAL([USE_GSETTINGS], [test "$have_gsettings" = "yes"])
+
+# GStreamer feature conditional
+AM_CONDITIONAL([USE_GSTREAMER], [test "$have_gstreamer" = "yes"])
 
 # WebKit feature conditionals
 AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
@@ -927,6 +960,7 @@ AM_CONDITIONAL([SVG_FLAGS],[test "$svg_flags" = "yes"])
 AM_CONDITIONAL([HTML_FLAGS],[test "$html_flags" = "yes"])
 AM_CONDITIONAL([ENABLE_WEB_SOCKETS],[test "$enable_web_sockets" = "yes"])
 AM_CONDITIONAL([ENABLE_WEB_TIMING],[test "$enable_web_timing" = "yes"])
+AM_CONDITIONAL([ENABLE_OPCODE_STATS],[test "$enable_opcode_stats" = "yes"])
 
 # Gtk conditionals
 AM_CONDITIONAL([ENABLE_INTROSPECTION],[test "$enable_introspection" = "yes"])
@@ -981,6 +1015,7 @@ Features:
  HTML5 video element support                              : $enable_video
  Icon database support                                    : $enable_icon_database
  Image resizer support                                    : $enable_image_resizer
+ Opcode stats                                             : $enable_opcode_stats
  SharedWorkers support                                    : $enable_shared_workers
  Speech input support                                     : $enable_input_speech
  SVG support                                              : $enable_svg

@@ -26,6 +26,7 @@
 #ifndef WebIDBIndex_h
 #define WebIDBIndex_h
 
+#include "WebIDBTransaction.h"
 #include "WebString.h"
 
 namespace WebKit {
@@ -60,10 +61,10 @@ public:
         return false;
     }
 
-    virtual void openObjectCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void openCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void getObject(const WebIDBKey&, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void get(const WebIDBKey&, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void openObjectCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void openCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void getObject(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void get(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
 };
 
 } // namespace WebKit

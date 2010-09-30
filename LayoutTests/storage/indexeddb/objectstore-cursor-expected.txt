@@ -6,7 +6,6 @@ On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE
 indexedDB.open('someDB', 'some description')
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -18,15 +17,13 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 db = event.result
-db.createObjectStore('someObjectStore')
+db.setVersion('new version')
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -38,7 +35,25 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
+PASS 'readyState' in event.target is true
+PASS event.target.readyState is event.target.DONE
+
+trans = event.result
+PASS trans !== null is true
+db.createObjectStore('someObjectStore')
+PASS 'onsuccess' in result is true
+PASS 'onerror' in result is true
+PASS 'readyState' in result is true
+An event should fire shortly...
+
+Success event fired:
+PASS 'result' in event is true
+PASS 'code' in event is false
+PASS 'message' in event is false
+PASS 'source' in event is true
+PASS event.source != null is true
+PASS 'onsuccess' in event.target is true
+PASS 'onerror' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
@@ -51,14 +66,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -70,14 +83,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -89,14 +100,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -108,14 +117,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -127,14 +134,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -146,14 +151,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 
@@ -165,14 +168,12 @@ PASS 'source' in event is true
 PASS event.source != null is true
 PASS 'onsuccess' in event.target is true
 PASS 'onerror' in event.target is true
-PASS 'abort' in event.target is true
 PASS 'readyState' in event.target is true
 PASS event.target.readyState is event.target.DONE
 
 objectStore.add('', testData[nextToAdd])
 PASS 'onsuccess' in result is true
 PASS 'onerror' in result is true
-PASS 'abort' in result is true
 PASS 'readyState' in result is true
 An event should fire shortly...
 

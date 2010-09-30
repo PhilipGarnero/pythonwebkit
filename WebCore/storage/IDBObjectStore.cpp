@@ -31,6 +31,7 @@
 #include "IDBIndex.h"
 #include "IDBKey.h"
 #include "IDBKeyRange.h"
+#include "IDBTransactionBackendInterface.h"
 #include "SerializedScriptValue.h"
 #include <wtf/UnusedParam.h>
 
@@ -38,9 +39,12 @@
 
 namespace WebCore {
 
-IDBObjectStore::IDBObjectStore(PassRefPtr<IDBObjectStoreBackendInterface> idbObjectStore)
+IDBObjectStore::IDBObjectStore(PassRefPtr<IDBObjectStoreBackendInterface> idbObjectStore, IDBTransactionBackendInterface* transaction)
     : m_objectStore(idbObjectStore)
+    , m_transaction(transaction)
 {
+    ASSERT(m_objectStore);
+    ASSERT(m_transaction);
     // We pass a reference to this object before it can be adopted.
     relaxAdoptionRequirement();
 }
@@ -62,57 +66,59 @@ PassRefPtr<DOMStringList> IDBObjectStore::indexNames() const
 
 PassRefPtr<IDBRequest> IDBObjectStore::get(ScriptExecutionContext* context, PassRefPtr<IDBKey> key)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->get(key, request);
-    return request;
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->get(key, request, m_transaction.get());
+    return request.release();
 }
 
 PassRefPtr<IDBRequest> IDBObjectStore::add(ScriptExecutionContext* context, PassRefPtr<SerializedScriptValue> value, PassRefPtr<IDBKey> key)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->put(value, key, true, request);
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->put(value, key, true, request, m_transaction.get());
     return request;
 }
 
 PassRefPtr<IDBRequest> IDBObjectStore::put(ScriptExecutionContext* context, PassRefPtr<SerializedScriptValue> value, PassRefPtr<IDBKey> key)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->put(value, key, false, request);
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->put(value, key, false, request, m_transaction.get());
     return request;
 }
 
 PassRefPtr<IDBRequest> IDBObjectStore::remove(ScriptExecutionContext* context, PassRefPtr<IDBKey> key)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->remove(key, request);
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->remove(key, request, m_transaction.get());
     return request;
 }
 
 PassRefPtr<IDBRequest> IDBObjectStore::createIndex(ScriptExecutionContext* context, const String& name, const String& keyPath, bool unique)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->createIndex(name, keyPath, unique, request);
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->createIndex(name, keyPath, unique, request, m_transaction.get());
     return request;
 }
 
 PassRefPtr<IDBIndex> IDBObjectStore::index(const String& name)
 {
+    // FIXME: If this is null, we should raise a NOT_FOUND_ERR.
     RefPtr<IDBIndexBackendInterface> index = m_objectStore->index(name);
-    ASSERT(index); // FIXME: If this is null, we should raise a NOT_FOUND_ERR.
-    return IDBIndex::create(index.release());
+    if (!index)
+        return 0;
+    return IDBIndex::create(index.release(), m_transaction.get());
 }
 
 PassRefPtr<IDBRequest> IDBObjectStore::removeIndex(ScriptExecutionContext* context, const String& name)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->removeIndex(name, request);
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->removeIndex(name, request, m_transaction.get());
     return request;
 }
 
 PassRefPtr<IDBRequest> IDBObjectStore::openCursor(ScriptExecutionContext* context, PassRefPtr<IDBKeyRange> range, unsigned short direction)
 {
-    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this));
-    m_objectStore->openCursor(range, direction, request);
+    RefPtr<IDBRequest> request = IDBRequest::create(context, IDBAny::create(this), m_transaction.get());
+    m_objectStore->openCursor(range, direction, request, m_transaction.get());
     return request.release();
 }
 

@@ -14,13 +14,18 @@ MACRO(WEBKIT_SET_EXTRA_COMPILER_FLAGS _target)
         SET(OLD_COMPILE_FLAGS "${OLD_COMPILE_FLAGS} -fno-tree-sra")
     ENDIF ()
 
-    IF (SHARED_CORE)
-        SET_TARGET_PROPERTIES (${_target} PROPERTIES
-            COMPILE_FLAGS "-fno-exceptions -fstrict-aliasing ${OLD_COMPILE_FLAGS}")
-    ELSE ()
-        SET_TARGET_PROPERTIES (${_target} PROPERTIES
-            COMPILE_FLAGS "-fPIC -fno-exceptions -fstrict-aliasing -fvisibility=hidden ${OLD_COMPILE_FLAGS}")
+    IF (NOT SHARED_CORE)
+        SET(OLD_COMPILE_FLAGS "-fPIC -fvisibility=hidden ${OLD_COMPILE_FLAGS}")
     ENDIF ()
+
+    SET(OLD_COMPILE_FLAGS "-fno-exceptions -fno-strict-aliasing ${OLD_COMPILE_FLAGS}")
+
+    # Enable warnings by default
+    SET(OLD_COMPILE_FLAGS "-W -DANOTHER_BRICK_IN_THE -Wall -Wextra -Wcast-align -Wchar-subscripts -Wformat -Wformat-security -Wmissing-format-attribute -Wno-format-y2k -Wno-parentheses -Wno-unused-parameter -Wpointer-arith  -Wreturn-type -Wundef -Wwrite-strings ${OLD_COMPILE_FLAGS}")
+
+    SET_TARGET_PROPERTIES (${_target} PROPERTIES
+	COMPILE_FLAGS "${OLD_COMPILE_FLAGS}")
+
     UNSET(OLD_COMPILE_FLAGS)
   ENDIF ()
 ENDMACRO()

@@ -439,9 +439,9 @@ static void writeTextRun(TextStream& ts, const RenderText& o, const InlineTextBo
     int y = run.m_y;
     if (o.containingBlock()->isTableCell())
         y -= toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
-    ts << "text run at (" << run.m_x << "," << y << ") width " << run.m_width;
-    if (run.direction() == RTL || run.m_dirOverride) {
-        ts << (run.direction() == RTL ? " RTL" : " LTR");
+    ts << "text run at (" << run.m_x << "," << y << ") width " << run.m_logicalWidth;
+    if (!run.isLeftToRightDirection() || run.m_dirOverride) {
+        ts << (!run.isLeftToRightDirection() ? " RTL" : " LTR");
         if (run.m_dirOverride)
             ts << " override";
     }

@@ -13,91 +13,77 @@ BUG_DRT MAC LINUX : fast/backgrounds/animated-gif-as-background.html = IMAGE
 
 // input-speech related failures
 BUG_DRT WIN MAC LINUX : fast/speech/input-text-speechbutton.html = TEXT
-BUG_DRT WIN MAC : fast/speech/input-appearance-numberandspeech.html = IMAGE
-BUG_DRT WIN MAC : fast/speech/input-appearance-searchandspeech.html = IMAGE
-BUG_DRT WIN MAC : fast/speech/input-appearance-speechbutton.html = IMAGE
+BUG_DRT WIN MAC LINUX : fast/speech/input-appearance-numberandspeech.html = IMAGE
+BUG_DRT WIN MAC LINUX : fast/speech/input-appearance-searchandspeech.html = IMAGE
+BUG_DRT WIN MAC LINUX : fast/speech/input-appearance-speechbutton.html = IMAGE
 
 BUG48431 WIN MAC LINUX : plugins/geturlnotify-during-document-teardown.html = TEXT
 BUG48431 WIN MAC LINUX : plugins/open-and-close-window-with-plugin.html = TEXT
 
-// Need to implement something?
-BUG_DRT WIN : http/tests/inspector-enabled/console-log-before-frame-navigation.html = CRASH
+// Inspector-related failures
+BUG_DRT WIN : http/tests/inspector-enabled/console-log-before-frame-navigation.html = TEXT
+BUG_DRT WIN : http/tests/inspector/change-iframe-src.html = CRASH
 // Inspector tests in Debug build are very slow.  If we remove SLOW, we'll see
 // random TIMEOUTs.  Is this issue DRT-specific?
 BUG_DRT WIN DEBUG SLOW : inspector = PASS
 
 
 // WebGL tests sometimes fail only on the buildbot.
-BUG_DRT MAC LINUX : fast/canvas/webgl/bad-arguments-test.html = TEXT
+BUG_DRT MAC : fast/canvas/webgl/bad-arguments-test.html = TEXT
 BUG_DRT MAC : fast/canvas/webgl/buffer-bind-test.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/buffer-data-array-buffer.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/canvas-test.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/context-attributes-alpha-depth-stencil-antialias.html = TEXT PASS TIMEOUT
+BUG_DRT MAC : fast/canvas/webgl/context-attributes-alpha-depth-stencil-antialias.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/context-attributes.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/copy-tex-image-and-sub-image-2d.html = TEXT PASS TIMEOUT
+BUG_DRT MAC : fast/canvas/webgl/copy-tex-image-and-sub-image-2d.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/css-webkit-canvas-repaint.html = IMAGE+TEXT
 BUG_DRT MAC : fast/canvas/webgl/css-webkit-canvas.html = IMAGE+TEXT
-BUG_DRT MAC LINUX : fast/canvas/webgl/draw-arrays-out-of-bounds.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/draw-arrays-out-of-bounds.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/draw-elements-out-of-bounds.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/draw-elements-out-of-bounds.html = CRASH
-BUG_DRT MAC LINUX : fast/canvas/webgl/error-reporting.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/error-reporting.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/framebuffer-object-attachment.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/framebuffer-test.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/framebuffer-test.html = CRASH
-BUG_DRT MAC LINUX : fast/canvas/webgl/get-active-test.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/gl-bind-attrib-location-test.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/get-active-test.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/gl-bind-attrib-location-test.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/gl-enable-enum-test.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/gl-enum-tests.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/gl-enum-tests.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/gl-get-calls.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/gl-get-calls.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/gl-object-get-calls.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/gl-object-get-calls.html = CRASH
-BUG_DRT MAC LINUX : fast/canvas/webgl/gl-pixelstorei.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/gl-pixelstorei.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/gl-teximage.html = TEXT
-BUG_DRT LINUX : fast/canvas/webgl/gl-teximage.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/gl-uniform-arrays.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/gl-uniformmatrix4fv.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/gl-uniformmatrix4fv.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/gl-vertex-attrib.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/incorrect-context-object-behaviour.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/index-validation-copies-indices.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/incorrect-context-object-behaviour.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/index-validation-copies-indices.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/index-validation-crash-with-buffer-sub-data.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/index-validation-verifies-too-many-indices.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/index-validation-with-resized-buffer.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/index-validation.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/index-validation-verifies-too-many-indices.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/index-validation-with-resized-buffer.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/index-validation.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/invalid-UTF-16.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/invalid-passed-params.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/null-object-behaviour.html = TEXT
-BUG_DRT MAC LINUX : fast/canvas/webgl/null-uniform-location.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/null-object-behaviour.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/null-uniform-location.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/point-size.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/program-test.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/read-pixels-pack-alignment.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/program-test.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/read-pixels-pack-alignment.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/renderbuffer-initialization.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/tex-image-and-sub-image-2d-with-array-buffer-view.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-image-and-sub-image-2d-with-array-buffer-view.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-data.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-image-and-sub-image-2d-with-image-data.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/tex-image-and-sub-image-2d-with-image.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-image-and-sub-image-2d-with-image.html = CRASH
-BUG_DRT LINUX : fast/canvas/webgl/tex-image-and-sub-image-2d-with-video.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/tex-image-and-uniform-binding-bugs.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-image-and-uniform-binding-bugs.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/tex-image-with-format-and-type.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-image-with-format-and-type.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/tex-input-validation.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-input-validation.html = CRASH
 BUG_DRT MAC : fast/canvas/webgl/tex-sub-image-2d.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/tex-sub-image-2d.html = CRASH
-BUG_DRT MAC LINUX : fast/canvas/webgl/texImage2DImageDataTest.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/texImage2DImageDataTest.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/texImageTest.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/texImageTest.html = CRASH
-BUG_DRT MAC LINUX : fast/canvas/webgl/texture-active-bind.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/texture-complete.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/texture-active-bind.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/texture-complete.html = TEXT PASS
 BUG_DRT MAC : fast/canvas/webgl/texture-npot.html = TEXT PASS
-BUG_DRT LINUX : fast/canvas/webgl/texture-npot.html = CRASH
-BUG_DRT MAC LINUX : fast/canvas/webgl/texture-transparent-pixels-initialized.html = TEXT PASS TIMEOUT
-BUG_DRT MAC LINUX : fast/canvas/webgl/triangle.html = TEXT PASS
-BUG_DRT MAC LINUX : fast/canvas/webgl/viewport-unchanged-upon-resize.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/texture-transparent-pixels-initialized.html = TEXT PASS TIMEOUT
+BUG_DRT MAC : fast/canvas/webgl/triangle.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/uniform-location.html = TEXT PASS
+BUG_DRT MAC : fast/canvas/webgl/viewport-unchanged-upon-resize.html = TEXT PASS
 
 // Background color is wrong.
 BUG_DRT MAC : fast/backgrounds/solid-color-context-restore.html = IMAGE
@@ -115,10 +101,14 @@ BUG_DRT LINUX : fast/text/international/003.html = IMAGE
 // CJK characters are not rotated.
 BUG_DRT LINUX : svg/batik/text/verticalText.svg = IMAGE+TEXT
 
-// Misc.
+// Need modal dialog support.
+BUG_DRT WIN : fast/events/show-modal-dialog-onblur-onfocus.html = TEXT
+BUG_DRT WIN : fast/harness/show-modal-dialog.html = TEXT
+
+// Not investigated.
 BUG_DRT WIN MAC LINUX : fast/dynamic/window-resize-scrollbars-test.html = IMAGE+TEXT
 BUG_DRT WIN MAC LINUX : storage/domstorage/quota.html = TEXT
-BUG_DRT WIN MAC LINUX : storage/indexeddb/objectstore-basics.html = TEXT
+BUG_DRT WIN MAC LINUX : scrollbars/custom-scrollbar-with-incomplete-style.html = IMAGE
 BUG_DRT MAC LINUX : http/tests/misc/slow-loading-image-in-pattern.html = IMAGE PASS
 BUG_DRT MAC LINUX : http/tests/plugins/post-url-file.html = TIMEOUT
 BUG_DRT LINUX : fast/events/select-onchange-crash.html = CRASH
@@ -130,26 +120,12 @@ BUG_DRT LINUX : fast/text/international/thai-line-breaks.html = IMAGE
 BUG_DRT LINUX : fast/text/international/wrap-CJK-001.html = IMAGE
 BUG_DRT LINUX : http/tests/multipart/invalid-image-data.html = IMAGE
 BUG_DRT LINUX : platform/chromium/fast/text/chromium-linux-fontconfig-renderstyle.html = IMAGE+TEXT
-BUG_DRT LINUX : svg/dynamic-updates/SVGFEDiffuseLightingElement-lighting-color-css-prop.html = IMAGE
 BUG_DRT MAC : media/video-aspect-ratio.html = TIMEOUT
 BUG_DRT MAC : media/video-controls-transformed.html = TEXT
 BUG_DRT MAC : media/video-play-empty-events.html = CRASH TIMEOUT PASS
 BUG_DRT MAC : media/video-src-change.html = CRASH TEXT PASS
 BUG_DRT MAC : svg/custom/clip-path-referencing-use2.svg = TEXT
-
-// plugin-related failures
-BUG_DRT WIN : fast/dom/object-embed-plugin-scripting.html = TEXT
-BUG_DRT WIN : plugins/embed-attributes-setting.html = TEXT
-
-// something to do with mime types of audio/video.
-BUG_DRT WIN : userscripts/user-script-audio-document.html = TEXT
-BUG_DRT WIN : userscripts/user-script-video-document.html = TEXT
-
-// unknown.
-BUG_DRT WIN : fast/events/show-modal-dialog-onblur-onfocus.html = TEXT
-BUG_DRT WIN : fast/harness/show-modal-dialog.html = TEXT
 BUG_DRT WIN : fast/notifications/notifications-replace.html = TEXT
 
-// Pass with DRT though FAIL on test_shell
+// PASS with DRT though FAIL on test_shell
 BUG_DRT : platform/chromium/accessibility = PASS
-BUG_DRT : userscripts/user-script-top-frame-only.html = PASS

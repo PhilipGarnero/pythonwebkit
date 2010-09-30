@@ -631,7 +631,7 @@ void DumpRenderTreeSupportQt::dumpNotification(bool b)
 
 QString DumpRenderTreeSupportQt::viewportAsText(QWebPage* page, const QSize& availableSize)
 {
-    WebCore::ViewportArguments args = page->mainFrame()->d->viewportArguments;
+    WebCore::ViewportArguments args = page->mainFrame()->d->viewportArguments();
     WebCore::ViewportConfiguration conf = WebCore::findConfigurationForViewportData(args,
         /* desktop-width */ 980,
         /* device-width  */ 320,
@@ -762,6 +762,15 @@ void DumpRenderTreeSupportQt::simulateDesktopNotificationClick(const QString& ti
 #if ENABLE(NOTIFICATIONS)
     NotificationPresenterClientQt::notificationPresenter()->notificationClicked(title);
 #endif
+}
+
+QString DumpRenderTreeSupportQt::plainText(const QVariant& range)
+{
+    QMap<QString, QVariant> map = range.toMap();
+    QVariant startContainer  = map.value("startContainer");
+    map = startContainer.toMap();
+
+    return map.value("innerText").toString();
 }
 
 // Provide a backward compatibility with previously exported private symbols as of QtWebKit 4.6 release

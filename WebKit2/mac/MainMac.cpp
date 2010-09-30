@@ -23,10 +23,33 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// The framework entry point.
-extern "C" int WebKitMain(int argc, char **argv);
+#include <dlfcn.h>
+
+static void closeUnusedFileDescriptors()
+{
+    int numFDs = getdtablesize();
+
+    // Close all file descriptors except stdin, stdout and stderr.
+    for (int fd = 3; fd < numFDs; ++fd)
+        close(fd);
+}
 
 int main(int argc, char** argv)
 {
-    return WebKitMain(argc, argv);
+    closeUnusedFileDescriptors();
+
+    static void* frameworkLibrary = dlopen("/System/Library/PrivateFrameworks/WebKit2.framework/WebKit2", RTLD_NOW);
+    if (!frameworkLibrary) {
+        fprintf(stderr, "Unable to load WebKit2.framework: %s\n", dlerror());
+        return EXIT_FAILURE;
+    }
+
+    typedef int (*WebKitMainFunction)(int argc, char** argv);
+    WebKitMainFunction webKitMain = reinterpret_cast<WebKitMainFunction>(dlsym(frameworkLibrary, "WebKitMain"));
+    if (!webKitMain) {
+        fprintf(stderr, "Unable to find entry point in WebKit2.framework: %s\n", dlerror());
+        return EXIT_FAILURE;
+    }
+
+    return webKitMain(argc, argv);
 }

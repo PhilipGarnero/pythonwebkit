@@ -568,7 +568,7 @@ button
 button-bevel
 default-button
 inner-spin-button
-input-speech-button
+-webkit-input-speech-button
 list-button
 listbox
 listitem
@@ -712,6 +712,14 @@ fill
 stroke
 #all
 #none
+
+#
+# CSS_PROP_SPEECH
+#
+spell-out
+digits
+literal-punctuation
+no-punctuation
 
 #
 # -webkit-font-smoothing

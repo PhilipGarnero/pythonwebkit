@@ -49,6 +49,8 @@ public:
         Handle();
         ~Handle();
 
+        bool isNull() const;
+
         void encode(CoreIPC::ArgumentEncoder*) const;
         static bool decode(CoreIPC::ArgumentDecoder*, Handle&);
 

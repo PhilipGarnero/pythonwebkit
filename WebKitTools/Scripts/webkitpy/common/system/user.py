@@ -28,6 +28,7 @@
 
 import logging
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -51,6 +52,9 @@ except ImportError:
 
 
 class User(object):
+    DEFAULT_NO = 'n'
+    DEFAULT_YES = 'y'
+
     # FIXME: These are @classmethods because bugzilla.py doesn't have a Tool object (thus no User instance).
     @classmethod
     def prompt(cls, message, repeat=1, raw_input=raw_input):
@@ -61,20 +65,40 @@ class User(object):
         return response
 
     @classmethod
-    def prompt_with_list(cls, list_title, list_items):
+    def prompt_with_list(cls, list_title, list_items, can_choose_multiple=False, raw_input=raw_input):
         print list_title
         i = 0
         for item in list_items:
             i += 1
             print "%2d. %s" % (i, item)
-        result = int(cls.prompt("Enter a number: ")) - 1
-        return list_items[result]
+
+        # Loop until we get valid input
+        while True:
+            if can_choose_multiple:
+                response = cls.prompt("Enter one or more numbers (comma-separated), or \"all\": ", raw_input=raw_input)
+                if not response.strip() or response == "all":
+                    return list_items
+                try:
+                    indices = [int(r) - 1 for r in re.split("\s*,\s*", response)]
+                except ValueError, err:
+                    continue
+                return [list_items[i] for i in indices]
+            else:
+                try:
+                    result = int(cls.prompt("Enter a number: ", raw_input=raw_input)) - 1
+                except ValueError, err:
+                    continue
+                return list_items[result]
 
     def edit(self, files):
         editor = os.environ.get("EDITOR") or "vi"
         args = shlex.split(editor)
         # Note: Not thread safe: http://bugs.python.org/issue2320
         subprocess.call(args + files)
+
+    def _warn_if_application_is_xcode(self, edit_application):
+        if "Xcode" in edit_application:
+            print "Instead of using Xcode.app, consider using EDITOR=\"xed --wait\"."
 
     def edit_changelog(self, files):
         edit_application = os.environ.get("CHANGE_LOG_EDIT_APPLICATION")
@@ -83,8 +107,7 @@ class User(object):
             args = shlex.split(edit_application)
             print "Using editor in the CHANGE_LOG_EDIT_APPLICATION environment variable."
             print "Please quit the editor application when done editing."
-            if edit_application.find("Xcode.app"):
-                print "Instead of using Xcode.app, consider using EDITOR=\"xed --wait\"."
+            self._warn_if_application_is_xcode(edit_application)
             subprocess.call(["open", "-W", "-n", "-a"] + args + files)
             return
         self.edit(files)
@@ -98,11 +121,14 @@ class User(object):
         except IOError, e:
             pass
 
-    def confirm(self, message=None):
+    def confirm(self, message=None, default=DEFAULT_YES, raw_input=raw_input):
         if not message:
             message = "Continue?"
-        response = raw_input("%s [Y/n]: " % message)
-        return not response or response.lower() == "y"
+        choice = {'y': 'Y/n', 'n': 'y/N'}[default]
+        response = raw_input("%s [%s]: " % (message, choice))
+        if not response:
+            response = default
+        return response.lower() == 'y'
 
     def can_open_url(self):
         try:

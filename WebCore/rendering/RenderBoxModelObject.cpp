@@ -320,11 +320,11 @@ int RenderBoxModelObject::relativePositionOffsetX() const
 {
     // Objects that shrink to avoid floats normally use available line width when computing containing block width.  However
     // in the case of relative positioning using percentages, we can't do this.  The offset should always be resolved using the
-    // available width of the containing block.  Therefore we don't use containingBlockWidthForContent() here, but instead explicitly
+    // available width of the containing block.  Therefore we don't use containingBlockLogicalWidthForContent() here, but instead explicitly
     // call availableWidth on our containing block.
     if (!style()->left().isAuto()) {
         RenderBlock* cb = containingBlock();
-        if (!style()->right().isAuto() && containingBlock()->style()->direction() == RTL)
+        if (!style()->right().isAuto() && !containingBlock()->style()->isLeftToRightDirection())
             return -style()->right().calcValue(cb->availableWidth());
         return style()->left().calcValue(cb->availableWidth());
     }
@@ -348,13 +348,13 @@ int RenderBoxModelObject::relativePositionOffsetY() const
     if (!style()->top().isAuto()
         && (!containingBlock->style()->height().isAuto()
             || !style()->top().isPercent()
-            || containingBlock->stretchesToViewHeight()))
+            || containingBlock->stretchesToViewport()))
         return style()->top().calcValue(containingBlock->availableHeight());
 
     if (!style()->bottom().isAuto()
         && (!containingBlock->style()->height().isAuto()
             || !style()->bottom().isPercent()
-            || containingBlock->stretchesToViewHeight()))
+            || containingBlock->stretchesToViewport()))
         return -style()->bottom().calcValue(containingBlock->availableHeight());
 
     return 0;
@@ -505,8 +505,8 @@ void RenderBoxModelObject::paintFillLayerExtended(const PaintInfo& paintInfo, co
     if (context->paintingDisabled())
         return;
 
-    bool includeLeftEdge = box ? box->includeLeftEdge() : true;
-    bool includeRightEdge = box ? box->includeRightEdge() : true;
+    bool includeLeftEdge = box ? box->includeLogicalLeftEdge() : true;
+    bool includeRightEdge = box ? box->includeLogicalRightEdge() : true;
     int bLeft = includeLeftEdge ? borderLeft() : 0;
     int bRight = includeRightEdge ? borderRight() : 0;
     int pLeft = includeLeftEdge ? paddingLeft() : 0;
@@ -624,6 +624,12 @@ void RenderBoxModelObject::paintFillLayerExtended(const PaintInfo& paintInfo, co
                         // Can't scroll a frameset document anyway.
                         isOpaqueRoot = body->hasLocalName(framesetTag);
                     }
+#if ENABLE(SVG)
+                    else {
+                        // SVG documents and XML documents with SVG root nodes are transparent.
+                        isOpaqueRoot = !document()->hasSVGRootNode();
+                    }
+#endif
                 }
             } else
                 isOpaqueRoot = !view()->frameView()->isTransparent();
@@ -1775,9 +1781,9 @@ void RenderBoxModelObject::paintBoxShadow(GraphicsContext* context, int tx, int 
     }
 }
 
-int RenderBoxModelObject::containingBlockWidthForContent() const
+int RenderBoxModelObject::containingBlockLogicalWidthForContent() const
 {
-    return containingBlock()->availableWidth();
+    return containingBlock()->availableLogicalWidth();
 }
 
 } // namespace WebCore

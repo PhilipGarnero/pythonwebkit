@@ -48,15 +48,15 @@ RenderMeter::~RenderMeter()
         m_barPart->detach();
 }
 
-void RenderMeter::calcWidth()
+void RenderMeter::computeLogicalWidth()
 {
-    RenderBox::calcWidth();
+    RenderBox::computeLogicalWidth();
     setWidth(theme()->meterSizeForBounds(this, frameRect()).width());
 }
 
-void RenderMeter::calcHeight()
+void RenderMeter::computeLogicalHeight()
 {
-    RenderBox::calcHeight();
+    RenderBox::computeLogicalHeight();
     setHeight(theme()->meterSizeForBounds(this, frameRect()).height());
 }
 
@@ -105,7 +105,7 @@ IntRect RenderMeter::valuePartRect() const
     
     if (rect.height() <= rect.width()) {
         int width = static_cast<int>(rect.width()*valueRatio());
-        if (style()->direction() == RTL) {
+        if (!style()->isLeftToRightDirection()) {
             rect.setX(rect.x() + (rect.width() - width));
             rect.setWidth(width);
         } else

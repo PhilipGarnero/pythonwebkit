@@ -94,11 +94,17 @@ public:
     bool open();
     void invalidate();
 
+    // FIXME: This variant of send is deprecated, all clients should move to the overload that takes a message.
     template<typename E, typename T> bool send(E messageID, uint64_t destinationID, const T& arguments);
     
+    template<typename T> bool send(const T& message, uint64_t destinationID);
+
     static const unsigned long long NoTimeout = 10000000000ULL;
+    // FIXME: This variant of send is deprecated, all clients should move to the overload that takes a message.
     template<typename E, typename T, typename U> bool sendSync(E messageID, uint64_t destinationID, const T& arguments, const U& reply, double timeout);
 
+    template<typename T> bool sendSync(const T& message, const typename T::Reply& reply, uint64_t destinationID, double timeout);
+    
     template<typename E> PassOwnPtr<ArgumentDecoder> waitFor(E messageID, uint64_t destinationID, double timeout);
 
     bool sendMessage(MessageID, PassOwnPtr<ArgumentEncoder>);
@@ -145,9 +151,11 @@ private:
     
     bool isValid() const { return m_client; }
     
-    PassOwnPtr<ArgumentDecoder> sendSyncMessage(MessageID, uint64_t syncRequestID, PassOwnPtr<ArgumentEncoder>, double timeout);
     PassOwnPtr<ArgumentDecoder> waitForMessage(MessageID, uint64_t destinationID, double timeout);
     
+    PassOwnPtr<ArgumentDecoder> sendSyncMessage(MessageID, uint64_t syncRequestID, PassOwnPtr<ArgumentEncoder>, double timeout);
+    PassOwnPtr<ArgumentDecoder> waitForSyncReply(uint64_t syncRequestID, double timeout);
+
     // Called on the connection work queue.
     void processIncomingMessage(MessageID, PassOwnPtr<ArgumentDecoder>);
     bool canSendOutgoingMessages() const;
@@ -181,7 +189,49 @@ private:
     ThreadCondition m_waitForMessageCondition;
     Mutex m_waitForMessageMutex;
     HashMap<std::pair<unsigned, uint64_t>, ArgumentDecoder*> m_waitForMessageMap;
+
+    // Represents a sync request for which we're waiting on a reply.
+    struct PendingSyncReply {
+        // The request ID.
+        uint64_t syncRequestID;
+
+        // The reply decoder, will be null if there was an error processing the sync
+        // message on the other side.
+        ArgumentDecoder* replyDecoder;
+
+        // Will be set to true once a reply has been received or an error occurred.
+        bool didReceiveReply;
     
+        PendingSyncReply()
+            : syncRequestID(0)
+            , replyDecoder(0)
+            , didReceiveReply(false)
+        {
+        }
+
+        explicit PendingSyncReply(uint64_t syncRequestID)
+            : syncRequestID(syncRequestID)
+            , replyDecoder(0)
+            , didReceiveReply(0)
+        {
+        }
+
+        PassOwnPtr<ArgumentDecoder> releaseReplyDecoder()
+        {
+            OwnPtr<ArgumentDecoder> reply = adoptPtr(replyDecoder);
+            replyDecoder = 0;
+            
+            return reply.release();
+        }
+    };
+
+
+    Mutex m_waitForSyncReplyMutex;
+    ThreadCondition m_waitForSyncReplyCondition;
+
+    // This is protected by the m_waitForSyncReply mutex.    
+    Vector<PendingSyncReply> m_pendingSyncReplies;
+
 #if PLATFORM(MAC)
     // Called on the connection queue.
     void receiveSourceEventHandler();
@@ -219,6 +269,14 @@ bool Connection::send(E messageID, uint64_t destinationID, const T& arguments)
     return sendMessage(MessageID(messageID), argumentEncoder.release());
 }
 
+template<typename T> bool Connection::send(const T& message, uint64_t destinationID)
+{
+    OwnPtr<ArgumentEncoder> argumentEncoder(new ArgumentEncoder(destinationID));
+    argumentEncoder->encode(message);
+    
+    return sendMessage(MessageID(T::messageID), argumentEncoder.release());
+}
+
 template<typename E, typename T, typename U>
 inline bool Connection::sendSync(E messageID, uint64_t destinationID, const T& arguments, const U& reply, double timeout)
 {
@@ -239,6 +297,27 @@ inline bool Connection::sendSync(E messageID, uint64_t destinationID, const T& a
     
     // Decode the reply.
     return replyDecoder->decode(const_cast<U&>(reply));
+}
+
+template<typename T> bool Connection::sendSync(const T& message, const typename T::Reply& reply, uint64_t destinationID, double timeout)
+{
+    OwnPtr<ArgumentEncoder> argumentEncoder(new ArgumentEncoder(destinationID));
+    
+    uint64_t syncRequestID = ++m_syncRequestID;
+
+    // Encode the sync request ID.
+    argumentEncoder->encode(syncRequestID);
+    
+    // Encode the rest of the input arguments.
+    argumentEncoder->encode(message);
+
+    // Now send the message and wait for a reply.
+    OwnPtr<ArgumentDecoder> replyDecoder = sendSyncMessage(MessageID(T::messageID, MessageID::SyncMessage), syncRequestID, argumentEncoder.release(), timeout);
+    if (!replyDecoder)
+        return false;
+
+    // Decode the reply.
+    return replyDecoder->decode(const_cast<typename T::Reply&>(reply));
 }
 
 template<typename E> inline PassOwnPtr<ArgumentDecoder> Connection::waitFor(E messageID, uint64_t destinationID, double timeout)

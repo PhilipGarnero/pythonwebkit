@@ -101,15 +101,13 @@ void NetscapePlugin::invalidate(const NPRect* invalidRect)
 const char* NetscapePlugin::userAgent()
 {
     if (m_userAgent.isNull()) {
-        // FIXME: Pass the src URL.
-        m_userAgent = m_pluginController->userAgent(KURL()).utf8();
+        m_userAgent = m_pluginController->userAgent().utf8();
         ASSERT(!m_userAgent.isNull());
     }
-    
     return m_userAgent.data();
 }
 
-void NetscapePlugin::loadURL(const String& method, const String& urlString, const String& target, const HTTPHeaderMap& headerFields, const Vector<char>& httpBody,
+void NetscapePlugin::loadURL(const String& method, const String& urlString, const String& target, const HTTPHeaderMap& headerFields, const Vector<uint8_t>& httpBody,
                              bool sendNotification, void* notificationData)
 {
     uint64_t requestID = ++m_nextRequestID;
@@ -358,7 +356,7 @@ bool NetscapePlugin::initialize(PluginController* pluginController, const Parame
 
     // Load the src URL if needed.
     if (!parameters.loadManually && !parameters.url.isEmpty() && shouldLoadSrcURL())
-        loadURL("GET", parameters.url.string(), String(), HTTPHeaderMap(), Vector<char>(), false, 0);
+        loadURL("GET", parameters.url.string(), String(), HTTPHeaderMap(), Vector<uint8_t>(), false, 0);
     
     return true;
 }
@@ -374,6 +372,8 @@ void NetscapePlugin::destroy()
 
     m_isStarted = false;
     m_pluginController = 0;
+
+    platformDestroy();
 }
     
 void NetscapePlugin::paint(GraphicsContext* context, const IntRect& dirtyRect)
@@ -395,6 +395,7 @@ void NetscapePlugin::geometryDidChange(const IntRect& frameRect, const IntRect& 
     m_frameRect = frameRect;
     m_clipRect = clipRect;
 
+    platformGeometryDidChange();
     callSetWindow();
 }
 

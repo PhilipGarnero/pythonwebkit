@@ -29,11 +29,13 @@
 #include "WebCommon.h"
 #include "WebDOMStringList.h"
 #include "WebIDBCallbacks.h"
+#include "WebIDBTransaction.h"
 #include "WebString.h"
 
 namespace WebKit {
 
 class WebIDBKeyRange;
+class WebIDBTransaction;
 
 // See comment in WebIndexedDatabase for a high level overview these classes.
 class WebIDBObjectStore {
@@ -55,36 +57,23 @@ public:
         WEBKIT_ASSERT_NOT_REACHED();
         return WebDOMStringList();
     }
-    virtual void get(const WebIDBKey& key, WebIDBCallbacks*)
-    {
-        WEBKIT_ASSERT_NOT_REACHED();
-    }
-    virtual void put(const WebSerializedScriptValue& value, const WebIDBKey& key, bool addOnly, WebIDBCallbacks*)
-    {
-        WEBKIT_ASSERT_NOT_REACHED();
-    }
-    virtual void remove(const WebIDBKey& key, WebIDBCallbacks*)
-    {
-        WEBKIT_ASSERT_NOT_REACHED();
-    }
-    virtual void createIndex(const WebString& name, const WebString& keyPath, bool unique, WebIDBCallbacks*)
-    {
-        WEBKIT_ASSERT_NOT_REACHED();
-    }
+
+    virtual void get(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void put(const WebSerializedScriptValue&, const WebIDBKey&, bool addOnly, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void remove(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    // FIXME: Remove once we update Chromium side.
+    virtual void createIndex(const WebString& name, const WebString& keyPath, bool unique, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void createIndex(const WebString& name, const WebString& keyPath, bool unique, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
     // Transfers ownership of the WebIDBIndex to the caller.
     virtual WebIDBIndex* index(const WebString& name)
     {
         WEBKIT_ASSERT_NOT_REACHED();
         return 0;
     }
-    virtual void removeIndex(const WebString& name, WebIDBCallbacks*)
-    {
-        WEBKIT_ASSERT_NOT_REACHED();
-    }
-    virtual void openCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*)
-    {
-        WEBKIT_ASSERT_NOT_REACHED();
-    }
+    // FIXME: Remove once we update Chromium side.
+    virtual void removeIndex(const WebString& name, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void removeIndex(const WebString& name, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void openCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
     // FIXME: finish.
 };
 

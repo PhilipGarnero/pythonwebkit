@@ -200,7 +200,7 @@ namespace WebCore {
         void setDOMPasteAllowed(bool);
         bool isDOMPasteAllowed() const { return m_isDOMPasteAllowed; }
         
-        void setMinDOMTimerInterval(double); // Interval specified in seconds.
+        static void setMinDOMTimerInterval(double); // Interval specified in seconds.
         
         void setUsesPageCache(bool);
         bool usesPageCache() const { return m_usesPageCache; }
@@ -240,9 +240,6 @@ namespace WebCore {
 
         void setLocalStorageDatabasePath(const String&);
         const String& localStorageDatabasePath() const { return m_localStorageDatabasePath; }
-
-        void setFileSystemRootPath(const String&);
-        const String& fileSystemRootPath() const { return m_fileSystemRootPath; }
 
         void setApplicationChromeMode(bool);
         bool inApplicationChromeMode() const { return m_inApplicationChromeMode; }
@@ -330,13 +327,15 @@ namespace WebCore {
         void setUsePreHTML5ParserQuirks(bool flag) { m_usePreHTML5ParserQuirks = flag; }
         bool usePreHTML5ParserQuirks() const { return m_usePreHTML5ParserQuirks; }
 
+        void setHyperlinkAuditingEnabled(bool flag) { m_hyperlinkAuditingEnabled = flag; }
+        bool hyperlinkAuditingEnabled() const { return m_hyperlinkAuditingEnabled; }
+
     private:
         Page* m_page;
 
         String m_defaultTextEncodingName;
         String m_ftpDirectoryTemplatePath;
         String m_localStorageDatabasePath;
-        String m_fileSystemRootPath;
         KURL m_userStyleSheetLocation;
         AtomicString m_standardFontFamily;
         AtomicString m_fixedFontFamily;
@@ -417,6 +416,7 @@ namespace WebCore {
         bool m_memoryInfoEnabled: 1;
         bool m_interactiveFormValidation: 1;
         bool m_usePreHTML5ParserQuirks: 1;
+        bool m_hyperlinkAuditingEnabled : 1;
 
 #if USE(SAFARI_THEME)
         static bool gShouldPaintNativeControls;

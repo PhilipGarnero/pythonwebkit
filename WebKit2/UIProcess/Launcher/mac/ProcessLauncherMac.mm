@@ -73,6 +73,22 @@ static const char* processName()
 }
 #endif
 
+static void setUpTerminationNotificationHandler(pid_t pid)
+{
+#if HAVE(DISPATCH_H)
+    dispatch_source_t processDiedSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_PROC, pid, DISPATCH_PROC_EXIT, dispatch_get_current_queue());
+    dispatch_source_set_event_handler(processDiedSource, ^{
+        int status;
+        waitpid(dispatch_source_get_handle(processDiedSource), &status, 0);
+        dispatch_source_cancel(processDiedSource);
+    });
+    dispatch_source_set_cancel_handler(processDiedSource, ^{
+        dispatch_release(processDiedSource);
+    });
+    dispatch_resume(processDiedSource);
+#endif
+}
+
 void ProcessLauncher::launchProcess()
 {
     // Create the listening port.
@@ -89,31 +105,49 @@ void ProcessLauncher::launchProcess()
     CString serviceName = String::format("com.apple.WebKit.WebProcess-%d-%p", getpid(), this).utf8();
 
     const char* path = [webProcessAppExecutablePath fileSystemRepresentation];
-    const char* args[] = { path, "-mode", "legacywebprocess", "-servicename", serviceName.data(), "-parentprocessname", processName(), 0 };
+    const char* args[] = { path, "-type", processTypeAsString(m_launchOptions.processType), "-servicename", serviceName.data(), "-parentprocessname", processName(), 0 };
 
     // Register ourselves.
     kern_return_t kr = bootstrap_register2(bootstrap_port, const_cast<char*>(serviceName.data()), listeningPort, 0);
-    if (kr)
-        NSLog(@"bootstrap_register2 result: %x", kr);
+    ASSERT_UNUSED(kr, kr == KERN_SUCCESS);
 
     posix_spawnattr_t attr;
     posix_spawnattr_init(&attr);
 
-#if CPU(X86)
-    // Ensure that the child process runs as the same architecture as the parent process. 
-    cpu_type_t cpuTypes[] = { CPU_TYPE_X86 };    
+    // FIXME: Should we restore signals here?
+
+    // Determine the architecture to use.
+    cpu_type_t architecture = m_launchOptions.architecture;
+    if (architecture == LaunchOptions::MatchCurrentArchitecture)
+        architecture = _NSGetMachExecuteHeader()->cputype;
+
+    cpu_type_t cpuTypes[] = { architecture };    
     size_t outCount = 0;
     posix_spawnattr_setbinpref_np(&attr, 1, cpuTypes, &outCount);
-#endif
+
+    // Start suspended so we can set up the termination notification handler.
+    posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
 
     pid_t processIdentifier;
     int result = posix_spawn(&processIdentifier, path, 0, &attr, (char *const*)args, *_NSGetEnviron());
 
     posix_spawnattr_destroy(&attr);
 
-    if (result)
-        NSLog(@"posix_spawn result: %d", result);
+    if (!result) {
+        // Set up the termination notification handler and then ask the child process to continue.
+        setUpTerminationNotificationHandler(processIdentifier);
+        kill(processIdentifier, SIGCONT);
+    } else {
+        // We failed to launch. Release the send right.
+        mach_port_deallocate(mach_task_self(), listeningPort);
 
+        // And the receive right.
+        mach_port_mod_refs(mach_task_self(), listeningPort, MACH_PORT_RIGHT_RECEIVE, -1);
+        
+        listeningPort = MACH_PORT_NULL;
+        processIdentifier = 0;
+    }
+    
     // We've finished launching the process, message back to the main run loop.
     RunLoop::main()->scheduleWork(WorkItem::create(this, &ProcessLauncher::didFinishLaunchingProcess, processIdentifier, listeningPort));
 }
@@ -126,4 +160,8 @@ void ProcessLauncher::terminateProcess()
     kill(m_processIdentifier, SIGKILL);
 }
     
+void ProcessLauncher::platformInvalidate()
+{
+}
+
 } // namespace WebKit

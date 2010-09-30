@@ -29,9 +29,9 @@
 #ifndef InspectorController_h
 #define InspectorController_h
 
+#include "CharacterData.h"
 #include "Console.h"
 #include "Cookie.h"
-#include "Element.h"
 #include "Page.h"
 #include "PlatformString.h"
 #include "ScriptState.h"
@@ -45,11 +45,11 @@
 namespace WebCore {
 
 class CachedResource;
+class CharacterData;
 class ConsoleMessage;
 class Database;
 class Document;
 class DocumentLoader;
-class Element;
 class FloatRect;
 class GraphicsContext;
 class HitTestResult;
@@ -196,12 +196,6 @@ public:
     void mainResourceFiredLoadEvent(DocumentLoader*, const KURL&);
     void mainResourceFiredDOMContentEvent(DocumentLoader*, const KURL&);
 
-    static void willInsertDOMNode(Node* node, Node* parent);
-    static void didInsertDOMNode(Node*);
-    static void willRemoveDOMNode(Node*);
-    static void willModifyDOMAttr(Element*);
-    static void didModifyDOMAttr(Element*);
-
 #if ENABLE(WORKERS)
     enum WorkerAction { WorkerCreated, WorkerDestroyed };
 
@@ -264,6 +258,10 @@ public:
     bool debuggerEnabled() const { return m_debuggerAgent; }
     InspectorDebuggerAgent* debuggerAgent() const { return m_debuggerAgent.get(); }
     void resume();
+
+    void setNativeBreakpoint(PassRefPtr<InspectorObject> breakpoint, unsigned int* breakpointId);
+    void removeNativeBreakpoint(unsigned int breakpointId);
+
 #endif
 
     void evaluateForTestInFrontend(long testCallId, const String& script);
@@ -282,17 +280,17 @@ private:
 
     friend class InspectorBackend;
     friend class InspectorBackendDispatcher;
+    friend class InspectorInstrumentation;
     friend class InjectedScriptHost;
 
     void populateScriptObjects();
     void restoreDebugger();
     void restoreProfiler();
     void unbindAllResources();
+    void setSearchingForNode(bool enabled);
 
     // Following are used from InspectorBackend and internally.
-    void setSearchingForNode(bool enabled);
-    void enableSearchingForNode() { setSearchingForNode(true); }
-    void disableSearchingForNode() { setSearchingForNode(false); }
+    void setSearchingForNode(bool enabled, bool* newState);
 
     void setMonitoringXHREnabled(bool enabled, bool* newState);
     void storeLastActivePanel(const String& panelName);
@@ -331,13 +329,7 @@ private:
 
     void didEvaluateForTestInFrontend(long callId, const String& jsonResult);
 
-    static InspectorController* inspectorControllerForNode(Node*);
-    void willInsertDOMNodeImpl(Node* node, Node* parent);
-    void didInsertDOMNodeImpl(Node*);
-    void willRemoveDOMNodeImpl(Node*);
-    void didRemoveDOMNodeImpl(Node*);
-    void willModifyDOMAttrImpl(Element*);
-    void didModifyDOMAttrImpl(Element*);
+    void instrumentWillSendXMLHttpRequest(const KURL&);
 
 #if ENABLE(JAVASCRIPT_DEBUGGER)
     friend class InspectorDebuggerAgent;
@@ -400,6 +392,9 @@ private:
     bool m_attachDebuggerWhenShown;
     OwnPtr<InspectorDebuggerAgent> m_debuggerAgent;
 
+    HashMap<unsigned int, String> m_XHRBreakpoints;
+    unsigned int m_lastBreakpointId;
+
     OwnPtr<InspectorProfilerAgent> m_profilerAgent;
 #endif
 #if ENABLE(WORKERS)
@@ -408,62 +403,6 @@ private:
     WorkersMap m_workers;
 #endif
 };
-
-inline void InspectorController::willInsertDOMNode(Node* node, Node* parent)
-{
-#if ENABLE(INSPECTOR)
-    if (InspectorController* inspectorController = inspectorControllerForNode(parent))
-        inspectorController->willInsertDOMNodeImpl(node, parent);
-#endif
-}
-
-inline void InspectorController::didInsertDOMNode(Node* node)
-{
-#if ENABLE(INSPECTOR)
-    if (InspectorController* inspectorController = inspectorControllerForNode(node))
-        inspectorController->didInsertDOMNodeImpl(node);
-#endif
-}
-
-inline void InspectorController::willRemoveDOMNode(Node* node)
-{
-#if ENABLE(INSPECTOR)
-    if (InspectorController* inspectorController = inspectorControllerForNode(node)) {
-        inspectorController->willRemoveDOMNodeImpl(node);
-        inspectorController->didRemoveDOMNodeImpl(node);
-    }
-#endif
-}
-
-inline void InspectorController::willModifyDOMAttr(Element* element)
-{
-#if ENABLE(INSPECTOR)
-    if (InspectorController* inspectorController = inspectorControllerForNode(element))
-        inspectorController->willModifyDOMAttrImpl(element);
-#endif
-}
-
-inline void InspectorController::didModifyDOMAttr(Element* element)
-{
-#if ENABLE(INSPECTOR)
-    if (InspectorController* inspectorController = inspectorControllerForNode(element))
-        inspectorController->didModifyDOMAttrImpl(element);
-#endif
-}
-
-inline InspectorController* InspectorController::inspectorControllerForNode(Node* node)
-{
-#if ENABLE(INSPECTOR)
-    if (Page* page = node->document()->page()) {
-        if (InspectorController* inspectorController = page->inspectorController()) {
-            if (inspectorController->hasFrontend())
-                return inspectorController;
-        }
-    }
-#endif
-
-    return 0;
-}
 
 } // namespace WebCore
 

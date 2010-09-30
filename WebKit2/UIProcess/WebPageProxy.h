@@ -63,6 +63,7 @@ struct WKContextStatistics;
 namespace WebKit {
 
 class DrawingAreaProxy;
+class NativeWebKeyboardEvent;
 class PageClient;
 class PlatformCertificateInfo;
 class WebBackForwardList;
@@ -76,6 +77,7 @@ class WebProcessProxy;
 class WebURLRequest;
 class WebWheelEvent;
 struct WebNavigationDataStore;
+struct WebPageCreationParameters;
 
 typedef GenericCallback<WKStringRef, StringImpl*> FrameSourceCallback;
 typedef GenericCallback<WKStringRef, StringImpl*> RenderTreeExternalRepresentationCallback;
@@ -105,7 +107,7 @@ public:
 
     void revive();
 
-    void initializeWebPage(const WebCore::IntSize&, PassOwnPtr<DrawingAreaProxy>);
+    void initializeWebPage(const WebCore::IntSize&);
     void reinitializeWebPage(const WebCore::IntSize&);
 
     void close();
@@ -131,17 +133,22 @@ public:
     void setFocused(bool isFocused);
     void setActive(bool active);
     void setIsInWindow(bool isInWindow);
+    void setWindowResizerSize(const WebCore::IntSize&);
 
-    void selectAll();
-    void copy();
-    void cut();
-    void paste();
-    
-    void mouseEvent(const WebMouseEvent&);
-    void wheelEvent(const WebWheelEvent&);
-    void keyEvent(const WebKeyboardEvent&);
+    void executeEditCommand(const String& commandName);
+    void validateMenuItem(const String& commandName);
+
+// These are only used on Mac currently.
+#if PLATFORM(MAC)
+    void setWindowIsVisible(bool windowIsVisible);
+    void setWindowFrame(const WebCore::IntRect&);
+#endif
+
+    void handleMouseEvent(const WebMouseEvent&);
+    void handleWheelEvent(const WebWheelEvent&);
+    void handleKeyboardEvent(const NativeWebKeyboardEvent&);
 #if ENABLE(TOUCH_EVENTS)
-    void touchEvent(const WebTouchEvent&);
+    void handleTouchEvent(const WebTouchEvent&);
 #endif
 
     const String& pageTitle() const { return m_pageTitle; }
@@ -216,6 +223,7 @@ private:
     void didReceiveTitleForFrame(WebFrameProxy*, const String&, APIObject*);
     void didFirstLayoutForFrame(WebFrameProxy*, APIObject*);
     void didFirstVisuallyNonEmptyLayoutForFrame(WebFrameProxy*, APIObject*);
+    void didRemoveFrameFromHierarchy(WebFrameProxy*, APIObject*);
     void didStartProgress();
     void didChangeProgress(double);
     void didFinishProgress();
@@ -233,6 +241,7 @@ private:
     bool runJavaScriptConfirm(WebFrameProxy* frame, const String&);
     String runJavaScriptPrompt(WebFrameProxy* frame, const String&, const String&);
     void setStatusText(const String&);
+    void mouseDidMoveOverElement(WebEvent::Modifiers, APIObject*);
     void contentsSizeChanged(WebFrameProxy*, const WebCore::IntSize&);
 
     // Back/Forward list management
@@ -247,11 +256,13 @@ private:
     void setToolTip(const String&);
     void setCursor(const WebCore::Cursor&);
 
-    void didReceiveEvent(WebEvent::Type);
+    void didReceiveEvent(WebEvent::Type, bool handled);
 
     void didRunJavaScriptInMainFrame(const String&, uint64_t);
     void didGetRenderTreeExternalRepresentation(const String&, uint64_t);
     void didGetSourceForFrame(const String&, uint64_t);
+
+    WebPageCreationParameters creationParameters(const WebCore::IntSize&) const;
 
 #if USE(ACCELERATED_COMPOSITING)
     void didChangeAcceleratedCompositing(bool compositing);
@@ -295,6 +306,8 @@ private:
     bool m_closed;
 
     uint64_t m_pageID;
+
+    Deque<NativeWebKeyboardEvent> m_keyEventQueue;
 };
 
 } // namespace WebKit

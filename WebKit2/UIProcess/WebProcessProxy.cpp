@@ -26,6 +26,7 @@
 #include "WebProcessProxy.h"
 
 #include "PluginInfoStore.h"
+#include "PluginProcessManager.h"
 #include "WebBackForwardListItem.h"
 #include "WebContext.h"
 #include "WebNavigationDataStore.h"
@@ -115,7 +116,14 @@ void WebProcessProxy::connect()
         m_threadLauncher = ThreadLauncher::create(this);
     } else {
         ASSERT(!m_processLauncher);
-        m_processLauncher = ProcessLauncher::create(this);
+
+        ProcessLauncher::LaunchOptions launchOptions;
+        launchOptions.processType = ProcessLauncher::WebProcess;
+#if PLATFORM(MAC)
+        // We want the web process to match the architecture of the UI process.
+        launchOptions.architecture = ProcessLauncher::LaunchOptions::MatchCurrentArchitecture;
+#endif
+        m_processLauncher = ProcessLauncher::create(this, launchOptions);
     }
 }
 
@@ -205,7 +213,14 @@ void WebProcessProxy::getPlugins(bool refresh, Vector<PluginInfo>& plugins)
     m_context->pluginInfoStore()->getPlugins(plugins);
 }
 
-void WebProcessProxy::getPluginHostConnection(const String& mimeType, const KURL& url, String& pluginPath)
+#if ENABLE(PLUGIN_PROCESS)
+void WebProcessProxy::getPluginProcessConnection(const String& pluginPath, CoreIPC::ArgumentEncoder* reply)
+{
+    PluginProcessManager::shared().getPluginProcessConnection(pluginPath, this, reply);
+}
+#endif
+
+void WebProcessProxy::getPluginPath(const String& mimeType, const KURL& url, String& pluginPath)
 {
     String newMimeType = mimeType.lower();
 
@@ -315,7 +330,10 @@ void WebProcessProxy::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC
 
             // These are synchronous messages and should never be handled here.
             case WebProcessProxyMessage::GetPlugins:
-            case WebProcessProxyMessage::GetPluginHostConnection:
+            case WebProcessProxyMessage::GetPluginPath:
+#if ENABLE(PLUGIN_PROCESS)
+            case WebProcessProxyMessage::GetPluginProcessConnection:
+#endif
                 ASSERT_NOT_REACHED();
                 break;
         }
@@ -354,7 +372,7 @@ CoreIPC::SyncReplyMode WebProcessProxy::didReceiveSyncMessage(CoreIPC::Connectio
                 return CoreIPC::AutomaticReply;
             }
 
-            case WebProcessProxyMessage::GetPluginHostConnection: {
+            case WebProcessProxyMessage::GetPluginPath: {
                 String mimeType;
                 String urlString;
                 
@@ -362,10 +380,23 @@ CoreIPC::SyncReplyMode WebProcessProxy::didReceiveSyncMessage(CoreIPC::Connectio
                     return CoreIPC::AutomaticReply;
                 
                 String pluginPath;
-                getPluginHostConnection(mimeType, KURL(ParsedURLString, urlString), pluginPath);
+                getPluginPath(mimeType, KURL(ParsedURLString, urlString), pluginPath);
+
                 reply->encode(CoreIPC::In(pluginPath));
                 return CoreIPC::AutomaticReply;
             }
+
+#if ENABLE(PLUGIN_PROCESS)
+            case WebProcessProxyMessage::GetPluginProcessConnection: {
+                String pluginPath;
+                
+                if (!arguments->decode(CoreIPC::Out(pluginPath)))
+                    return CoreIPC::AutomaticReply;
+
+                getPluginProcessConnection(pluginPath, reply);
+                return CoreIPC::ManualReply;
+            }
+#endif
 
             // These are asynchronous messages and should never be handled here.
             case WebProcessProxyMessage::DidNavigateWithNavigationData:

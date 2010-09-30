@@ -27,12 +27,12 @@
 #define WKPage_h
 
 #include <WebKit2/WKBase.h>
+#include <WebKit2/WKEvent.h>
+#include <WebKit2/WKNativeEvent.h>
 
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
-
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,22 +48,6 @@ enum {
 };
 typedef uint32_t WKFrameNavigationType;
 
-enum {
-    kWKEventModifiersShiftKey = 1 << 0,
-    kWKEventModifiersControlKey = 1 << 1,
-    kWKEventModifiersAltKey = 1 << 2,
-    kWKEventModifiersMetaKey = 1 << 3
-};
-typedef uint32_t WKEventModifiers;
-
-enum {
-    kWKEventMouseButtonNoButton = -1,
-    kWKEventMouseButtonLeftButton = 0,
-    kWKEventMouseButtonMiddleButton = 1,
-    kWKEventMouseButtonRightButton = 2,
-};
-typedef int32_t WKEventMouseButton;
-
 // FrameLoad Client
 typedef void (*WKPageDidStartProvisionalLoadForFrameCallback)(WKPageRef page, WKFrameRef frame, WKTypeRef userData, const void *clientInfo);
 typedef void (*WKPageDidReceiveServerRedirectForProvisionalLoadForFrameCallback)(WKPageRef page, WKFrameRef frame, WKTypeRef userData, const void *clientInfo);
@@ -75,6 +59,7 @@ typedef void (*WKPageDidFailLoadWithErrorForFrameCallback)(WKPageRef page, WKFra
 typedef void (*WKPageDidReceiveTitleForFrameCallback)(WKPageRef page, WKStringRef title, WKFrameRef frame, WKTypeRef userData, const void *clientInfo);
 typedef void (*WKPageDidFirstLayoutForFrame)(WKPageRef page, WKFrameRef frame, WKTypeRef userData, const void *clientInfo);
 typedef void (*WKPageDidFirstVisuallyNonEmptyLayoutForFrame)(WKPageRef page, WKFrameRef frame, WKTypeRef userData, const void *clientInfo);
+typedef void (*WKPageDidRemoveFrameFromHierarchyCallback)(WKPageRef page, WKFrameRef frame, WKTypeRef userData, const void *clientInfo);
 
 // Progress Client
 typedef void (*WKPageDidStartProgressCallback)(WKPageRef page, const void *clientInfo);
@@ -102,6 +87,7 @@ struct WKPageLoaderClient {
     WKPageDidReceiveTitleForFrameCallback                               didReceiveTitleForFrame;
     WKPageDidFirstLayoutForFrame                                        didFirstLayoutForFrame;
     WKPageDidFirstVisuallyNonEmptyLayoutForFrame                        didFirstVisuallyNonEmptyLayoutForFrame;
+    WKPageDidRemoveFrameFromHierarchyCallback                           didRemoveFrameFromHierarchy;
 
     // FIXME: Move to progress client.
     WKPageDidStartProgressCallback                                      didStartProgress;
@@ -149,7 +135,9 @@ typedef void (*WKPageRunJavaScriptAlertCallback)(WKPageRef page, WKStringRef ale
 typedef bool (*WKPageRunJavaScriptConfirmCallback)(WKPageRef page, WKStringRef message, WKFrameRef frame, const void *clientInfo);
 typedef WKStringRef (*WKPageRunJavaScriptPromptCallback)(WKPageRef page, WKStringRef message, WKStringRef defaultValue, WKFrameRef frame, const void *clientInfo);
 typedef void (*WKPageSetStatusTextCallback)(WKPageRef page, WKStringRef text, const void *clientInfo);
+typedef void (*WKPageMouseDidMoveOverElementCallback)(WKPageRef page, WKEventModifiers modifiers, WKTypeRef userData, const void *clientInfo);
 typedef void (*WKPageContentsSizeChangedCallback)(WKPageRef page, int width, int height, WKFrameRef frame, const void *clientInfo);
+typedef void (*WKPageDidNotHandleKeyEventCallback)(WKPageRef page, WKNativeEventPtr event, const void *clientInfo);
 
 struct WKPageUIClient {
     int                                                                 version;
@@ -161,7 +149,9 @@ struct WKPageUIClient {
     WKPageRunJavaScriptConfirmCallback                                  runJavaScriptConfirm;
     WKPageRunJavaScriptPromptCallback                                   runJavaScriptPrompt;
     WKPageSetStatusTextCallback                                         setStatusText;
+    WKPageMouseDidMoveOverElementCallback                               mouseDidMoveOverElement;
     WKPageContentsSizeChangedCallback                                   contentsSizeChanged;
+    WKPageDidNotHandleKeyEventCallback                                  didNotHandleKeyEvent;
 };
 typedef struct WKPageUIClient WKPageUIClient;
 

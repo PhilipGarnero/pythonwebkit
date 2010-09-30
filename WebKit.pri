@@ -46,7 +46,6 @@ building-libs {
     }
     DEPENDPATH += $$PWD/WebKit/qt/Api
 }
-greaterThan(QT_MINOR_VERSION, 5):DEFINES += WTF_USE_ACCELERATED_COMPOSITING
 
 !mac:!unix|symbian {
     DEFINES += USE_SYSTEM_MALLOC
@@ -68,7 +67,7 @@ CONFIG -= warn_on
 *-g++*:QMAKE_CXXFLAGS += -Wall -Wextra -Wreturn-type -fno-strict-aliasing -Wcast-align -Wchar-subscripts -Wformat-security -Wreturn-type -Wno-unused-parameter -Wno-sign-compare -Wno-switch -Wno-switch-enum -Wundef -Wmissing-noreturn -Winit-self
 
 # Treat warnings as errors on x86/Linux/GCC
-linux-g++*:!isEqual(QT_ARCH,arm): QMAKE_CXXFLAGS += -Werror
+linux-g++*:isEqual(QT_ARCH,x86): QMAKE_CXXFLAGS += -Werror
 
 # Enable GNU compiler extensions to the ARM compiler for all Qt ports using RVCT
 symbian|*-armcc {
@@ -104,5 +103,5 @@ contains(DEFINES, QT_NO_UITOOLS): CONFIG -= uitools
 
 # Disable a few warnings on Windows. The warnings are also
 # disabled in WebKitLibraries/win/tools/vsprops/common.vsprops
-win32-msvc*: QMAKE_CXXFLAGS += -wd4291 -wd4344 -wd4396 -wd4503 -wd4800 -wd4819 -wd4996
+win32-msvc*|wince*: QMAKE_CXXFLAGS += -wd4291 -wd4344 -wd4396 -wd4503 -wd4800 -wd4819 -wd4996
 

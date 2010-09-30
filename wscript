@@ -252,12 +252,12 @@ def build(bld):
         excludes.extend(['UserStyleSheetLoader.cpp', 'RenderMediaControls.cpp'])
 
         # intermediate sources
-        excludes.append('ColorData.cpp')
-        excludes.append('CSSValueKeywords.cpp')
-        excludes.append('CSSPropertyNames.cpp')
         excludes.append('DocTypeStrings.cpp')
         excludes.append('HTMLEntityNames.cpp')
         excludes.append('tokenizer.cpp')
+
+        # Qt specific file in common sources
+        excludes.append('ContextShadow.cpp')
 
         # FIXME: these three require headers that I can't seem to find in trunk.
         # Investigate how to resolve these issues.
@@ -310,9 +310,18 @@ def build(bld):
             webcore.includes += ' WebKit/mac/WebCoreSupport WebCore/platform/mac'
             webcore.source += " WebKit/mac/WebCoreSupport/WebSystemInterface.mm"
             
+        if building_on_win32:
+            for wxlib in bld.env['LIB_WX']:
+                wxlibname = os.path.join(bld.env['LIBPATH_WX'][0], wxlib + '_vc.dll')
+                if os.path.exists(wxlibname):
+                    bld.install_files(webcore.install_path, [wxlibname])
+        
+            for dep in windows_deps:
+                bld.install_files(webcore.install_path, [os.path.join(msvclibs_dir, dep)])
+
     webcore.find_sources_in_dirs(full_dirs, excludes = excludes, exts=['.c', '.cpp'])
 
     bld.add_group()
     
-    if build_port == "wx":
+    if build_port == "wx":    
         bld.add_subdirs(['WebKitTools/DumpRenderTree', 'WebKitTools/wx/browser', 'WebKit/wx/bindings/python'])

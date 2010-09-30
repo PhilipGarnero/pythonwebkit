@@ -541,6 +541,8 @@ void WebViewHost::postAccessibilityNotification(const WebAccessibilityObject& ob
         case WebAccessibilityNotificationRowExpanded:
             printf("RowExpanded");
             break;
+        default:
+            break;
         }
 
         WebKit::WebNode node = obj.node();
@@ -590,6 +592,13 @@ void WebViewHost::didScrollRect(int, int, const WebRect& clipRect)
     // This is used for optimizing painting when the renderer is scrolled. We're
     // currently not doing any optimizations so just invalidate the region.
     didInvalidateRect(clipRect);
+}
+
+void WebViewHost::scheduleComposite()
+{
+    WebSize widgetSize = webWidget()->size();
+    WebRect clientRect(0, 0, widgetSize.width, widgetSize.height);
+    didInvalidateRect(clientRect);
 }
 
 void WebViewHost::didFocus()
@@ -1041,10 +1050,11 @@ WebViewHost::WebViewHost(TestShell* shell)
     , m_policyDelegateIsPermissive(false)
     , m_policyDelegateShouldNotifyDone(false)
     , m_shell(shell)
+    , m_webWidget(0)
     , m_topLoadingFrame(0)
-    , m_hasWindow(false)
     , m_pageId(-1)
     , m_lastPageIdUpdated(-1)
+    , m_hasWindow(false)
     , m_smartInsertDeleteEnabled(true)
 #if OS(WINDOWS)
     , m_selectTrailingWhitespaceEnabled(true)
@@ -1054,7 +1064,6 @@ WebViewHost::WebViewHost(TestShell* shell)
     , m_blocksRedirects(false)
     , m_requestReturnNull(false)
     , m_isPainting(false)
-    , m_webWidget(0)
 {
     m_navigationController.set(new TestNavigationController(this));
 }

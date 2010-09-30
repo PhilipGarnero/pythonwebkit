@@ -27,12 +27,14 @@ HEADERS = $$BASEDIR/WorkQueue.h \
     WorkQueueItemQt.h \
     LayoutTestControllerQt.h \
     GCControllerQt.h \
+    PlainTextControllerQt.h \
     testplugin.h
 SOURCES = ../../../JavaScriptCore/wtf/Assertions.cpp \
     $$BASEDIR/WorkQueue.cpp \
     DumpRenderTreeQt.cpp \
     EventSenderQt.cpp \
     TextInputControllerQt.cpp \
+    PlainTextControllerQt.cpp \
     WorkQueueItemQt.cpp \
     LayoutTestControllerQt.cpp \
     GCControllerQt.cpp \
@@ -41,6 +43,11 @@ SOURCES = ../../../JavaScriptCore/wtf/Assertions.cpp \
 
 unix:!mac {
     QMAKE_RPATHDIR = $$OUTPUT_DIR/lib $$QMAKE_RPATHDIR
+}
+
+wince*: {
+    INCLUDEPATH += $$QT_SOURCE_TREE/src/3rdparty/ce-compat $$WCECOMPAT/include
+    LIBS += $$WCECOMPAT/lib/wcecompat.lib
 }
 
 DEFINES+=USE_SYSTEM_MALLOC

@@ -18,17 +18,32 @@ function test()
 {
     result = evalAndLog("indexedDB.open('name', 'description')");
     verifyResult(result);
-    result.onsuccess = createObjectStore;
+    result.onsuccess = startSetVersion;
     result.onerror = unexpectedErrorCallback;
 }
 
-function createObjectStore()
+function startSetVersion()
 {
     verifySuccessEvent(event);
     db = evalAndLog("db = event.result");
 
-    deleteAllObjectStores(db);
+    result = evalAndLog("db.setVersion('new version')");
+    verifyResult(result);
+    result.onsuccess = deleteExisting;
+    result.onerror = unexpectedErrorCallback;
+}
 
+function deleteExisting()
+{
+    verifySuccessEvent(event);
+    window.trans = evalAndLog("trans = event.result");
+    shouldBeTrue("trans !== null");
+
+    deleteAllObjectStores(db, createObjectStore);
+}
+
+function createObjectStore()
+{
     result = evalAndLog("db.createObjectStore('storeName', null)");
     verifyResult(result);
     result.onsuccess = addValue;
@@ -49,7 +64,11 @@ function getValue()
 {
     verifySuccessEvent(event);
 
-    result = evalAndLog("event.source.get('key')");
+    transaction = evalAndLog("db.transaction()");
+    transaction.onabort = unexpectedErrorCallback;
+    var store = evalAndLog("store = transaction.objectStore('storeName')");
+
+    result = evalAndLog("store.get('key')");
     verifyResult(result);
     result.onsuccess = addIndex;
     result.onerror = unexpectedErrorCallback;
@@ -62,6 +81,22 @@ function addIndex()
 
     result = evalAndLog("event.source.createIndex('indexName', '')");
     verifyResult(result);
+    result.onsuccess = commitTransaction;
+    result.onerror = unexpectedErrorCallback;
+}
+
+function commitTransaction()
+{
+    verifySuccessEvent(event);
+    shouldBeTrue("event.source.indexNames.contains('indexName')");
+    // Let the transaction commit.
+    window.setTimeout('secondSetVersion()', 0);
+}
+
+function secondSetVersion()
+{
+    result = evalAndLog("db.setVersion('new version')");
+    verifyResult(result);
     result.onsuccess = removeObjectStore;
     result.onerror = unexpectedErrorCallback;
 }
@@ -69,7 +104,9 @@ function addIndex()
 function removeObjectStore()
 {
     verifySuccessEvent(event);
-    shouldBeTrue("event.source.indexNames.contains('indexName')");
+    window.trans = evalAndLog("trans = event.result");
+    shouldBeTrue("trans !== null");
+    trans.onabort = unexpectedAbortCallback;
 
     result = evalAndLog("db.removeObjectStore('storeName')");
     verifyResult(result);
@@ -91,7 +128,11 @@ function getValueAgain()
 {
     verifySuccessEvent(event);
 
-    result = evalAndLog("event.result.get('key')");
+    transaction = evalAndLog("db.transaction()");
+    transaction.onabort = unexpectedErrorCallback;
+    var store = evalAndLog("store = transaction.objectStore('storeName')");
+
+    result = evalAndLog("store.get('key')");
     verifyResult(result);
     result.onsuccess = unexpectedSuccessCallback;
     result.onerror = verifyError;
@@ -100,7 +141,6 @@ function getValueAgain()
 function verifyError()
 {
     verifyErrorEvent(event);
-    // FIXME: Should just be IDBDatabaseException.NOT_FOUND_ERR but that doesn't work yet.
     shouldBe("event.code", "2");
     shouldBeFalse("event.source.indexNames.contains('indexName')");
 

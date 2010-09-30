@@ -62,6 +62,7 @@ public:
     void terminate();
 
     template<typename E, typename T> bool send(E messageID, uint64_t destinationID, const T& arguments);
+    template<typename T> bool send(const T& message, uint64_t destinationID);
     
     CoreIPC::Connection* connection() const
     { 
@@ -69,6 +70,8 @@ public:
         
         return m_connection.get(); 
     }
+
+    WebContext* context() const { return m_context; }
 
     PlatformProcessIdentifier processIdentifier() const { return m_processLauncher->processIdentifier(); }
 
@@ -104,8 +107,11 @@ private:
 
     bool sendMessage(CoreIPC::MessageID, PassOwnPtr<CoreIPC::ArgumentEncoder>);
 
+#if ENABLE(PLUGIN_PROCESS)
+    void getPluginProcessConnection(const String& pluginPath, CoreIPC::ArgumentEncoder* reply);
+#endif
+    void getPluginPath(const String& mimeType, const WebCore::KURL& url, String& pluginPath);
     void getPlugins(bool refresh, Vector<WebCore::PluginInfo>&);
-    void getPluginHostConnection(const String& mimeType, const WebCore::KURL& url, String& pluginPath);
 
     void addOrUpdateBackForwardListItem(uint64_t itemID, const String& originalURLString, const String& urlString, const String& title);
     void addVisitedLink(WebCore::LinkHash);
@@ -153,6 +159,15 @@ bool WebProcessProxy::send(E messageID, uint64_t destinationID, const T& argumen
     argumentEncoder->encode(arguments);
 
     return sendMessage(CoreIPC::MessageID(messageID), argumentEncoder.release());
+}
+
+template<typename T>
+bool WebProcessProxy::send(const T& message, uint64_t destinationID)
+{
+    OwnPtr<CoreIPC::ArgumentEncoder> argumentEncoder(new CoreIPC::ArgumentEncoder(destinationID));
+    argumentEncoder->encode(message);
+
+    return sendMessage(CoreIPC::MessageID(T::messageID), argumentEncoder.release());
 }
 
 } // namespace WebKit

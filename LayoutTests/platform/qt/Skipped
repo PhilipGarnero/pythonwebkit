@@ -88,6 +88,7 @@ storage/indexeddb
 
 # ----- No User Scripts
 userscripts
+plugins/plugin-document-load-prevented-userscript.html
 
 # ------ Doesn't support WOFF yet.
 fast/css/font-face-woff.html
@@ -177,9 +178,6 @@ http/tests/security/originHeader/origin-header-for-empty.html
 # Disabled HTTP subdirs for now, needs investigation.
 http/tests/media
 http/tests/wml
-
-# not utf8-encoding urls as expected
-http/tests/uri/escaped-entity.html
 
 # https://bugs.webkit.org/show_bug.cgi?id=44282
 http/tests/incremental/slow-utf8-text.pl
@@ -409,6 +407,7 @@ plugins/embed-attributes-style.html
 # ---- depends on QuickTime support
 plugins/embed-attributes-setting.html
 fast/dom/object-embed-plugin-scripting.html
+plugins/plugin-initiate-popup-window.html
 # ---- to be reviewed
 http/tests/plugins/plugin-document-has-focus.html
 
@@ -740,10 +739,6 @@ java
 fast/dom/Window/timer-resume-on-navigation-back.html
 loader/go-back-to-different-window-size.html
 
-# Plain text controller currently in Mac DumpRenderTree only.
-# https://bugs.webkit.org/show_bug.cgi?id=38805
-editing/text-iterator/basic-iteration.html
-
 # Missing layoutTestController.overridePreference()
 fast/events/pageshow-pagehide-on-back-cached.html
 fast/events/pageshow-pagehide-on-back-cached-with-frames.html
@@ -769,12 +764,9 @@ http/tests/security/isolatedWorld/world-reuse.html
 
 # Missing eventSender.beginDragWithFiles()
 fast/dom/Window/window-postmessage-clone-frames.html
-fast/files/read-blob-async.html
-fast/files/read-file-async.html
-fast/files/apply-blob-url-to-img.html
-fast/files/apply-blob-url-to-xhr.html
-fast/files/create-blob-url-crash.html
-fast/files/workers
+
+# File API is not supported yet
+fast/files
 
 # Missing layoutTestController.setAlwaysAcceptCookies()
 http/tests/plugins/third-party-cookie-accept-policy.html
@@ -5481,3 +5473,21 @@ http/tests/uri/css-href.php
 # Pre-HMTL5 parser quirks only apply to the mac port for now.
 fast/parser/pre-html5-parser-quirks.html
 
+# FileSystem API is not supported.
+fast/filesystem
+
+# LayoutTestController::nodesFromRect is not supported.
+fast/dom/nodesFromRect-basic.html
+
+# It fails, because 3D canvas is disabled by default.
+http/tests/canvas/webgl/origin-clean-conformance.html
+
+# 3 media tests fail with Qt version 4.6.3 and 4.7.0
+# https://bugs.webkit.org/show_bug.cgi?id=46249
+media/restore-from-page-cache.html
+media/video-can-play-type.html
+media/video-delay-load-event.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=46223
+# The WebKit plugin implementation does not support iframe shims.
+plugins/iframe-shims.html

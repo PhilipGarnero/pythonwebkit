@@ -92,7 +92,8 @@ global_cppflags += \
 	-Wformat -Wformat-security -Wno-format-y2k -Wundef \
 	-Wmissing-format-attribute -Wpointer-arith -Wwrite-strings \
 	-Wno-unused-parameter -Wno-parentheses \
-	-fno-exceptions
+	-fno-exceptions -DENABLE_GLIB_SUPPORT=1
+
 
 global_cxxflags += \
 	$(SYMBOL_VISIBILITY_INLINES) \
@@ -102,7 +103,7 @@ global_cxxflags += \
 # It breaks the build on other platforms, so we use it conditionally
 if OS_WIN32
 no_undefined = -no-undefined
-version_script = -export-symbols-regex "^(webkit_|JS).*"
+version_script = -export-symbols-regex "^(webkit_|k?JS).*"
 endif
 
 if OS_GNU
@@ -247,7 +248,10 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIBA
 	$(PNG_LIBS) \
 	$(SQLITE3_LIBS) \
 	$(UNICODE_LIBS) \
-	$(XT_LIBS)
+	$(XT_LIBS) \
+	$(WINMM_LIBS) \
+	$(SHLWAPI_LIBS) \
+	$(OLE32_LIBS)
 
 # _pywebkit - forced to link in to absolutely identical code as
 # libwebkitgtk due to key functions (webcore) not being exported.
@@ -386,6 +390,11 @@ global_cppflags += \
 	-DUSE_SYSTEM_MALLOC
 endif
 
+if USE_GSTREAMER
+global_cppflags += \
+	-DWTF_USE_GSTREAMER=1
+endif
+
 # ----
 # GTK+ 2.x/3.x support
 # ----
@@ -514,19 +523,23 @@ JSCORE_GIRSOURCES += JSCore-@WEBKITGTK_API_VERSION@.gir
 WEBKIT_GIRSOURCES += WebKit-@WEBKITGTK_API_VERSION@.gir
 
 $(WEBKIT_GIRSOURCES): $(G_IR_SCANNER) $(JSCORE_GIRSOURCES) libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la
-	$(AM_V_GEN)$(G_IR_SCANNER) -v --namespace WebKit --nsversion=@WEBKITGTK_API_VERSION@ \
+	$(AM_V_GEN)$(G_IR_SCANNER) -v --warn-all \
+	     --symbol-prefix=webkit \
+	     --identifier-prefix=WebKit \
+	     --namespace=WebKit \
+	     --nsversion=@WEBKITGTK_API_VERSION@ \
 	     --include=GObject-2.0 \
 	     --include=Gtk-@GTK_API_VERSION@ \
 	     --include=JSCore-@WEBKITGTK_API_VERSION@ \
 	     --include=Soup-2.4 \
 	     --library=webkitgtk-@WEBKITGTK_API_VERSION@ \
 	     --libtool="$(LIBTOOL)" \
-	     --pkg gobject-2.0 \
-	     --pkg gtk+-@GTK_API_VERSION@ \
-	     --pkg libsoup-2.4 \
-	     --output $@ \
-	     --add-include-path $(top_srcdir)/WebKit/gtk \
-	     --add-include-path $(builddir) \
+	     --pkg=gobject-2.0 \
+	     --pkg=gtk+-@GTK_API_VERSION@ \
+	     --pkg=libsoup-2.4 \
+	     --output=$@ \
+	     --add-include-path=$(top_srcdir)/WebKit/gtk \
+	     --add-include-path=$(builddir) \
 	     -I$(top_srcdir)/WebKit/gtk \
 	     -I$(top_builddir)/WebKit/gtk \
 	     -I$(top_builddir)/DerivedSources \

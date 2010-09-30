@@ -40,6 +40,7 @@
 #include <WebCore/HTMLPlugInElement.h>
 #include <WebCore/HostWindow.h>
 #include <WebCore/NetscapePlugInStreamLoader.h>
+#include <WebCore/RenderEmbeddedObject.h>
 #include <WebCore/RenderLayer.h>
 #include <WebCore/ScrollView.h>
 #include <WebCore/Settings.h>
@@ -221,10 +222,22 @@ void PluginView::Stream::didFinishLoading(NetscapePlugInStreamLoader*)
     m_pluginView = 0;
 }
 
-PluginView::PluginView(WebCore::HTMLPlugInElement* pluginElement, PassRefPtr<Plugin> plugin, const Plugin::Parameters& parameters)
+static inline WebPage* webPage(HTMLPlugInElement* pluginElement)
+{
+    Frame* frame = pluginElement->document()->frame();
+    ASSERT(frame);
+
+    WebPage* webPage = static_cast<WebFrameLoaderClient*>(frame->loader()->client())->webFrame()->page();
+    ASSERT(webPage);
+
+    return webPage;
+}
+        
+PluginView::PluginView(HTMLPlugInElement* pluginElement, PassRefPtr<Plugin> plugin, const Plugin::Parameters& parameters)
     : PluginViewBase(0)
     , m_pluginElement(pluginElement)
     , m_plugin(plugin)
+    , m_webPage(webPage(pluginElement))
     , m_parameters(parameters)
     , m_isInitialized(false)
     , m_isWaitingUntilMediaCanStart(false)
@@ -232,10 +245,17 @@ PluginView::PluginView(WebCore::HTMLPlugInElement* pluginElement, PassRefPtr<Plu
     , m_pendingURLRequestsTimer(RunLoop::main(), this, &PluginView::pendingURLRequestsTimerFired)
     , m_npRuntimeObjectMap(this)
 {
+#if PLATFORM(MAC)
+    m_webPage->addPluginView(this);
+#endif
 }
 
 PluginView::~PluginView()
 {
+#if PLATFORM(MAC)
+    m_webPage->removePluginView(this);
+#endif
+
     ASSERT(!m_isBeingDestroyed);
 
     if (m_isWaitingUntilMediaCanStart)
@@ -294,7 +314,34 @@ void PluginView::manualLoadDidFail(const ResourceError& error)
 {
     m_plugin->manualStreamDidFail(error.isCancellation());
 }
-    
+
+#if PLATFORM(MAC)    
+void PluginView::setWindowIsVisible(bool windowIsVisible)
+{
+    if (!m_plugin)
+        return;
+
+    // FIXME: Implement.
+}
+
+void PluginView::setWindowIsFocused(bool windowIsFocused)
+{
+    if (!m_plugin)
+        return;
+
+    m_plugin->windowFocusChanged(windowIsFocused);    
+}
+
+void PluginView::setWindowFrame(const IntRect& windowFrame)
+{
+    if (!m_plugin)
+        return;
+        
+    // FIXME: Implement.
+}
+
+#endif
+
 void PluginView::initializePlugin()
 {
     if (m_isInitialized)
@@ -329,15 +376,19 @@ void PluginView::initializePlugin()
     
     m_isInitialized = true;
 
+    viewGeometryDidChange();
+
 #if PLATFORM(MAC)
-    if (!m_plugin->pluginLayer())
-        return;
+    if (m_plugin->pluginLayer()) {
+        if (frame()) {
+            frame()->view()->enterCompositingMode();
+            m_pluginElement->setNeedsStyleRecalc(SyntheticStyleChange);
+        }
+    }
 
-    if (!frame())
-        return;
-
-    frame()->view()->enterCompositingMode();
-    m_pluginElement->setNeedsStyleRecalc(SyntheticStyleChange);
+    setWindowFrame(m_webPage->windowFrame());
+    setWindowIsVisible(m_webPage->windowIsVisible());
+    setWindowIsFocused(m_webPage->windowIsFocused());
 #endif
 }
 
@@ -403,12 +454,13 @@ void PluginView::setParent(ScrollView* scrollView)
     
     if (scrollView)
         initializePlugin();
-
-    viewGeometryDidChange();
 }
 
 void PluginView::handleEvent(Event* event)
 {
+    if (!m_plugin)
+        return;
+
     const WebEvent* currentEvent = WebPage::currentEvent();
     if (!currentEvent)
         return;
@@ -647,17 +699,17 @@ void PluginView::invalidate(const IntRect& dirtyRect)
     invalidateRect(dirtyRect);
 }
 
-String PluginView::userAgent(const KURL& url)
+String PluginView::userAgent()
 {
     Frame* frame = m_pluginElement->document()->frame();
     if (!frame)
         return String();
     
-    return frame->loader()->client()->userAgent(url);
+    return frame->loader()->client()->userAgent(KURL());
 }
 
 void PluginView::loadURL(uint64_t requestID, const String& method, const String& urlString, const String& target, 
-                         const HTTPHeaderMap& headerFields, const Vector<char>& httpBody, bool allowPopups)
+                         const HTTPHeaderMap& headerFields, const Vector<uint8_t>& httpBody, bool allowPopups)
 {
     FrameLoadRequest frameLoadRequest;
     frameLoadRequest.setFrameName(target);
@@ -756,6 +808,21 @@ bool PluginView::isAcceleratedCompositingEnabled()
 
     return settings->acceleratedCompositingEnabled();
 }
+
+void PluginView::pluginProcessCrashed()
+{
+    if (RenderEmbeddedObject* renderer = toRenderEmbeddedObject(m_pluginElement->renderer()))
+        renderer->setShowsCrashedPluginIndicator();
+    
+    invalidateRect(frameRect());
+}
+
+#if PLATFORM(WIN)
+HWND PluginView::nativeParentWindow()
+{
+    return m_webPage->nativeWindow();
+}
+#endif
 
 void PluginView::didFinishLoad(WebFrame* webFrame)
 {

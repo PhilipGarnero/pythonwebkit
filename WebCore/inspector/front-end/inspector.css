@@ -207,6 +207,10 @@ body.attached #search-results-matches {
     background-image: url(Images/resourcesIcon.png);
 }
 
+.toolbar-item.network .toolbar-icon {
+    background-image: url(Images/networkIcon.png);
+}
+
 .toolbar-item.scripts .toolbar-icon {
     background-image: url(Images/scriptsIcon.png);
 }
@@ -1677,6 +1681,29 @@ li.editing .swatch, li.editing .enabled-button,  li.editing-sub-part .delete-but
     color: black;
 }
 
+.pane > .title > button.add {
+    float: right;
+    width: 23px;
+    height: 17px;
+    color: transparent;
+    background-color: transparent;
+    border: none;
+    background-image: url(Images/paneAddButtons.png);
+    background-repeat: no-repeat;
+    margin: 1px 0 0 0;
+    padding: 0;
+    -webkit-border-radius: 0;
+    -webkit-appearance: none;
+}
+
+.pane > .title > button.add:hover {
+    background-position: -23px 0px;
+}
+
+.pane > .title > button.add:active {
+    background-position: -46px 0px;
+}
+
 .pane > .body {
     position: relative;
     display: none;
@@ -1699,6 +1726,14 @@ li.editing .swatch, li.editing .enabled-button,  li.editing-sub-part .delete-but
 
 .pane.expanded > .body, .pane.expanded > .growbar {
     display: block;
+}
+
+.pane > .body .breakpoint-condition {
+    display: block;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    margin-left: 25px;
+    margin-right: 10px;
 }
 
 .pane.expanded:nth-last-of-type(1) {
@@ -1950,8 +1985,6 @@ body.inactive .sidebar {
     padding-right: 14px;
     overflow-x: hidden;
     overflow-y: overlay;
-    background-image: -webkit-gradient(linear, left top, left bottom, from(white), color-stop(0.5, white), color-stop(0.5, rgb(234, 243, 255)), to(rgb(234, 243, 255)));
-    -webkit-background-size: 1px 32px;
 }
 
 .data-grid.inline .data-container {
@@ -2053,22 +2086,27 @@ body.inactive .sidebar {
     background-image: url(Images/glossyHeaderSelectedPressed.png);
 }
 
-.data-grid th.sort-ascending div::after {
+.data-grid th.sort-ascending > div::after {
     position: absolute;
     top: 0;
+    bottom: 0;
     right: 0;
+    height: 12px;
+    margin-bottom: auto;
+    margin-top: auto;
     width: 8px;
-    height: 8px;
     content: url(Images/treeUpTriangleBlack.png);
 }
 
-.data-grid th.sort-descending div::after {
+.data-grid th.sort-descending > div::after {
     position: absolute;
     top: 0;
+    bottom: 0;
     right: 0;
-    margin-top: 1px;
-    width: 8px;
     height: 8px;
+    margin-bottom: auto;
+    margin-top: auto;
+    width: 8px;
     content: url(Images/treeDownTriangleBlack.png);
 }
 
@@ -3804,8 +3842,7 @@ body.inactive .sidebar-tree-item.selected .bubble.search-matches {
     bottom: 0;
 }
 
-#timeline-view-status-bar-items,
-#profile-view-status-bar-items {
+.status-bar-items {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -3929,28 +3966,8 @@ button.enable-toggle-status-bar-item .glyph {
     -webkit-mask-image: url(Images/excludeButtonGlyph.png);
 }
 
-#storage-view-status-bar-items {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 200px;
-    overflow: hidden;
-    border-left: 1px solid rgb(184, 184, 184);
-    margin-left: -1px;
-}
-
 .refresh-storage-status-bar-item .glyph {
     -webkit-mask-image: url(Images/reloadButtonGlyph.png);
-}
-
-#storage-view-status-bar-items {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 200px;
-    overflow: hidden;
-    border-left: 1px solid rgb(184, 184, 184);
-    margin-left: -1px;
 }
 
 ol.breakpoint-list {

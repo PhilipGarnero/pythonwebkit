@@ -29,6 +29,11 @@
 #include "DrawingArea.h"
 #include "InjectedBundle.h"
 #include "MessageID.h"
+#include "NetscapePlugin.h"
+#include "PluginProcessConnection.h"
+#include "PluginProcessConnectionManager.h"
+#include "PluginProxy.h"
+#include "PluginView.h"
 #include "WebBackForwardControllerClient.h"
 #include "WebBackForwardListProxy.h"
 #include "WebChromeClient.h"
@@ -40,8 +45,9 @@
 #include "WebEventConversion.h"
 #include "WebFrame.h"
 #include "WebInspectorClient.h"
-#include "WebPageMessageKinds.h"
+#include "WebPageCreationParameters.h"
 #include "WebPageProxyMessageKinds.h"
+#include "WebProcessProxyMessageKinds.h"
 #include "WebPreferencesStore.h"
 #include "WebProcess.h"
 #include <WebCore/EventHandler.h>
@@ -61,6 +67,11 @@
 #include <runtime/JSLock.h>
 #include <runtime/JSValue.h>
 
+#if ENABLE(PLUGIN_PROCESS)
+// FIXME: This is currently mac specific!
+#include "MachPort.h"
+#endif
+
 #ifndef NDEBUG
 #include <wtf/RefCountedLeakCounter.h>
 #endif
@@ -74,9 +85,9 @@ namespace WebKit {
 static WTF::RefCountedLeakCounter webPageCounter("WebPage");
 #endif
 
-PassRefPtr<WebPage> WebPage::create(uint64_t pageID, const IntSize& viewSize, const WebPreferencesStore& store, const DrawingAreaBase::DrawingAreaInfo& drawingAreaInfo)
+PassRefPtr<WebPage> WebPage::create(uint64_t pageID, const WebPageCreationParameters& parameters)
 {
-    RefPtr<WebPage> page = adoptRef(new WebPage(pageID, viewSize, store, drawingAreaInfo));
+    RefPtr<WebPage> page = adoptRef(new WebPage(pageID, parameters));
 
     if (WebProcess::shared().injectedBundle())
         WebProcess::shared().injectedBundle()->didCreatePage(page.get());
@@ -84,10 +95,15 @@ PassRefPtr<WebPage> WebPage::create(uint64_t pageID, const IntSize& viewSize, co
     return page.release();
 }
 
-WebPage::WebPage(uint64_t pageID, const IntSize& viewSize, const WebPreferencesStore& store, const DrawingAreaBase::DrawingAreaInfo& drawingAreaInfo)
-    : m_viewSize(viewSize)
-    , m_drawingArea(DrawingArea::create(drawingAreaInfo.type, drawingAreaInfo.id, this))
+WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
+    : m_viewSize(parameters.viewSize)
+    , m_drawingArea(DrawingArea::create(parameters.drawingAreaInfo.type, parameters.drawingAreaInfo.id, this))
     , m_isInRedo(false)
+#if PLATFORM(MAC)
+    , m_windowIsVisible(false)
+#elif PLATFORM(WIN)
+    , m_nativeWindow(parameters.nativeWindow)
+#endif
     , m_pageID(pageID)
 {
     ASSERT(m_pageID);
@@ -101,28 +117,29 @@ WebPage::WebPage(uint64_t pageID, const IntSize& viewSize, const WebPreferencesS
     pageClients.backForwardControllerClient = new WebBackForwardControllerClient(this);
     m_page = adoptPtr(new Page(pageClients));
 
-    m_page->settings()->setJavaScriptEnabled(store.javaScriptEnabled);
-    m_page->settings()->setLoadsImagesAutomatically(store.loadsImagesAutomatically);
-    m_page->settings()->setPluginsEnabled(store.pluginsEnabled);
-    m_page->settings()->setOfflineWebApplicationCacheEnabled(store.offlineWebApplicationCacheEnabled);
-    m_page->settings()->setLocalStorageEnabled(store.localStorageEnabled);
-    m_page->settings()->setXSSAuditorEnabled(store.xssAuditorEnabled);
-    m_page->settings()->setMinimumFontSize(store.minimumFontSize);
-    m_page->settings()->setMinimumLogicalFontSize(store.minimumLogicalFontSize);
-    m_page->settings()->setDefaultFontSize(store.defaultFontSize);
-    m_page->settings()->setDefaultFixedFontSize(store.defaultFixedFontSize);
-    m_page->settings()->setStandardFontFamily(store.standardFontFamily);
-    m_page->settings()->setCursiveFontFamily(store.cursiveFontFamily);
-    m_page->settings()->setFantasyFontFamily(store.fantasyFontFamily);
-    m_page->settings()->setFixedFontFamily(store.fixedFontFamily);
-    m_page->settings()->setSansSerifFontFamily(store.sansSerifFontFamily);
-    m_page->settings()->setSerifFontFamily(store.serifFontFamily);
+    m_page->settings()->setJavaScriptEnabled(parameters.store.javaScriptEnabled);
+    m_page->settings()->setLoadsImagesAutomatically(parameters.store.loadsImagesAutomatically);
+    m_page->settings()->setPluginsEnabled(parameters.store.pluginsEnabled);
+    m_page->settings()->setOfflineWebApplicationCacheEnabled(parameters.store.offlineWebApplicationCacheEnabled);
+    m_page->settings()->setLocalStorageEnabled(parameters.store.localStorageEnabled);
+    m_page->settings()->setXSSAuditorEnabled(parameters.store.xssAuditorEnabled);
+    m_page->settings()->setFrameFlatteningEnabled(parameters.store.frameFlatteningEnabled);
+    m_page->settings()->setMinimumFontSize(parameters.store.minimumFontSize);
+    m_page->settings()->setMinimumLogicalFontSize(parameters.store.minimumLogicalFontSize);
+    m_page->settings()->setDefaultFontSize(parameters.store.defaultFontSize);
+    m_page->settings()->setDefaultFixedFontSize(parameters.store.defaultFixedFontSize);
+    m_page->settings()->setStandardFontFamily(parameters.store.standardFontFamily);
+    m_page->settings()->setCursiveFontFamily(parameters.store.cursiveFontFamily);
+    m_page->settings()->setFantasyFontFamily(parameters.store.fantasyFontFamily);
+    m_page->settings()->setFixedFontFamily(parameters.store.fixedFontFamily);
+    m_page->settings()->setSansSerifFontFamily(parameters.store.sansSerifFontFamily);
+    m_page->settings()->setSerifFontFamily(parameters.store.serifFontFamily);
     m_page->settings()->setJavaScriptCanOpenWindowsAutomatically(true);
-    m_page->settings()->setMinDOMTimerInterval(0.004);
 
     m_page->setGroupName("WebKit2Group");
     
     platformInitialize();
+    Settings::setMinDOMTimerInterval(0.004);
 
     m_mainFrame = WebFrame::createMainFrame(this);
     WebProcess::shared().connection()->send(WebPageProxyMessage::DidCreateMainFrame, m_pageID, CoreIPC::In(m_mainFrame->frameID()));
@@ -135,6 +152,10 @@ WebPage::WebPage(uint64_t pageID, const IntSize& viewSize, const WebPreferencesS
 WebPage::~WebPage()
 {
     ASSERT(!m_page);
+#if PLATFORM(MAC)
+    ASSERT(m_pluginViews.isEmpty());
+#endif
+
 #ifndef NDEBUG
     webPageCounter.decrement();
 #endif
@@ -160,6 +181,35 @@ void WebPage::initializeInjectedBundleUIClient(WKBundlePageUIClient* client)
     m_uiClient.initialize(client);
 }
 
+PassRefPtr<Plugin> WebPage::createPlugin(const Plugin::Parameters& parameters)
+{
+    String pluginPath;
+
+    if (!WebProcess::shared().connection()->sendSync(WebProcessProxyMessage::GetPluginPath, 0, 
+                                                     CoreIPC::In(parameters.mimeType, parameters.url.string()), 
+                                                     CoreIPC::Out(pluginPath), 
+                                                     CoreIPC::Connection::NoTimeout))
+        return 0;
+
+    if (pluginPath.isNull())
+        return 0;
+
+#if ENABLE(PLUGIN_PROCESS)
+    PluginProcessConnection* pluginProcessConnection = PluginProcessConnectionManager::shared().getPluginProcessConnection(pluginPath);
+
+    if (!pluginProcessConnection)
+        return 0;
+
+    return PluginProxy::create(pluginProcessConnection);
+#else
+    RefPtr<NetscapePluginModule> pluginModule = NetscapePluginModule::getOrCreate(pluginPath);
+    if (!pluginModule)
+        return 0;
+
+    return NetscapePlugin::create(pluginModule.release());
+#endif
+}
+
 String WebPage::renderTreeExternalRepresentation() const
 {
     return externalRepresentation(m_mainFrame->coreFrame(), RenderAsTextBehaviorNormal);
@@ -167,14 +217,22 @@ String WebPage::renderTreeExternalRepresentation() const
 
 void WebPage::executeEditingCommand(const String& commandName, const String& argument)
 {
-    m_mainFrame->coreFrame()->editor()->command(commandName).execute(argument);
+    Frame* frame = m_page->focusController()->focusedOrMainFrame();
+    if (!frame)
+        return;
+    frame->editor()->command(commandName).execute(argument);
 }
 
 bool WebPage::isEditingCommandEnabled(const String& commandName)
 {
-    return m_mainFrame->coreFrame()->editor()->command(commandName).isEnabled();
+    Frame* frame = m_page->focusController()->focusedOrMainFrame();
+    if (!frame)
+        return false;
+    
+    Editor::Command command = frame->editor()->command(commandName);
+    return command.isSupported() && command.isEnabled();
 }
-
+    
 void WebPage::clearMainFrameName()
 {
     mainFrame()->coreFrame()->tree()->clearName();
@@ -193,9 +251,12 @@ void WebPage::changeAcceleratedCompositingMode(WebCore::GraphicsLayer* layer)
                                                 CoreIPC::Out(newDrawingAreaInfo),
                                                 CoreIPC::Connection::NoTimeout);
     
-    if (newDrawingAreaInfo.type != drawingArea()->type()) {
-        m_drawingArea = DrawingArea::create(newDrawingAreaInfo.type, newDrawingAreaInfo.id, this);
-        m_drawingArea->setNeedsDisplay(IntRect(IntPoint(0, 0), m_viewSize));
+    if (newDrawingAreaInfo.type != drawingArea()->info().type) {
+        m_drawingArea = 0;
+        if (newDrawingAreaInfo.type != DrawingArea::None) {
+            m_drawingArea = DrawingArea::create(newDrawingAreaInfo.type, newDrawingAreaInfo.id, this);
+            m_drawingArea->setNeedsDisplay(IntRect(IntPoint(0, 0), m_viewSize));
+        }
     }
 }
 
@@ -394,109 +455,140 @@ private:
     const WebEvent* m_previousCurrentEvent;
 };
 
+static bool handleMouseEvent(const WebMouseEvent& mouseEvent, Page* page)
+{
+    Frame* frame = page->mainFrame();
+    if (!frame->view())
+        return false;
+
+    PlatformMouseEvent platformMouseEvent = platform(mouseEvent);
+
+    switch (platformMouseEvent.eventType()) {
+        case WebCore::MouseEventPressed:
+            return frame->eventHandler()->handleMousePressEvent(platformMouseEvent);
+        case WebCore::MouseEventReleased:
+            return frame->eventHandler()->handleMouseReleaseEvent(platformMouseEvent);
+        case WebCore::MouseEventMoved:
+            return frame->eventHandler()->mouseMoved(platformMouseEvent);
+        default:
+            ASSERT_NOT_REACHED();
+            return false;
+    }
+}
+
 void WebPage::mouseEvent(const WebMouseEvent& mouseEvent)
 {
     CurrentEvent currentEvent(mouseEvent);
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(mouseEvent.type())));
+    bool handled = handleMouseEvent(mouseEvent, m_page.get());
 
-    if (!m_mainFrame->coreFrame()->view())
-        return;
+    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(mouseEvent.type()), handled));
+}
 
-    PlatformMouseEvent platformMouseEvent = platform(mouseEvent);
-    
-    switch (platformMouseEvent.eventType()) {
-        case WebCore::MouseEventPressed:
-            m_mainFrame->coreFrame()->eventHandler()->handleMousePressEvent(platformMouseEvent);
-            break;
-        case WebCore::MouseEventReleased:
-            m_mainFrame->coreFrame()->eventHandler()->handleMouseReleaseEvent(platformMouseEvent);
-            break;
-        case WebCore::MouseEventMoved:
-            m_mainFrame->coreFrame()->eventHandler()->mouseMoved(platformMouseEvent);
-            break;
-        default:
-            ASSERT_NOT_REACHED();
-            break;
-    }
+static bool handleWheelEvent(const WebWheelEvent& wheelEvent, Page* page)
+{
+    Frame* frame = page->mainFrame();
+    if (!frame->view())
+        return false;
+
+    PlatformWheelEvent platformWheelEvent = platform(wheelEvent);
+    return frame->eventHandler()->handleWheelEvent(platformWheelEvent);
 }
 
 void WebPage::wheelEvent(const WebWheelEvent& wheelEvent)
 {
     CurrentEvent currentEvent(wheelEvent);
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(wheelEvent.type())));
-    if (!m_mainFrame->coreFrame()->view())
-        return;
+    bool handled = handleWheelEvent(wheelEvent, m_page.get());
+    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(wheelEvent.type()), handled));
+}
 
-    PlatformWheelEvent platformWheelEvent = platform(wheelEvent);
-    m_mainFrame->coreFrame()->eventHandler()->handleWheelEvent(platformWheelEvent);
+static bool handleKeyEvent(const WebKeyboardEvent& keyboardEvent, Page* page)
+{
+    if (!page->mainFrame()->view())
+        return false;
+
+    return page->focusController()->focusedOrMainFrame()->eventHandler()->keyEvent(platform(keyboardEvent));
 }
 
 void WebPage::keyEvent(const WebKeyboardEvent& keyboardEvent)
 {
     CurrentEvent currentEvent(keyboardEvent);
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(keyboardEvent.type())));
+    bool handled = handleKeyEvent(keyboardEvent, m_page.get());
+    if (!handled)
+        handled = performDefaultBehaviorForKeyEvent(keyboardEvent);
 
-    if (!m_mainFrame->coreFrame()->view())
-        return;
-
-    PlatformKeyboardEvent platformKeyboardEvent = platform(keyboardEvent);
-    if (m_page->focusController()->focusedOrMainFrame()->eventHandler()->keyEvent(platformKeyboardEvent))
-        return;
-
-    bool handled = performDefaultBehaviorForKeyEvent(keyboardEvent);
-    // FIXME: Communicate back to the UI process that the event was handled.
-    (void)handled;
+    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(keyboardEvent.type()), handled));
 }
 
-void WebPage::selectAll()
+void WebPage::validateMenuItem(const String& commandName)
 {
-    if (m_page->focusController()->focusedOrMainFrame())
-        m_page->focusController()->focusedOrMainFrame()->selection()->selectAll();
-}
-
-void WebPage::copy()
-{
-    if (m_page->focusController()->focusedOrMainFrame())
-        m_page->focusController()->focusedOrMainFrame()->editor()->copy();
-}
-
-void WebPage::cut()
-{
-    if (m_page->focusController()->focusedOrMainFrame())
-        m_page->focusController()->focusedOrMainFrame()->editor()->cut();
-}
-
-void WebPage::paste()
-{
-    if (m_page->focusController()->focusedOrMainFrame())
-        m_page->focusController()->focusedOrMainFrame()->editor()->paste();
-}    
+    bool isEnabled = false;
+    int state = 0;
+    Frame* frame = m_page->focusController()->focusedOrMainFrame();
+    if (frame) {
+        Editor::Command command = frame->editor()->command(commandName);
+        state = command.state();
+        isEnabled = command.isSupported() && command.isEnabled();
+    }
     
+    WebProcess::shared().connection()->send(WebPageProxyMessage::DidValidateMenuItem, m_pageID, CoreIPC::In(commandName, isEnabled, state));
+}
+
+void WebPage::executeEditCommand(const String& commandName)
+{
+    executeEditingCommand(commandName, String());
+}
+
 #if ENABLE(TOUCH_EVENTS)
+static bool handleTouchEvent(const WebTouchEvent& touchEvent, Page* page)
+{
+    Frame* frame = page->mainFrame();
+    if (!frame->view())
+        return false;
+
+    return frame->eventHandler()->handleTouchEvent(platform(touchEvent));
+}
+
 void WebPage::touchEvent(const WebTouchEvent& touchEvent)
 {
     CurrentEvent currentEvent(touchEvent);
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(touchEvent.type())));
-            
-    if (!m_mainFrame->coreFrame()->view())
-        return;
 
-    PlatformTouchEvent platformTouchEvent = platform(touchEvent);
-    m_mainFrame->coreFrame()->eventHandler()->handleTouchEvent(platformTouchEvent);
+    bool handled = handleTouchEvent(touchEvent, m_page.get());
+
+    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(touchEvent.type()), handled));
 }
 #endif
 
 void WebPage::setActive(bool isActive)
 {
     m_page->focusController()->setActive(isActive);
+
+#if PLATFORM(MAC)    
+    // Tell all our plug-in views that the window focus changed.
+    for (HashSet<PluginView*>::const_iterator it = m_pluginViews.begin(), end = m_pluginViews.end(); it != end; ++it)
+        (*it)->setWindowIsFocused(isActive);
+#endif
 }
 
 void WebPage::setFocused(bool isFocused)
 {
     m_page->focusController()->setFocused(isFocused);
+}
+
+void WebPage::setWindowResizerSize(const IntSize& windowResizerSize)
+{
+    if (m_windowResizerSize == windowResizerSize)
+        return;
+
+    m_windowResizerSize = windowResizerSize;
+
+    for (Frame* coreFrame = m_mainFrame->coreFrame(); coreFrame; coreFrame = coreFrame->tree()->traverseNext()) {
+        FrameView* view = coreFrame->view();
+        if (view)
+            view->windowResizerRectChanged();
+    }
 }
 
 void WebPage::setIsInWindow(bool isInWindow)
@@ -510,11 +602,12 @@ void WebPage::setIsInWindow(bool isInWindow)
     }
 }
 
-void WebPage::didReceivePolicyDecision(WebFrame* frame, uint64_t listenerID, WebCore::PolicyAction policyAction)
+void WebPage::didReceivePolicyDecision(uint64_t frameID, uint64_t listenerID, uint32_t policyAction)
 {
+    WebFrame* frame = WebProcess::shared().webFrame(frameID);
     if (!frame)
         return;
-    frame->didReceivePolicyDecision(listenerID, policyAction);
+    frame->didReceivePolicyDecision(listenerID, static_cast<WebCore::PolicyAction>(policyAction));
 }
 
 void WebPage::show()
@@ -538,12 +631,8 @@ String WebPage::userAgent() const
 
 IntRect WebPage::windowResizerRect() const
 {
-    // FIXME: This function should conditionally return a null IntRect for circumstances when
-    // you don't always want to show a resizer rect (i.e. you never want to show one on windows
-    // and you don't want to show one in Safari when the status bar is visible).
-
-    // FIXME: This should be either platform specific or based off the width of the scrollbar. 
-    static const int windowResizerSize = 15;
+    if (m_windowResizerSize.isEmpty())
+        return IntRect();
 
     IntSize frameViewSize;
     if (Frame* coreFrame = m_mainFrame->coreFrame()) {
@@ -551,8 +640,8 @@ IntRect WebPage::windowResizerRect() const
             frameViewSize = view->size();
     }
 
-    return IntRect(frameViewSize.width() - windowResizerSize, frameViewSize.height() - windowResizerSize, 
-                   windowResizerSize, windowResizerSize);
+    return IntRect(frameViewSize.width() - m_windowResizerSize.width(), frameViewSize.height() - m_windowResizerSize.height(), 
+                   m_windowResizerSize.width(), m_windowResizerSize.height());
 }
 
 void WebPage::runJavaScriptInMainFrame(const String& script, uint64_t callbackID)
@@ -573,10 +662,10 @@ void WebPage::getRenderTreeExternalRepresentation(uint64_t callbackID)
     WebProcess::shared().connection()->send(WebPageProxyMessage::DidGetRenderTreeExternalRepresentation, m_pageID, CoreIPC::In(resultString, callbackID));
 }
 
-void WebPage::getSourceForFrame(WebFrame* frame, uint64_t callbackID)
+void WebPage::getSourceForFrame(uint64_t frameID, uint64_t callbackID)
 {
     String resultString;
-    if (frame)
+    if (WebFrame* frame = WebProcess::shared().webFrame(frameID))
        resultString = frame->source();
     WebProcess::shared().connection()->send(WebPageProxyMessage::DidGetSourceForFrame, m_pageID, CoreIPC::In(resultString, callbackID));
 }
@@ -587,9 +676,17 @@ void WebPage::preferencesDidChange(const WebPreferencesStore& store)
 
     m_page->settings()->setJavaScriptEnabled(store.javaScriptEnabled);
     m_page->settings()->setLoadsImagesAutomatically(store.loadsImagesAutomatically);
+    m_page->settings()->setPluginsEnabled(store.pluginsEnabled);
     m_page->settings()->setOfflineWebApplicationCacheEnabled(store.offlineWebApplicationCacheEnabled);
     m_page->settings()->setLocalStorageEnabled(store.localStorageEnabled);
     m_page->settings()->setXSSAuditorEnabled(store.xssAuditorEnabled);
+    m_page->settings()->setFrameFlatteningEnabled(store.frameFlatteningEnabled);
+    m_page->settings()->setStandardFontFamily(store.standardFontFamily);
+    m_page->settings()->setCursiveFontFamily(store.cursiveFontFamily);
+    m_page->settings()->setFantasyFontFamily(store.fantasyFontFamily);
+    m_page->settings()->setFixedFontFamily(store.fixedFontFamily);
+    m_page->settings()->setSansSerifFontFamily(store.sansSerifFontFamily);
+    m_page->settings()->setSerifFontFamily(store.serifFontFamily);
 
     platformPreferencesDidChange(store);
 }
@@ -664,252 +761,55 @@ void WebPage::didRemoveEditCommand(uint64_t commandID)
     removeWebEditCommand(commandID);
 }
 
+#if PLATFORM(MAC)
+void WebPage::addPluginView(PluginView* pluginView)
+{
+    ASSERT(!m_pluginViews.contains(pluginView));
+
+    m_pluginViews.add(pluginView);
+}
+
+void WebPage::removePluginView(PluginView* pluginView)
+{
+    ASSERT(m_pluginViews.contains(pluginView));
+
+    m_pluginViews.remove(pluginView);
+}
+
+void WebPage::setWindowIsVisible(bool windowIsVisible)
+{
+    m_windowIsVisible = windowIsVisible;
+
+    // Tell all our plug-in views that the window visibility changed.
+    for (HashSet<PluginView*>::const_iterator it = m_pluginViews.begin(), end = m_pluginViews.end(); it != end; ++it)
+        (*it)->setWindowIsVisible(windowIsVisible);
+}
+
+void WebPage::setWindowFrame(const IntRect& windowFrame)
+{
+    m_windowFrame = windowFrame;
+
+    // Tell all our plug-in views that the window frame changed.
+    for (HashSet<PluginView*>::const_iterator it = m_pluginViews.begin(), end = m_pluginViews.end(); it != end; ++it)
+        (*it)->setWindowFrame(windowFrame);
+}
+
+bool WebPage::windowIsFocused() const
+{
+    return m_page->focusController()->isActive();
+}   
+
+#endif
+
 void WebPage::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::MessageID messageID, CoreIPC::ArgumentDecoder* arguments)
 {
     if (messageID.is<CoreIPC::MessageClassDrawingArea>()) {
-        ASSERT(m_drawingArea);
-        m_drawingArea->didReceiveMessage(connection, messageID, arguments);
+        if (m_drawingArea)
+            m_drawingArea->didReceiveMessage(connection, messageID, arguments);
         return;
     }
 
-    switch (messageID.get<WebPageMessage::Kind>()) {
-        case WebPageMessage::SetActive: {
-            bool active;
-            if (!arguments->decode(active))
-                return;
-         
-            setActive(active);
-            return;
-        }
-        case WebPageMessage::SetFocused: {
-            bool focused;
-            if (!arguments->decode(focused))
-                return;
-            
-            setFocused(focused);
-            return;
-        }
-        case WebPageMessage::SetIsInWindow: {
-            bool isInWindow;
-            if (!arguments->decode(isInWindow))
-                return;
-            
-            setIsInWindow(isInWindow);
-            return;
-        }
-        case WebPageMessage::MouseEvent: {
-            WebMouseEvent event;
-            if (!arguments->decode(event))
-                return;
-            mouseEvent(event);
-            return;
-        }
-        case WebPageMessage::PreferencesDidChange: {
-            WebPreferencesStore store;
-            if (!arguments->decode(store))
-                return;
-            
-            preferencesDidChange(store);
-            return;
-        }
-        case WebPageMessage::WheelEvent: {
-            WebWheelEvent event;
-            if (!arguments->decode(event))
-                return;
-
-            wheelEvent(event);
-            return;
-        }
-        case WebPageMessage::KeyEvent: {
-            WebKeyboardEvent event;
-            if (!arguments->decode(event))
-                return;
-
-            keyEvent(event);
-            return;
-        }
-        case WebPageMessage::SelectAll: {
-            selectAll();
-            return;
-        }
-        case WebPageMessage::Copy: {
-            copy();
-            return;
-        }
-        case WebPageMessage::Cut: {
-            cut();
-            return;
-        }
-        case WebPageMessage::Paste: {
-            paste();
-            return;
-        }            
-#if ENABLE(TOUCH_EVENTS)
-        case WebPageMessage::TouchEvent: {
-            WebTouchEvent event;
-            if (!arguments->decode(event))
-                return;
-            touchEvent(event);
-        }
-#endif
-        case WebPageMessage::LoadURL: {
-            String url;
-            if (!arguments->decode(url))
-                return;
-            
-            loadURL(url);
-            return;
-        }
-        case WebPageMessage::LoadURLRequest: {
-            ResourceRequest request;
-            if (!arguments->decode(request))
-                return;
-            
-            loadURLRequest(request);
-            return;
-        }
-        case WebPageMessage::LoadHTMLString: {
-            String htmlString;
-            String baseURL;
-            if (!arguments->decode(CoreIPC::Out(htmlString, baseURL)))
-                return;
-            
-            loadHTMLString(htmlString, baseURL);
-            return;
-        }
-        case WebPageMessage::LoadPlainTextString: {
-            String string;
-            if (!arguments->decode(CoreIPC::Out(string)))
-                return;
-            
-            loadPlainTextString(string);
-            return;
-        }
-        case WebPageMessage::StopLoading:
-            stopLoading();
-            return;
-        case WebPageMessage::Reload: {
-            bool reloadFromOrigin;
-            if (!arguments->decode(CoreIPC::Out(reloadFromOrigin)))
-                return;
-
-            reload(reloadFromOrigin);
-            return;
-        }
-        case WebPageMessage::GoForward: {
-            uint64_t backForwardItemID;
-            if (!arguments->decode(CoreIPC::Out(backForwardItemID)))
-                return;
-            goForward(backForwardItemID);
-            return;
-        }
-        case WebPageMessage::GoBack: {
-            uint64_t backForwardItemID;
-            if (!arguments->decode(CoreIPC::Out(backForwardItemID)))
-                return;
-            goBack(backForwardItemID);
-            return;
-        }
-       case WebPageMessage::GoToBackForwardItem: {
-            uint64_t backForwardItemID;
-            if (!arguments->decode(CoreIPC::Out(backForwardItemID)))
-                return;
-            goToBackForwardItem(backForwardItemID);
-            return;
-        }
-        case WebPageMessage::DidReceivePolicyDecision: {
-            uint64_t frameID;
-            uint64_t listenerID;
-            uint32_t policyAction;
-            if (!arguments->decode(CoreIPC::Out(frameID, listenerID, policyAction)))
-                return;
-            didReceivePolicyDecision(WebProcess::shared().webFrame(frameID), listenerID, (WebCore::PolicyAction)policyAction);
-            return;
-        }
-        case WebPageMessage::RunJavaScriptInMainFrame: {
-            String script;
-            uint64_t callbackID;
-            if (!arguments->decode(CoreIPC::Out(script, callbackID)))
-                return;
-            runJavaScriptInMainFrame(script, callbackID);
-            return;
-        }
-        case WebPageMessage::GetRenderTreeExternalRepresentation: {
-            uint64_t callbackID;
-            if (!arguments->decode(callbackID))
-                return;
-            getRenderTreeExternalRepresentation(callbackID);
-            return;
-        }
-        case WebPageMessage::GetSourceForFrame: {
-            uint64_t frameID;
-            uint64_t callbackID;
-            if (!arguments->decode(CoreIPC::Out(frameID, callbackID)))
-                return;
-            getSourceForFrame(WebProcess::shared().webFrame(frameID), callbackID);
-            return;
-        }
-        case WebPageMessage::Close: {
-            close();
-            return;
-        }
-        case WebPageMessage::TryClose: {
-            tryClose();
-            return;
-        }
-        case WebPageMessage::SetCustomUserAgent: {
-            String customUserAgent;
-            if (!arguments->decode(CoreIPC::Out(customUserAgent)))
-                return;
-            setCustomUserAgent(customUserAgent);
-            return;
-        }
-        case WebPageMessage::UnapplyEditCommand: {
-            uint64_t commandID;
-            if (!arguments->decode(CoreIPC::Out(commandID)))
-                return;
-            unapplyEditCommand(commandID);
-            return;
-        }
-        case WebPageMessage::ReapplyEditCommand: {
-            uint64_t commandID;
-            if (!arguments->decode(CoreIPC::Out(commandID)))
-                return;
-            reapplyEditCommand(commandID);
-            return;
-        }
-        case WebPageMessage::DidRemoveEditCommand: {
-            uint64_t commandID;
-            if (!arguments->decode(CoreIPC::Out(commandID)))
-                return;
-            didRemoveEditCommand(commandID);
-            return;
-        }
-        case WebPageMessage::SetPageZoomFactor: {
-            double zoomFactor;
-            if (!arguments->decode(CoreIPC::Out(zoomFactor)))
-                return;
-            setPageZoomFactor(zoomFactor);
-            return;
-        }
-        case WebPageMessage::SetTextZoomFactor: {
-            double zoomFactor;
-            if (!arguments->decode(CoreIPC::Out(zoomFactor)))
-                return;
-            setTextZoomFactor(zoomFactor);
-            return;
-        }
-        case WebPageMessage::SetPageAndTextZoomFactors: {
-            double pageZoomFactor;
-            double textZoomFactor;
-            if (!arguments->decode(CoreIPC::Out(pageZoomFactor, textZoomFactor)))
-                return;
-            setPageAndTextZoomFactors(pageZoomFactor, textZoomFactor);
-            return;
-        }
-    }
-
-    ASSERT_NOT_REACHED();
+    didReceiveWebPageMessage(connection, messageID, arguments);
 }
 
 } // namespace WebKit

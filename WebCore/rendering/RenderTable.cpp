@@ -194,23 +194,23 @@ void RenderTable::removeChild(RenderObject* oldChild)
     setNeedsSectionRecalc();
 }
 
-void RenderTable::calcWidth()
+void RenderTable::computeLogicalWidth()
 {
     if (isPositioned())
-        calcAbsoluteHorizontal();
+        computePositionedLogicalWidth();
 
     RenderBlock* cb = containingBlock();
-    int availableWidth = cb->availableWidth();
+    int availableWidth = cb->availableLogicalWidth();
 
     LengthType widthType = style()->width().type();
     if (widthType > Relative && style()->width().isPositive()) {
         // Percent or fixed table
         setWidth(style()->width().calcMinValue(availableWidth));
-        setWidth(max(minPrefWidth(), width()));
+        setWidth(max(minPreferredLogicalWidth(), width()));
     } else {
         // An auto width table should shrink to fit within the line width if necessary in order to 
         // avoid overlapping floats.
-        availableWidth = cb->lineWidth(y(), false);
+        availableWidth = cb->availableLogicalWidthForLine(y(), false);
         
         // Subtract out any fixed margins from our available width for auto width tables.
         int marginTotal = 0;
@@ -223,15 +223,15 @@ void RenderTable::calcWidth()
         int availContentWidth = max(0, availableWidth - marginTotal);
         
         // Ensure we aren't bigger than our max width or smaller than our min width.
-        setWidth(min(availContentWidth, maxPrefWidth()));
+        setWidth(min(availContentWidth, maxPreferredLogicalWidth()));
     }
     
-    setWidth(max(width(), minPrefWidth()));
+    setWidth(max(width(), minPreferredLogicalWidth()));
 
     // Finally, with our true width determined, compute our margins for real.
     m_marginRight = 0;
     m_marginLeft = 0;
-    calcHorizontalMargins(style()->marginLeft(), style()->marginRight(), availableWidth);
+    computeInlineDirectionMargins(cb, availableWidth, width());
 }
 
 void RenderTable::layout()
@@ -252,7 +252,7 @@ void RenderTable::layout()
     initMaxMarginValues();
     
     int oldWidth = width();
-    calcWidth();
+    computeLogicalWidth();
 
     if (m_caption && width() != oldWidth)
         m_caption->setNeedsLayout(true, false);
@@ -318,7 +318,7 @@ void RenderTable::layout()
     setHeight(height() + bpTop);
 
     if (!isPositioned())
-        calcHeight();
+        computeLogicalHeight();
 
     Length h = style()->height();
     int th = 0;
@@ -326,7 +326,7 @@ void RenderTable::layout()
         // Tables size as though CSS height includes border/padding.
         th = h.value() - (bpTop + bpBottom);
     else if (h.isPercent())
-        th = calcPercentageHeight(h);
+        th = computePercentageLogicalHeight(h);
     th = max(0, th);
 
     for (RenderObject* child = firstChild(); child; child = child->nextSibling()) {
@@ -371,7 +371,7 @@ void RenderTable::layout()
     }
 
     if (isPositioned())
-        calcHeight();
+        computeLogicalHeight();
 
     // table can be containing block of positioned elements.
     // FIXME: Only pass true if width or height changed.
@@ -533,19 +533,19 @@ void RenderTable::paintMask(PaintInfo& paintInfo, int tx, int ty)
     paintMaskImages(paintInfo, tx, ty, w, h);
 }
 
-void RenderTable::calcPrefWidths()
+void RenderTable::computePreferredLogicalWidths()
 {
-    ASSERT(prefWidthsDirty());
+    ASSERT(preferredLogicalWidthsDirty());
 
     recalcSectionsIfNeeded();
     recalcHorizontalBorders();
 
-    m_tableLayout->calcPrefWidths(m_minPrefWidth, m_maxPrefWidth);
+    m_tableLayout->computePreferredLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);
 
     if (m_caption)
-        m_minPrefWidth = max(m_minPrefWidth, m_caption->minPrefWidth());
+        m_minPreferredLogicalWidth = max(m_minPreferredLogicalWidth, m_caption->minPreferredLogicalWidth());
 
-    setPrefWidthsDirty(false);
+    setPreferredLogicalWidthsDirty(false);
 }
 
 void RenderTable::splitColumn(int pos, int firstSpan)
@@ -732,7 +732,7 @@ int RenderTable::calcBorderLeft() const
         if (tb.style() > BHIDDEN)
             borderWidth = tb.width();
 
-        int leftmostColumn = style()->direction() == RTL ? numEffCols() - 1 : 0;
+        int leftmostColumn = !style()->isLeftToRightDirection() ? numEffCols() - 1 : 0;
         RenderTableCol* colGroup = colElement(leftmostColumn);
         if (colGroup) {
             const BorderValue& gb = style()->borderLeft();
@@ -791,7 +791,7 @@ int RenderTable::calcBorderRight() const
         if (tb.style() > BHIDDEN)
             borderWidth = tb.width();
 
-        int rightmostColumn = style()->direction() == RTL ? 0 : numEffCols() - 1;
+        int rightmostColumn = !style()->isLeftToRightDirection() ? 0 : numEffCols() - 1;
         RenderTableCol* colGroup = colElement(rightmostColumn);
         if (colGroup) {
             const BorderValue& gb = style()->borderRight();

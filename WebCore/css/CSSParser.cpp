@@ -62,6 +62,7 @@
 #include "FloatConversion.h"
 #include "FontFamilyValue.h"
 #include "FontValue.h"
+#include "HashTools.h"
 #include "MediaList.h"
 #include "MediaQueryExp.h"
 #include "Pair.h"
@@ -88,9 +89,6 @@ extern int cssyyparse(void* parser);
 
 using namespace std;
 using namespace WTF;
-
-#include "CSSPropertyNames.cpp"
-#include "CSSValueKeywords.cpp"
 
 namespace WebCore {
 
@@ -1003,7 +1001,12 @@ bool CSSParser::parseValue(int propId, bool important)
         if (id == CSSValueNormal || id == CSSValueBreakWord)
             validPrimitive = true;
         break;
-
+    case CSSPropertySpeak:           // none | normal | spell-out | digits | literal-punctuation | no-punctuation | inherit
+        if (id == CSSValueNone || id == CSSValueNormal || id == CSSValueSpellOut || id == CSSValueDigits 
+            || id == CSSValueLiteralPunctuation || id == CSSValueNoPunctuation)
+            validPrimitive = true;
+        break;
+            
     case CSSPropertyTextIndent:          // <length> | <percentage> | inherit
         validPrimitive = (!id && validUnit(value, FLength | FPercent, m_strict));
         break;
@@ -1433,8 +1436,8 @@ bool CSSParser::parseValue(int propId, bool important)
         return false;
     }
     case CSSPropertyWebkitMarginCollapse: {
-        const int properties[2] = { CSSPropertyWebkitMarginTopCollapse,
-            CSSPropertyWebkitMarginBottomCollapse };
+        const int properties[2] = { CSSPropertyWebkitMarginBeforeCollapse,
+            CSSPropertyWebkitMarginAfterCollapse };
         if (num == 1) {
             ShorthandScope scope(this, CSSPropertyWebkitMarginCollapse);
             if (!parseValue(properties[0], important))
@@ -1451,6 +1454,8 @@ bool CSSParser::parseValue(int propId, bool important)
         }
         return false;
     }
+    case CSSPropertyWebkitMarginBeforeCollapse:
+    case CSSPropertyWebkitMarginAfterCollapse:
     case CSSPropertyWebkitMarginTopCollapse:
     case CSSPropertyWebkitMarginBottomCollapse:
         if (id == CSSValueCollapse || id == CSSValueSeparate || id == CSSValueDiscard)

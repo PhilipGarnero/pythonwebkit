@@ -687,7 +687,7 @@ void FrameView::layout(bool allowSubtree)
                 vMode = ScrollbarAlwaysOff;
                 hMode = ScrollbarAlwaysOff;
             } else if (body->hasTagName(bodyTag)) {
-                if (!m_firstLayout && m_size.height() != layoutHeight() && body->renderer()->enclosingBox()->stretchesToViewHeight())
+                if (!m_firstLayout && m_size.height() != layoutHeight() && body->renderer()->enclosingBox()->stretchesToViewport())
                     body->renderer()->setChildNeedsLayout(true);
                 // It's sufficient to just check the X overflow,
                 // since it's illegal to have visible in only one direction.
@@ -799,7 +799,7 @@ void FrameView::layout(bool allowSubtree)
     
     m_layoutCount++;
 
-#if PLATFORM(MAC)
+#if PLATFORM(MAC) || PLATFORM(CHROMIUM)
     if (AXObjectCache::accessibilityEnabled())
         root->document()->axObjectCache()->postNotification(root, AXObjectCache::AXLayoutComplete, true);
 #endif

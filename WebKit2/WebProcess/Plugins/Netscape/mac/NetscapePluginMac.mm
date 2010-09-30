@@ -125,6 +125,14 @@ bool NetscapePlugin::platformPostInitialize()
     return true;
 }
 
+void NetscapePlugin::platformDestroy()
+{
+}
+
+void NetscapePlugin::platformGeometryDidChange()
+{
+}
+
 static inline NPCocoaEvent initializeEvent(NPCocoaEventType type)
 {
     NPCocoaEvent event;
@@ -323,6 +331,35 @@ void NetscapePlugin::platformSetFocus(bool hasFocus)
             ASSERT_NOT_REACHED();
     }
 }
+
+#if PLATFORM(MAC)
+void NetscapePlugin::windowFocusChanged(bool hasFocus)
+{
+    switch (m_eventModel) {
+        case NPEventModelCocoa: {
+            NPCocoaEvent event = initializeEvent(NPCocoaEventWindowFocusChanged);
+            
+            event.data.focus.hasFocus = hasFocus;
+            NPP_HandleEvent(&event);
+            break;
+        }
+
+        default:
+            ASSERT_NOT_REACHED();
+    }
+}
+
+void NetscapePlugin::windowFrameChanged(const IntRect&)
+{
+    // FIXME: Implement.
+}
+    
+void NetscapePlugin::windowVisibilityChanged(bool)
+{
+    // FIXME: Implement.
+}
+    
+#endif
 
 PlatformLayer* NetscapePlugin::pluginLayer()
 {

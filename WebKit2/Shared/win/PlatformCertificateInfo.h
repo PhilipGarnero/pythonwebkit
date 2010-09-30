@@ -26,30 +26,33 @@
 #ifndef PlatformCertificateInfo_h
 #define PlatformCertificateInfo_h
 
-#include "ArgumentDecoder.h"
-#include "ArgumentEncoder.h"
-#include <WebCore/ResourceResponse.h>
+namespace CoreIPC {
+    class ArgumentDecoder;
+    class ArgumentEncoder;
+}
+
+namespace WebCore {
+    class ResourceResponse;
+}
 
 namespace WebKit {
 
 class PlatformCertificateInfo {
 public:
-    PlatformCertificateInfo()
-    {
-    }
+    PlatformCertificateInfo();
+    explicit PlatformCertificateInfo(const WebCore::ResourceResponse&);    
+    ~PlatformCertificateInfo();
 
-    explicit PlatformCertificateInfo(const WebCore::ResourceResponse&)
-    {
-    }
+    PlatformCertificateInfo(const PlatformCertificateInfo&);
+    PlatformCertificateInfo& operator=(const PlatformCertificateInfo&);
 
-    void encode(CoreIPC::ArgumentEncoder*) const
-    {
-    }
+    PCCERT_CONTEXT certificateContext() const { return m_certificateContext; }
 
-    static bool decode(CoreIPC::ArgumentDecoder*, PlatformCertificateInfo&)
-    {
-        return true;
-    }
+    void encode(CoreIPC::ArgumentEncoder* encoder) const;
+    static bool decode(CoreIPC::ArgumentDecoder* decoder, PlatformCertificateInfo& t);
+
+private:
+    PCCERT_CONTEXT m_certificateContext;
 };
 
 } // namespace WebKit

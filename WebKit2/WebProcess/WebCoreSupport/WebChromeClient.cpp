@@ -30,10 +30,12 @@
 #include "NotImplemented.h"
 
 #include "DrawingArea.h"
+#include "InjectedBundleUserMessageCoders.h"
 #include "WebCoreArgumentCoders.h"
 #include "WebFrame.h"
 #include "WebFrameLoaderClient.h"
 #include "WebPage.h"
+#include "WebPageCreationParameters.h"
 #include "WebPageProxyMessageKinds.h"
 #include "WebPopupMenu.h"
 #include "WebPreferencesStore.h"
@@ -108,12 +110,10 @@ void WebChromeClient::focusedNodeChanged(Node*)
 Page* WebChromeClient::createWindow(Frame*, const FrameLoadRequest&, const WindowFeatures&)
 {
     uint64_t newPageID = 0;
-    IntSize viewSize;
-    WebPreferencesStore store;
-    DrawingAreaBase::DrawingAreaInfo drawingAreaInfo;
+    WebPageCreationParameters parameters;
     if (!WebProcess::shared().connection()->sendSync(WebPageProxyMessage::CreateNewPage,
                                                      m_page->pageID(), CoreIPC::In(),
-                                                     CoreIPC::Out(newPageID, viewSize, store, drawingAreaInfo),
+                                                     CoreIPC::Out(newPageID, parameters),
                                                      CoreIPC::Connection::NoTimeout)) {
         return 0;
     }
@@ -121,7 +121,7 @@ Page* WebChromeClient::createWindow(Frame*, const FrameLoadRequest&, const Windo
     if (!newPageID)
         return 0;
 
-    WebPage* newWebPage = WebProcess::shared().createWebPage(newPageID, viewSize, store, drawingAreaInfo);
+    WebPage* newWebPage = WebProcess::shared().createWebPage(newPageID, parameters);
     return newWebPage->corePage();
 }
 
@@ -357,9 +357,15 @@ void WebChromeClient::scrollbarsModeDidChange() const
     notImplemented();
 }
 
-void WebChromeClient::mouseDidMoveOverElement(const HitTestResult&, unsigned modifierFlags)
+void WebChromeClient::mouseDidMoveOverElement(const HitTestResult& hitTestResult, unsigned modifierFlags)
 {
-    notImplemented();
+    RefPtr<APIObject> userData;
+
+    // Notify the bundle client.
+    m_page->injectedBundleUIClient().mouseDidMoveOverElement(m_page, hitTestResult, static_cast<WebEvent::Modifiers>(modifierFlags), userData);
+
+    // Notify the UIProcess.
+    WebProcess::shared().connection()->send(WebPageProxyMessage::MouseDidMoveOverElement, m_page->pageID(), CoreIPC::In(modifierFlags, InjectedBundleUserMessageEncoder(userData.get())));
 }
 
 void WebChromeClient::setToolTip(const String& toolTip, TextDirection)

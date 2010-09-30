@@ -130,7 +130,7 @@ void Font::drawGlyphs(GraphicsContext* gc, const SimpleFontData* font,
         if (textMode & cTextFill) {
             // If we also filled, we don't want to draw shadows twice.
             // See comment in FontChromiumWin.cpp::paintSkiaText() for more details.
-            paint.setLooper(0)->safeUnref();
+            SkSafeUnref(paint.setLooper(0));
         }
 
         canvas->drawPosText(glyphs, numGlyphs << 1, pos, paint);
@@ -313,7 +313,7 @@ public:
             // So we allow that to run first, then do a second pass over the range it
             // found and take the largest subregion that stays within a single font.
             const FontData* glyphData = m_font->glyphDataForCharacter(m_item.string[m_item.item.pos], false, false).fontData;
-            int endOfRun;
+            unsigned endOfRun;
             for (endOfRun = 1; endOfRun < m_item.item.length; ++endOfRun) {
                 const FontData* nextGlyphData = m_font->glyphDataForCharacter(m_item.string[m_item.item.pos + endOfRun], false, false).fontData;
                 if (nextGlyphData != glyphData)
@@ -406,7 +406,7 @@ private:
         // Harfbuzz will do the same thing for us using the GSUB table.
         // 2) Convert spacing characters into plain spaces, as some fonts will provide glyphs
         // for characters like '\n' otherwise.
-        for (unsigned i = 0; i < originalRun.length(); ++i) {
+        for (int i = 0; i < originalRun.length(); ++i) {
             UChar ch = originalRun[i];
             UBlockCode block = ::ublock_getCode(ch);
             if (block == UBLOCK_COMBINING_DIACRITICAL_MARKS || (Font::treatAsSpace(ch) && ch != ' ')) {
@@ -428,7 +428,7 @@ private:
         normalizedString.extract(m_normalizedBuffer.get(), normalizedString.length() + 1, error);
         ASSERT(U_SUCCESS(error));
 
-        for (unsigned i = 0; i < normalizedString.length(); ++i) {
+        for (int i = 0; i < normalizedString.length(); ++i) {
             if (Font::treatAsSpace(m_normalizedBuffer[i]))
                 m_normalizedBuffer[i] = ' ';
         }
@@ -477,26 +477,40 @@ private:
     void createGlyphArrays(int size)
     {
         m_item.glyphs = new HB_Glyph[size];
-        memset(m_item.glyphs, 0, size * sizeof(HB_Glyph));
         m_item.attributes = new HB_GlyphAttributes[size];
-        memset(m_item.attributes, 0, size * sizeof(HB_GlyphAttributes));
         m_item.advances = new HB_Fixed[size];
-        memset(m_item.advances, 0, size * sizeof(HB_Fixed));
         m_item.offsets = new HB_FixedPoint[size];
-        memset(m_item.offsets, 0, size * sizeof(HB_FixedPoint));
 
         m_glyphs16 = new uint16_t[size];
         m_xPositions = new SkScalar[size];
 
         m_item.num_glyphs = size;
+        m_glyphsArrayCapacity = size; // Save the GlyphArrays size.
+        resetGlyphArrays();
+    }
+
+    void resetGlyphArrays()
+    {
+        int size = m_item.num_glyphs;
+        // All the types here don't have pointers. It is safe to reset to
+        // zero unless Harfbuzz breaks the compatibility in the future.
+        memset(m_item.glyphs, 0, size * sizeof(HB_Glyph));
+        memset(m_item.attributes, 0, size * sizeof(HB_GlyphAttributes));
+        memset(m_item.advances, 0, size * sizeof(HB_Fixed));
+        memset(m_item.offsets, 0, size * sizeof(HB_FixedPoint));
+        memset(m_glyphs16, 0, size * sizeof(uint16_t));
+        memset(m_xPositions, 0, size * sizeof(SkScalar));
     }
 
     void shapeGlyphs()
     {
-        for (;;) {
-            if (HB_ShapeItem(&m_item))
-                break;
-
+        // HB_ShapeItem() resets m_item.num_glyphs. If the previous call to
+        // HB_ShapeItem() used less space than was available, the capacity of
+        // the array may be larger than the current value of m_item.num_glyphs. 
+        // So, we need to reset the num_glyphs to the capacity of the array.
+        m_item.num_glyphs = m_glyphsArrayCapacity;
+        resetGlyphArrays();
+        while (!HB_ShapeItem(&m_item)) {
             // We overflowed our arrays. Resize and retry.
             // HB_ShapeItem fills in m_item.num_glyphs with the needed size.
             deleteGlyphArrays();
@@ -517,7 +531,7 @@ private:
         // glyph.
         unsigned logClustersIndex = isRTL ? m_item.num_glyphs - 1 : 0;
 
-        for (int iter = 0; iter < m_item.num_glyphs; ++iter) {
+        for (unsigned iter = 0; iter < m_item.num_glyphs; ++iter) {
             // Glyphs are stored in logical order, but for layout purposes we
             // always go left to right.
             int i = isRTL ? m_item.num_glyphs - iter - 1 : iter;
@@ -597,6 +611,7 @@ private:
     unsigned m_offsetX; // Offset in pixels to the start of the next script run.
     unsigned m_pixelWidth; // Width (in px) of the current script run.
     unsigned m_numCodePoints; // Code points in current script run.
+    unsigned m_glyphsArrayCapacity; // Current size of all the Harfbuzz arrays.
 
     OwnPtr<TextRun> m_normalizedRun;
     OwnArrayPtr<UChar> m_normalizedBuffer; // A buffer for normalized run.
@@ -683,7 +698,7 @@ static int glyphIndexForXPositionInScriptRun(const TextRunWalker& walker, int x)
             x -= truncateFixedPointToInteger(advances[glyphIndex]);
         }
     } else {
-        for (glyphIndex = 0; glyphIndex < walker.length(); ++glyphIndex) {
+        for (glyphIndex = 0; static_cast<unsigned>(glyphIndex) < walker.length(); ++glyphIndex) {
             if (x < truncateFixedPointToInteger(advances[glyphIndex]))
                 break;
             x -= truncateFixedPointToInteger(advances[glyphIndex]);
@@ -741,7 +756,7 @@ int Font::offsetForPositionForComplexText(const TextRun& run, float xFloat,
         if (walker.rtl())
             basePosition -= walker.numCodePoints();
 
-        if (x >= 0 && x < walker.width()) {
+        if (x >= 0 && static_cast<unsigned>(x) < walker.width()) {
             // The x value in question is within this script run. We consider
             // each glyph in presentation order and stop when we find the one
             // covering this position.
@@ -803,7 +818,7 @@ FloatRect Font::selectionRectForComplexText(const TextRun& run,
         if (walker.rtl())
             base -= walker.width();
 
-        if (fromX == -1 && from < walker.numCodePoints()) {
+        if (fromX == -1 && from >= 0 && static_cast<unsigned>(from) < walker.numCodePoints()) {
             // |from| is within this script run. So we index the clusters log to
             // find which glyph this code-point contributed to and find its x
             // position.
@@ -813,7 +828,7 @@ FloatRect Font::selectionRectForComplexText(const TextRun& run,
         } else
             from -= walker.numCodePoints();
 
-        if (toX == -1 && to < walker.numCodePoints()) {
+        if (toX == -1 && to >= 0 && static_cast<unsigned>(to) < walker.numCodePoints()) {
             int glyph = walker.logClusters()[to];
             toX = base + walker.xPositions()[glyph];
             toAdvance = walker.advances()[glyph];

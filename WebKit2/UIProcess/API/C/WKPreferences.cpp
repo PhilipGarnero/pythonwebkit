@@ -98,3 +98,83 @@ bool WKPreferencesGetXSSAuditorEnabled(WKPreferencesRef preferencesRef)
 {
     return toWK(preferencesRef)->xssAuditorEnabled();
 }
+
+void WKPreferencesSetFrameFlatteningEnabled(WKPreferencesRef preferencesRef, bool frameFlatteningEnabled)
+{
+    toWK(preferencesRef)->setFrameFlatteningEnabled(frameFlatteningEnabled);
+}
+
+bool WKPreferencesGetFrameFlatteningEnabled(WKPreferencesRef preferencesRef)
+{
+    return toWK(preferencesRef)->frameFlatteningEnabled();
+}
+
+void WKPreferencesSetPluginsEnabled(WKPreferencesRef preferencesRef, bool pluginsEnabled)
+{
+    toWK(preferencesRef)->setPluginsEnabled(pluginsEnabled);
+}
+
+bool WKPreferencesGetPluginsEnabled(WKPreferencesRef preferencesRef)
+{
+    return toWK(preferencesRef)->pluginsEnabled();
+}
+
+void WKPreferencesSetStandardFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toWK(preferencesRef)->setStandardFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopyStandardFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedRef(toWK(preferencesRef)->standardFontFamily());
+}
+
+void WKPreferencesSetFixedFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toWK(preferencesRef)->setFixedFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopyFixedFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedRef(toWK(preferencesRef)->fixedFontFamily());
+}
+
+void WKPreferencesSetSerifFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toWK(preferencesRef)->setSerifFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopySerifFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedRef(toWK(preferencesRef)->serifFontFamily());
+}
+
+void WKPreferencesSetSansSerifFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toWK(preferencesRef)->setSansSerifFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopySansSerifFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedRef(toWK(preferencesRef)->sansSerifFontFamily());
+}
+
+void WKPreferencesSetCursiveFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toWK(preferencesRef)->setCursiveFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopyCursiveFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedRef(toWK(preferencesRef)->cursiveFontFamily());
+}
+
+void WKPreferencesSetFantasyFontFamily(WKPreferencesRef preferencesRef, WKStringRef family)
+{
+    toWK(preferencesRef)->setFantasyFontFamily(toWTFString(family));
+}
+
+WKStringRef WKPreferencesCopyFantasyFontFamily(WKPreferencesRef preferencesRef)
+{
+    return toCopiedRef(toWK(preferencesRef)->fantasyFontFamily());
+}

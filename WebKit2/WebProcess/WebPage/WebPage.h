@@ -32,6 +32,7 @@
 #include "InjectedBundlePageFormClient.h"
 #include "InjectedBundlePageLoaderClient.h"
 #include "InjectedBundlePageUIClient.h"
+#include "Plugin.h"
 #include "WebEditCommand.h"
 #include <WebCore/FrameLoaderTypes.h>
 #include <WebCore/IntRect.h>
@@ -62,6 +63,7 @@ namespace WebCore {
 namespace WebKit {
 
 class DrawingArea;
+class PluginView;
 class WebEvent;
 class WebFrame;
 class WebKeyboardEvent;
@@ -70,13 +72,14 @@ class WebWheelEvent;
 #if ENABLE(TOUCH_EVENTS)
 class WebTouchEvent;
 #endif
+struct WebPageCreationParameters;
 struct WebPreferencesStore;
 
 class WebPage : public APIObject {
 public:
     static const Type APIType = TypeBundlePage;
 
-    static PassRefPtr<WebPage> create(uint64_t pageID, const WebCore::IntSize& viewSize, const WebPreferencesStore&, const DrawingAreaBase::DrawingAreaInfo&);
+    static PassRefPtr<WebPage> create(uint64_t pageID, const WebPageCreationParameters&);
     ~WebPage();
 
     void close();
@@ -120,6 +123,7 @@ public:
     InjectedBundlePageUIClient& injectedBundleUIClient() { return m_uiClient; }
 
     WebFrame* mainFrame() const { return m_mainFrame.get(); }
+    PassRefPtr<Plugin> createPlugin(const Plugin::Parameters&);
 
     String renderTreeExternalRepresentation() const;
     void executeEditingCommand(const String& commandName, const String& argument);
@@ -141,14 +145,28 @@ public:
     void exitAcceleratedCompositingMode();
 #endif
 
+#if PLATFORM(MAC)
+    void addPluginView(PluginView*);
+    void removePluginView(PluginView*);
+
+    bool windowIsVisible() const { return m_windowIsVisible; }
+    const WebCore::IntRect& windowFrame() const { return m_windowFrame; }
+    bool windowIsFocused() const;
+#elif PLATFORM(WIN)
+    HWND nativeWindow() const { return m_nativeWindow; }
+#endif
+
     static const WebEvent* currentEvent();
 
 private:
-    WebPage(uint64_t pageID, const WebCore::IntSize& viewSize, const WebPreferencesStore&, const DrawingAreaBase::DrawingAreaInfo&);
+    WebPage(uint64_t pageID, const WebPageCreationParameters&);
 
     virtual Type type() const { return APIType; }
 
     void platformInitialize();
+
+    void didReceiveWebPageMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::ArgumentDecoder*);
+
     static const char* interpretKeyEvent(const WebCore::KeyboardEvent*);
     bool performDefaultBehaviorForKeyEvent(const WebKeyboardEvent&);
 
@@ -168,24 +186,28 @@ private:
     void goToBackForwardItem(uint64_t);
     void setActive(bool);
     void setFocused(bool);
+    void setWindowResizerSize(const WebCore::IntSize&);
     void setIsInWindow(bool);
     void mouseEvent(const WebMouseEvent&);
     void wheelEvent(const WebWheelEvent&);
     void keyEvent(const WebKeyboardEvent&);
-    void selectAll();
-    void copy();
-    void cut();
-    void paste();
+    void validateMenuItem(const String&);
+    void executeEditCommand(const String&);
 #if ENABLE(TOUCH_EVENTS)
     void touchEvent(const WebTouchEvent&);
 #endif
     void runJavaScriptInMainFrame(const String&, uint64_t callbackID);
     void getRenderTreeExternalRepresentation(uint64_t callbackID);
-    void getSourceForFrame(WebFrame*, uint64_t callbackID);
+    void getSourceForFrame(uint64_t frameID, uint64_t callbackID);
     void preferencesDidChange(const WebPreferencesStore&);
     void platformPreferencesDidChange(const WebPreferencesStore&);
-    void didReceivePolicyDecision(WebFrame*, uint64_t listenerID, WebCore::PolicyAction policyAction);
+    void didReceivePolicyDecision(uint64_t frameID, uint64_t listenerID, uint32_t policyAction);
     void setCustomUserAgent(const String&);
+
+#if PLATFORM(MAC)
+    void setWindowIsVisible(bool windowIsVisible);
+    void setWindowFrame(const WebCore::IntRect&);
+#endif
 
     void unapplyEditCommand(uint64_t commandID);
     void reapplyEditCommand(uint64_t commandID);
@@ -200,7 +222,24 @@ private:
     RefPtr<DrawingArea> m_drawingArea;
 
     bool m_isInRedo;
+
+#if PLATFORM(MAC)
+    // Whether the containing window is visible or not.
+    bool m_windowIsVisible;
+
+    // The frame of the containing window.
+    WebCore::IntRect m_windowFrame;
+
+    // All plug-in views on this web page.
+    HashSet<PluginView*> m_pluginViews;
+#elif PLATFORM(WIN)
+    // Our view's window (in the UI process).
+    HWND m_nativeWindow;
+#endif
+    
     HashMap<uint64_t, RefPtr<WebEditCommand> > m_editCommandMap;
+
+    WebCore::IntSize m_windowResizerSize;
 
     InjectedBundlePageEditorClient m_editorClient;
     InjectedBundlePageFormClient m_formClient;

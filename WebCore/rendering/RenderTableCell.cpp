@@ -122,14 +122,14 @@ Length RenderTableCell::styleOrColWidth() const
     return w;
 }
 
-void RenderTableCell::calcPrefWidths()
+void RenderTableCell::computePreferredLogicalWidths()
 {
-    // The child cells rely on the grids up in the sections to do their calcPrefWidths work.  Normally the sections are set up early, as table
+    // The child cells rely on the grids up in the sections to do their computePreferredLogicalWidths work.  Normally the sections are set up early, as table
     // cells are added, but relayout can cause the cells to be freed, leaving stale pointers in the sections'
     // grids.  We must refresh those grids before the child cells try to use them.
     table()->recalcSectionsIfNeeded();
 
-    RenderBlock::calcPrefWidths();
+    RenderBlock::computePreferredLogicalWidths();
     if (node() && style()->autoWrap()) {
         // See if nowrap was set.
         Length w = styleOrColWidth();
@@ -140,11 +140,11 @@ void RenderTableCell::calcPrefWidths()
             // to make the minwidth of the cell into the fixed width.  They do this
             // even in strict mode, so do not make this a quirk.  Affected the top
             // of hiptop.com.
-            m_minPrefWidth = max(w.value(), m_minPrefWidth);
+            m_minPreferredLogicalWidth = max(w.value(), m_minPreferredLogicalWidth);
     }
 }
 
-void RenderTableCell::calcWidth()
+void RenderTableCell::computeLogicalWidth()
 {
 }
 
@@ -237,7 +237,7 @@ IntRect RenderTableCell::clippedOverflowRectForRepaint(RenderBoxModelObject* rep
     if (!table()->collapseBorders() || table()->needsSectionRecalc())
         return RenderBlock::clippedOverflowRectForRepaint(repaintContainer);
 
-    bool rtl = table()->style()->direction() == RTL;
+    bool rtl = !table()->style()->isLeftToRightDirection();
     int outlineSize = style()->outlineSize();
     int left = max(borderHalfLeft(true), outlineSize);
     int right = max(borderHalfRight(true), outlineSize);
@@ -690,9 +690,31 @@ int RenderTableCell::borderBottom() const
     return table()->collapseBorders() ? borderHalfBottom(false) : RenderBlock::borderBottom();
 }
 
+// FIXME: https://bugs.webkit.org/show_bug.cgi?id=46191, make the collapsed border drawing
+// work with different block flow values instead of being hard-coded to top-to-bottom.
+int RenderTableCell::borderStart() const
+{
+    return table()->collapseBorders() ? borderHalfLeft(false) : RenderBlock::borderStart();
+}
+
+int RenderTableCell::borderEnd() const
+{
+    return table()->collapseBorders() ? borderHalfRight(false) : RenderBlock::borderEnd();
+}
+
+int RenderTableCell::borderBefore() const
+{
+    return table()->collapseBorders() ? borderHalfTop(false) : RenderBlock::borderBefore();
+}
+
+int RenderTableCell::borderAfter() const
+{
+    return table()->collapseBorders() ? borderHalfBottom(false) : RenderBlock::borderAfter();
+}
+
 int RenderTableCell::borderHalfLeft(bool outer) const
 {
-    CollapsedBorderValue border = collapsedLeftBorder(table()->style()->direction() == RTL);
+    CollapsedBorderValue border = collapsedLeftBorder(!table()->style()->isLeftToRightDirection());
     if (border.exists())
         return (border.width() + (outer ? 0 : 1)) / 2; // Give the extra pixel to top and left.
     return 0;
@@ -700,7 +722,7 @@ int RenderTableCell::borderHalfLeft(bool outer) const
     
 int RenderTableCell::borderHalfRight(bool outer) const
 {
-    CollapsedBorderValue border = collapsedRightBorder(table()->style()->direction() == RTL);
+    CollapsedBorderValue border = collapsedRightBorder(!table()->style()->isLeftToRightDirection());
     if (border.exists())
         return (border.width() + (outer ? 1 : 0)) / 2;
     return 0;
@@ -812,7 +834,7 @@ static void addBorderStyle(RenderTableCell::CollapsedBorderStyles& borderStyles,
 
 void RenderTableCell::collectBorderStyles(CollapsedBorderStyles& borderStyles) const
 {
-    bool rtl = table()->style()->direction() == RTL;
+    bool rtl = !table()->style()->isLeftToRightDirection();
     addBorderStyle(borderStyles, collapsedLeftBorder(rtl));
     addBorderStyle(borderStyles, collapsedRightBorder(rtl));
     addBorderStyle(borderStyles, collapsedTopBorder());
@@ -839,7 +861,7 @@ void RenderTableCell::paintCollapsedBorder(GraphicsContext* graphicsContext, int
     if (!table()->currentBorderStyle())
         return;
     
-    bool rtl = table()->style()->direction() == RTL;
+    bool rtl = !table()->style()->isLeftToRightDirection();
     CollapsedBorderValue leftVal = collapsedLeftBorder(rtl);
     CollapsedBorderValue rightVal = collapsedRightBorder(rtl);
     CollapsedBorderValue topVal = collapsedTopBorder();

@@ -27,10 +27,16 @@
 #define InjectedBundlePageUIClient_h
 
 #include "WKBundlePage.h"
+#include "WebEvent.h"
 #include <wtf/Forward.h>
+
+namespace WebCore {
+    class HitTestResult;
+}
 
 namespace WebKit {
 
+class APIObject;
 class WebFrame;
 class WebPage;
 
@@ -44,6 +50,7 @@ public:
     void willRunJavaScriptAlert(WebPage*, const String&, WebFrame*);
     void willRunJavaScriptConfirm(WebPage*, const String&, WebFrame*);
     void willRunJavaScriptPrompt(WebPage*, const String&, const String&, WebFrame*);
+    void mouseDidMoveOverElement(WebPage*, const WebCore::HitTestResult&, WebEvent::Modifiers, RefPtr<APIObject>& userData);
 
 private:
     WKBundlePageUIClient m_client;

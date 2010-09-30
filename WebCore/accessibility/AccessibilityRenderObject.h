@@ -301,6 +301,8 @@ private:
     String accessibilityDescriptionForElements(Vector<Element*> &elements) const;
     void elementsFromAttribute(Vector<Element*>& elements, const QualifiedName& name) const;
     
+    virtual ESpeak speakProperty() const;
+    
     virtual const AtomicString& ariaLiveRegionStatus() const;
     virtual const AtomicString& ariaLiveRegionRelevant() const;
     virtual bool ariaLiveRegionAtomic() const;
@@ -311,7 +313,22 @@ private:
     
     mutable AccessibilityRole m_roleForMSAA;
 };
-    
+
+inline AccessibilityRenderObject* toAccessibilityRenderObject(AccessibilityObject* object)
+{
+    ASSERT(!object || object->isAccessibilityRenderObject());
+    return static_cast<AccessibilityRenderObject*>(object);
+}
+
+inline const AccessibilityRenderObject* toAccessibilityRenderObject(const AccessibilityObject* object)
+{
+    ASSERT(!object || object->isAccessibilityRenderObject());
+    return static_cast<const AccessibilityRenderObject*>(object);
+}
+
+// This will catch anyone doing an unnecessary cast.
+void toAccessibilityRenderObject(const AccessibilityRenderObject*);
+
 } // namespace WebCore
 
 #endif // AccessibilityRenderObject_h

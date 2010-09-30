@@ -27,6 +27,7 @@
 #include "ProcessLauncher.h"
 
 #include "Connection.h"
+#include "NotImplemented.h"
 #include "RunLoop.h"
 #include "WebProcess.h"
 #include <runtime/InitializeThreading.h>
@@ -53,6 +54,7 @@ namespace WebKit {
 class ProcessLauncherHelper : public QObject {
     Q_OBJECT
 public:
+    ~ProcessLauncherHelper();
     void launch(WebKit::ProcessLauncher*);
     QLocalSocket* takePendingConnection();
     static ProcessLauncherHelper* instance();
@@ -97,6 +99,11 @@ QLocalSocket* ProcessLauncherHelper::takePendingConnection()
     return m_server.nextPendingConnection();
 }
 
+ProcessLauncherHelper::~ProcessLauncherHelper()
+{
+    m_server.close();
+}
+
 ProcessLauncherHelper::ProcessLauncherHelper()
 {
     srandom(time(0));
@@ -105,6 +112,7 @@ ProcessLauncherHelper::ProcessLauncherHelper()
         ASSERT_NOT_REACHED();
     }
     connect(&m_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+    connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(deleteLater()), Qt::QueuedConnection);
 }
 
 ProcessLauncherHelper* ProcessLauncherHelper::instance()
@@ -139,6 +147,11 @@ void ProcessLauncher::terminateProcess()
 QLocalSocket* ProcessLauncher::takePendingConnection()
 {
     return ProcessLauncherHelper::instance()->takePendingConnection();
+}
+
+void ProcessLauncher::platformInvalidate()
+{
+    notImplemented();
 }
 
 } // namespace WebKit

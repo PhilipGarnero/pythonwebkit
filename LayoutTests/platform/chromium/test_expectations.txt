@@ -81,7 +81,6 @@ BUG24182 SLOW WIN DEBUG : svg/carto.net/window.svg = PASS
 BUG24182 SLOW LINUX DEBUG : fast/xpath/4XPath/Borrowed/cz_20030217.html = PASS
 BUG24182 SLOW WIN MAC DEBUG : tables/mozilla/bugs/45621.html = PASS
 //BUG24852 started failing since webkit 49583
-//BUG24182 SLOW WIN : css1/font_properties/font.html = PASS
 BUG24182 SLOW WIN : http/tests/security/xssAuditor/meta-tag-http-refresh-javascript-url.html = PASS
 BUG24182 SLOW WIN RELEASE : http/tests/security/cross-origin-css.html = PASS
 BUG24182 SLOW WIN RELEASE : fast/loader/local-CSS-from-local.html = PASS
@@ -89,12 +88,9 @@ BUG24182 WIN RELEASE SLOW : http/tests/incremental/split-hex-entities.pl = PASS
 BUG24182 WIN RELEASE SLOW : http/tests/xmlhttprequest/XMLHttpRequestException.html = PASS
 BUG24182 WIN RELEASE SLOW : http/tests/xmlhttprequest/connection-error-sync.html = PASS
 BUG24182 WIN RELEASE SLOW : http/tests/loading/onload-vs-immediate-refresh.pl = PASS
-//BUG24182 WIN LINUX SLOW : editing/selection/extend-selection.html = PASS
 BUG24182 SLOW WIN : fast/images/svg-as-background.html = PASS
 BUG24182 SLOW WIN : fast/backgrounds/svg-as-background-5.html = PASS
 BUG24182 WIN DEBUG SLOW: inspector/console-dirxml.html = PASS
-// BUG24182 DEBUG SLOW : fast/dom/Window/window-function-frame-getter-precedence.html = PASS
-// BUG24182 SLOW DEBUG : fast/frames/frame-limit.html = PASS
 BUG24182 SLOW : http/tests/cache/subresource-failover-to-network.html = PASS
 
 // Usually <1s in release, ~1s in debug, but occasionally >5s in release.
@@ -542,14 +538,12 @@ BUG20404 : editing/execCommand/copy-without-selection.html = FAIL
 // (Note that lighttpd is only used on Windows at this point.)
 
 // LightTPD doesn't accept unknown HTTP methods
-BUG30536 SKIP : http/tests/xmlhttprequest/methods-lower-case.html = TIMEOUT CRASH
-BUG30536 LINUX MAC : http/tests/xmlhttprequest/methods-async.html = TEXT
-BUG30536 WIN       : http/tests/xmlhttprequest/methods-async.html = TIMEOUT
+BUG30536 WIN SKIP : http/tests/xmlhttprequest/methods-lower-case.html = TIMEOUT CRASH
+BUG30536 WIN : http/tests/xmlhttprequest/methods-async.html = TIMEOUT
 BUG30536 WIN SLOW : http/tests/xmlhttprequest/access-control-basic-allow-preflight-cache-invalidation-by-method.html = FAIL
 // LightTPD doesn't accept unknown HTTP methods and passes CGIs a Content-Type
 // even when a request didn't send the header.
 BUG30536 WIN SLOW : http/tests/xmlhttprequest/methods.html = FAIL
-BUG30536 MAC LINUX : http/tests/xmlhttprequest/methods.html = FAIL
 // Webkit 50667:50696 (Lighttpd related?)
 BUG30536 WIN : http/tests/xmlhttprequest/xmlhttprequest-setrequestheader-no-value.html = TEXT
 
@@ -598,12 +592,10 @@ BUG24203 : fast/events/stopPropagation-submit.html = FAIL
 
 // These tests don't work with fast timers due to setTimeout
 // races. See https://bugs.webkit.org/show_bug.cgi?id=21536
+// We currently match upstream except for font differences, but we should
+// probably rewrite the test as suggested in the webkit bug.
 BUG24195 WIN LINUX : fast/repaint/bugzilla-6473.html = IMAGE+TEXT
 BUG24195 MAC : fast/repaint/bugzilla-6473.html = IMAGE
-
-// -----------------------------------------------------------------
-// Tests deferred until we provide support for a particular feature.
-// -----------------------------------------------------------------
 
 // -----------------------------------------------------------------
 // Tests requiring features not currently in test_shell.
@@ -627,8 +619,7 @@ BUG8630 LINUX : svg/custom/use-detach.svg = FAIL PASS
 // layoutTestController. Now we have preference to enable/disable user
 // styles(not work now), we still need to add a preference to enable/disable
 // styles of both author and user.
-// Deferring, we don't support user-controlled UA stylesheets (in beta)
-// Actually, gonna SKIP because it causes an additional error message in:
+// SKIP because it causes an additional error message in:
 // fast/css/display-none-inline-style-change-crash.html   somehow
 // the message is dumped after the #EOF, which causes an additional
 // error in the header of the following test.
@@ -800,11 +791,6 @@ BUG11153 WIN LINUX : fast/canvas/canvas-incremental-repaint.html = FAIL
 
 // Repaint issues are revealed by these tests.
 BUG28183 LINUX WIN : fast/repaint/box-shadow-v.html = IMAGE
-// The difference of positions of texts after the list markers is NOT
-// an issue. The behavior of the expectations was wrong. The real
-// problem is the change of the 'p' in italic "properly". Note that
-// upstream expectation image has the same issue.
-BUG28183 WIN LINUX : fast/repaint/list-marker.html = IMAGE
 
 BUG20507 : http/tests/uri/resolve-encoding-relative.html = FAIL
 
@@ -978,9 +964,11 @@ BUG10318 WIN LINUX : fast/canvas/toDataURL-supportedTypes.html = FAIL
 
 // Issue 3273: TextInputController::firstRectForCharacterRange not implemented.
 BUG3273 : editing/selection/move-left-right.html = FAIL
-BUG3273 MAC : platform/mac/editing/input/caret-primary-bidi.html = FAIL
-BUG3273 MAC : platform/mac/editing/input/firstrectforcharacterrange-plain.html = FAIL
-BUG3273 MAC : platform/mac/editing/input/range-for-empty-document.html = FAIL
+BUG3273 MAC : platform/mac/editing/input/caret-primary-bidi.html = FAIL PASS
+BUG3273 MAC : platform/mac/editing/input/firstrectforcharacterrange-plain.html = FAIL PASS
+BUG3273 MAC : platform/mac/editing/input/range-for-empty-document.html = FAIL PASS
+BUGWK38100 : editing/inserting/caret-position.html = TEXT PASS
+
 // WebKit 50358:50395
 BUG3273 : fast/text/international/thai-cursor-position.html = TEXT
 // WebKit roll 51512:51524
@@ -1098,7 +1086,6 @@ BUG15797 LINUX : plugins/embed-attributes-setting.html = FAIL
 BUG10351 SKIP MAC : http/tests/plugins/geturlnotify-from-npp-destroystream.html = FAIL
 BUG10351 MAC : plugins/inner-html-display-none.html = FAIL
 BUG10351 MAC : plugins/mouse-events.html = FAIL
-// BUG10667 SLOW MAC RELEASE : plugins/iframe-shims.html = FAIL
 
 // NEW FOR MERGE 36102:37604
 
@@ -1203,7 +1190,6 @@ BUG23498 MAC : css1/color_and_background/background_position.html = IMAGE
 BUG23498 MAC : css1/color_and_background/background_repeat.html = IMAGE
 BUG23498 MAC : css1/conformance/forward_compatible_parsing.html = IMAGE
 BUG23498 MAC : css1/font_properties/font.html = IMAGE
-// BUG23498 MAC : css1/font_properties/font_family.html = IMAGE
 BUG23498 MAC : css1/font_properties/font_size.html = IMAGE
 BUG23498 MAC : css1/font_properties/font_weight.html = IMAGE
 BUG23498 MAC : css1/formatting_model/floating_elements.html = IMAGE
@@ -1251,13 +1237,11 @@ BUG23498 MAC : editing/selection/select-all-002.html = IMAGE
 BUG23498 MAC : editing/selection/select-all-003.html = IMAGE
 BUG23498 MAC : editing/selection/select-all-004.html = IMAGE
 BUG23498 MAC : editing/selection/unrendered-001.html = IMAGE
-// BUG23498 MAC : editing/selection/unrendered-002.html = IMAGE
 BUG23498 MAC : editing/selection/unrendered-003.html = IMAGE
 BUG23498 MAC : editing/selection/unrendered-004.html = IMAGE
 BUG23498 MAC : editing/selection/unrendered-005.html = IMAGE
 BUG23498 MAC : fast/backgrounds/background-inherit-color-bug.html = IMAGE
 BUG23498 MAC : fast/backgrounds/repeat/negative-offset-repeat-transformed.html = IMAGE
-BUG23498 MAC : fast/block/basic/016.html = IMAGE
 BUG23498 MAC : fast/block/basic/fieldset-stretch-to-legend.html = IMAGE
 BUG23498 MAC : fast/block/float/008.html = IMAGE
 BUG23498 MAC : fast/block/float/013.html = IMAGE
@@ -1270,9 +1254,7 @@ BUG23498 MAC : fast/block/float/028.html = IMAGE
 BUG23498 MAC : fast/block/float/032.html = IMAGE
 BUG23498 MAC : fast/block/float/033.html = IMAGE
 BUG23498 MAC : fast/block/float/035.html = IMAGE
-// BUG23498 MAC : fast/block/float/avoidance-percent-width-strict.html = IMAGE
 BUG23498 MAC : fast/block/float/br-with-clear-2.html = IMAGE
-// BUG23498 MAC : fast/block/float/float-avoidance.html = IMAGE
 BUG23498 MAC : fast/block/float/nested-clearance.html = IMAGE
 BUG23498 MAC : fast/block/float/relative-painted-twice.html = IMAGE
 BUG23498 MAC : fast/block/margin-collapse/103.html = IMAGE
@@ -1292,8 +1274,6 @@ BUG23498 MAC : fast/body-propagation/overflow/001.html = IMAGE
 BUG23498 MAC : fast/body-propagation/overflow/005-declarative.xhtml = IMAGE
 BUG23498 MAC : fast/body-propagation/overflow/005-xhtml.xhtml = IMAGE
 BUG23498 MAC : fast/body-propagation/overflow/005.html = IMAGE
-// BUG23498 MAC : fast/borders/inline-mask-overlay-image.html = IMAGE
-// BUG23498 MAC : fast/box-shadow/basic-shadows.html = IMAGE
 BUG23498 MAC : fast/box-sizing/box-sizing.html = IMAGE
 BUG23498 MAC : fast/canvas/canvas-bg.html = IMAGE
 BUG23498 MAC : fast/canvas/canvas-text-alignment.html = IMAGE
@@ -1311,7 +1291,6 @@ BUG23498 MAC : fast/css/nested-floating-relative-position-percentages.html = IMA
 BUG23498 MAC : fast/css/only-child-pseudo-class.html = IMAGE
 BUG23498 MAC : fast/css/only-of-type-pseudo-class.html = IMAGE
 BUG23498 MAC : fast/css/percentage-non-integer.html = IMAGE
-// BUG23498 MAC : fast/css/shadow-multiple.html = IMAGE
 BUG23498 MAC : fast/css/text-overflow-ellipsis-strict.html = IMAGE
 BUG23498 MAC : fast/css/text-overflow-ellipsis.html = IMAGE
 BUG23498 MAC : fast/css/word-space-extra.html = IMAGE
@@ -1337,7 +1316,6 @@ BUG23498 MAC : fast/frames/frame-scrolling-attribute.html = IMAGE
 BUG23498 MAC : fast/frames/iframe-scrolling-attribute.html = IMAGE
 BUG23498 BUG26044 MAC RELEASE : fast/frames/invalid.html = IMAGE CRASH
 BUG23498 BUG26044 SLOW MAC DEBUG : fast/frames/invalid.html = IMAGE
-// BUG23498 MAC : fast/frames/onlyCommentInIFrame.html = IMAGE
 BUG23498 MAC DEBUG : fast/frames/valid.html = IMAGE
 BUG23498 MAC RELEASE : fast/frames/valid.html = IMAGE CRASH
 BUG23498 MAC : fast/gradients/background-clipped.html = IMAGE
@@ -1350,18 +1328,13 @@ BUG23498 MAC : fast/layers/scroll-rect-to-visible.html = IMAGE
 BUG23498 MAC : fast/lists/001.html = IMAGE
 BUG23498 MAC : fast/lists/008.html = IMAGE
 BUG23498 MAC : fast/lists/li-br.html = IMAGE
-// BUG23498 MAC : fast/lists/ol-start-parsing.html = IMAGE
 BUG23498 MAC : fast/lists/olstart.html = IMAGE
 BUG23498 MAC : fast/multicol/columns-shorthand-parsing.html = IMAGE
-BUG23498 MAC : fast/multicol/float-multicol.html = IMAGE
-// BUG23498 MAC : fast/multicol/positioned-with-constrained-height.html = IMAGE
-// BUG23498 MAC : fast/overflow/004.html = IMAGE
 BUG23498 MAC : fast/overflow/006.html = IMAGE
 BUG23498 MAC : fast/overflow/clip-rects-fixed-ancestor.html = IMAGE
 BUG23498 MAC : fast/overflow/overflow-auto-table.html = IMAGE
 BUG23498 MAC : fast/overflow/overflow-stacking.html = IMAGE
 BUG23498 MAC : fast/overflow/overflow-x-y.html = IMAGE
-// BUG23498 MAC : fast/overflow/position-fixed-transform-clipping.html = IMAGE
 BUG23498 MAC : fast/overflow/scrollRevealButton.html = IMAGE
 BUG23498 MAC : fast/reflections/reflection-direction.html = IMAGE
 BUG23498 MAC : fast/replaced/005.html = IMAGE
@@ -1394,10 +1367,7 @@ BUG23498 MAC : fonts/fantasy.html = IMAGE
 BUG23498 MAC : fonts/monospace.html = IMAGE
 BUG23498 MAC : fonts/sans-serif.html = IMAGE
 BUG23498 MAC : fonts/serif.html = IMAGE
-BUG9798 BUG23498 MAC DEBUG : http/tests/navigation/error404-frames.html = TIMEOUT IMAGE
-BUG9798 BUG23498 MAC RELEASE : http/tests/navigation/error404-frames.html = IMAGE
 BUG23498 MAC : http/tests/navigation/error404-subframeload.html = IMAGE
-// BUG23498 MAC : http/tests/navigation/javascriptlink-frames.html = IMAGE
 BUG23498 MAC : svg/custom/altglyph.svg = IMAGE
 BUG23498 MAC : svg/hixie/links/003-broken.xml = IMAGE
 BUG23498 MAC : svg/text/multichar-glyph.svg = IMAGE
@@ -1494,8 +1464,6 @@ BUG23498 MAC : tables/mozilla_expected_failures/bugs/bug85016.html = IMAGE
 BUG23498 MAC : tables/mozilla_expected_failures/bugs/bug89315.html = IMAGE
 BUG23498 MAC : tables/mozilla_expected_failures/bugs/bug91057.html = IMAGE
 BUG23498 BUG32193 MAC : tables/mozilla_expected_failures/core/backgrounds.html = IMAGE IMAGE+TEXT
-// BUG23498 MAC : tables/mozilla_expected_failures/core/captions1.html = IMAGE
-// BUG23498 MAC : tables/mozilla_expected_failures/core/captions2.html = IMAGE
 BUG23498 MAC : tables/mozilla_expected_failures/core/captions3.html = IMAGE
 BUG23498 MAC : tables/mozilla_expected_failures/core/col_span2.html = IMAGE
 BUG23498 MAC : tables/mozilla_expected_failures/core/columns.html = IMAGE
@@ -1533,7 +1501,6 @@ BUG23496 MAC : css2.1/t09-c5526c-display-00-e.html = IMAGE
 BUG23496 MAC : fast/block/basic/011.html = IMAGE
 BUG23496 MAC : fast/forms/001.html = IMAGE
 BUG23496 MAC : fast/forms/basic-inputs.html = IMAGE
-// BUG23496 MAC : fast/forms/box-shadow-override.html = IMAGE
 BUG23496 MAC : fast/forms/checkbox-radio-onchange.html = IMAGE
 BUG23496 MAC : fast/forms/file-input-disabled.html = IMAGE+TEXT
 BUG23496 MAC : fast/forms/form-element-geometry.html = IMAGE+TEXT
@@ -1543,12 +1510,10 @@ BUG23496 MAC : fast/forms/formmove2.html = IMAGE
 BUG23496 MAC : fast/forms/indeterminate.html = IMAGE
 BUG23496 MAC : fast/forms/input-appearance-height.html = IMAGE+TEXT
 BUG23496 MAC : fast/forms/input-value.html = IMAGE+TEXT
-// BUG23496 MAC : fast/forms/menulist-narrow-width.html = IMAGE
 BUG23496 MAC : fast/forms/radio-attr-order.html = IMAGE
 BUG23496 MAC : fast/forms/radio-nested-labels.html = IMAGE
 BUG23496 MAC : fast/forms/radio_checked.html = IMAGE
 BUG23496 MAC : fast/forms/radio_checked_dynamic.html = IMAGE
-// BUG23496 MAC : fast/forms/search-vertical-alignment.html = IMAGE
 BUG23496 MAC : fast/inline/positionedLifetime.html = IMAGE
 BUG23496 MAC : fast/parser/bad-xml-slash.html = IMAGE
 BUG23496 MAC : fast/replaced/replaced-breaking.html = IMAGE
@@ -1621,63 +1586,113 @@ BUG23475 MAC : fast/invalid/missing-end-tag.xhtml = IMAGE
 BUG23475 MAC : fast/parser/xhtml-alternate-entities.xml = IMAGE
 BUG23475 MAC : fast/xsl/xslt-extra-content-at-end.xml = IMAGE
 
-// 116/136 of the repaint tests fail due to invalidation that doesn't match; further triage necessary
-BUG23473 MAC : fast/repaint = IMAGE
-BUG23473 MAC : fast/repaint/block-no-inflow-children.html = PASS
-BUG23473 MAC : fast/repaint/block-selection-gap-stale-cache.html = PASS
-BUG23473 MAC : fast/repaint/block-selection-gap-stale-cache-2.html = PASS
-BUG23473 MAC : fast/repaint/box-shadow-h.html = PASS
-BUG23473 MAC : fast/repaint/box-shadow-v.html = PASS
-BUG23473 MAC : fast/repaint/caret-outside-block.html = PASS
-BUG23473 MAC : fast/repaint/fixed.html = PASS
-BUG23473 MAC : fast/repaint/fixed-move-after-keyboard-scroll.html = PASS
-BUG23473 MAC : fast/repaint/fixed-tranformed.html = PASS
-BUG23473 MAC : fast/repaint/flexible-box-overflow.html = PASS
-BUG23473 MAC : fast/repaint/flexible-box-overflow-horizontal.html = PASS
-BUG23473 MAC : fast/repaint/float-new-in-block.html = PASS
-BUG23473 MAC : fast/repaint/focus-layers.html = PASS
-BUG23473 MAC : fast/repaint/focus-ring.html = PASS
-BUG23473 MAC : fast/repaint/inline-block-overflow.html = PASS
-BUG23473 MAC : fast/repaint/layer-child-outline.html = PASS
-BUG23473 MAC : fast/repaint/layer-outline.html = PASS
-BUG23473 MAC : fast/repaint/layer-outline-horizontal.html = PASS
-BUG23473 MAC : fast/repaint/layout-state-scrolloffset.html = PASS
-BUG23473 MAC : fast/repaint/layout-state-scrolloffset2.html = PASS
-BUG23473 MAC : fast/repaint/layout-state-scrolloffset3.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-1.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-10.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-2.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-3.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-4.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-5.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-6.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-7.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-8.html = PASS
-BUG23473 MAC : fast/repaint/line-flow-with-floats-9.html = PASS
-BUG23473 MAC : fast/repaint/list-marker.html = PASS
-BUG23473 MAC : fast/repaint/moving-shadow-on-path.html = PASS
-BUG23473 MAC : fast/repaint/multicol-repaint.html = PASS
-BUG23473 MAC : fast/repaint/overflow-scroll-body-appear.html = PASS
-BUG23473 MAC : fast/repaint/positioned-document-element.html = PASS
-BUG23473 MAC : fast/repaint/renderer-destruction-by-invalidateSelection-crash.html = PASS
-BUG23473 MAC : fast/repaint/repaint-during-scroll.html = PASS
-BUG23473 MAC : fast/repaint/selection-gap-overflow-scroll-2.html = PASS
-BUG23473 MAC : fast/repaint/shadow-multiple-horizontal.html = PASS
-BUG23473 MAC : fast/repaint/shadow-multiple-strict-horizontal.html = PASS
-BUG23473 MAC : fast/repaint/shadow-multiple-strict-vertical.html = PASS
-BUG23473 MAC : fast/repaint/shadow-multiple-vertical.html = PASS
-BUG23473 MAC : fast/repaint/svg-layout-root-style-attr-update.html = PASS
-BUG23473 MAC : fast/repaint/table-cell-vertical-overflow.html = PASS
-BUG23473 MAC : fast/repaint/text-shadow.html = PASS
-BUG23473 MAC : fast/repaint/text-shadow-horizontal.html = PASS
-BUG23473 MAC : fast/repaint/view-background-from-body-1.html = PASS
-BUG23473 MAC : fast/repaint/view-background-from-body-2.html = PASS
+// Repaint tests failing on Mac.  Need to be manually triaged.
+BUG23473 MAC : fast/repaint/4774354.html = IMAGE
+BUG23473 MAC : fast/repaint/4776765.html = IMAGE
+BUG23473 MAC : fast/repaint/background-generated.html = IMAGE
+BUG23473 MAC : fast/repaint/backgroundSizeRepaint.html = IMAGE
+BUG23473 MAC : fast/repaint/block-selection-gap-in-composited-layer.html = IMAGE
+BUG23473 MAC : fast/repaint/block-selection-gap-in-table-cell.html = IMAGE
+BUG23473 MAC : fast/repaint/body-background-image.html = IMAGE
+BUG23473 MAC : fast/repaint/border-fit-lines.html = IMAGE
+BUG23473 MAC : fast/repaint/border-radius-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/border-repaint-glitch.html = IMAGE
+BUG23473 MAC : fast/repaint/box-shadow-dynamic.html = IMAGE
+BUG23473 MAC : fast/repaint/bugzilla-3509.html = IMAGE
+BUG23473 MAC : fast/repaint/bugzilla-5699.html = IMAGE
+BUG23473 MAC : fast/repaint/bugzilla-6278.html = IMAGE
+BUG23473 MAC : fast/repaint/bugzilla-6388.html = IMAGE
+BUG23473 MAC : fast/repaint/bugzilla-7235.html = IMAGE
+BUG23473 MAC : fast/repaint/button-spurious-layout-hint.html = IMAGE
+BUG23473 MAC : fast/repaint/change-transform.html = IMAGE
+BUG23473 MAC : fast/repaint/clipped-relative.html = IMAGE
+BUG23473 MAC : fast/repaint/clip-with-layout-delta.html = IMAGE
+BUG23473 MAC : fast/repaint/containing-block-position-change.html = IMAGE
+BUG23473 MAC : fast/repaint/content-into-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/control-clip.html = IMAGE
+BUG23473 MAC : fast/repaint/create-layer-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/delete-into-nested-block.html = IMAGE
+BUG23473 MAC : fast/repaint/dynamic-table-vertical-alignment-change.html = IMAGE
+BUG23473 MAC : fast/repaint/erase-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/fixed-child-move-after-scroll.html = IMAGE
+BUG23473 MAC : fast/repaint/fixed-child-of-fixed-move-after-scroll.html = IMAGE
+BUG23473 MAC : fast/repaint/fixed-child-of-transformed-move-after-scroll.html = IMAGE
+BUG23473 MAC : fast/repaint/fixed-move-after-scroll.html = IMAGE
+BUG23473 MAC : fast/repaint/float-in-new-block-with-layout-delta.html = IMAGE
+BUG23473 MAC : fast/repaint/float-move-during-layout.html = IMAGE
+BUG23473 MAC : fast/repaint/float-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/float-overflow-right.html = IMAGE
+BUG23473 MAC : fast/repaint/inline-block-resize.html = IMAGE
+BUG23473 MAC : fast/repaint/inline-color-change.html = IMAGE
+BUG23473 MAC : fast/repaint/inline-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/inline-relative-positioned.html = IMAGE
+BUG23473 MAC : fast/repaint/intermediate-layout-position-clip.html = IMAGE
+BUG23473 MAC : fast/repaint/intermediate-layout-position.html = IMAGE
+BUG23473 MAC : fast/repaint/invisible-objects.html = IMAGE
+BUG23473 MAC : fast/repaint/layer-full-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/layer-hide-when-needs-layout.html = IMAGE
+BUG23473 MAC : fast/repaint/layer-visibility.html = IMAGE
+BUG23473 MAC : fast/repaint/layout-state-only-positioned.html = IMAGE
+BUG23473 MAC : fast/repaint/layout-state-relative.html = IMAGE
+BUG23473 MAC : fast/repaint/line-in-scrolled-clipped-block.html = IMAGE
+BUG23473 MAC : fast/repaint/line-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/lines-with-layout-delta.html = IMAGE
+BUG23473 MAC : fast/repaint/list-marker-2.html = IMAGE
+BUG23473 MAC : fast/repaint/make-children-non-inline.html = IMAGE
+BUG23473 MAC : fast/repaint/outline-child-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/outline-inset.html = IMAGE
+BUG23473 MAC : fast/repaint/outline-repaint-glitch.html = IMAGE
+BUG23473 MAC : fast/repaint/outline-shrinking.html = IMAGE
+BUG23473 MAC : fast/repaint/overflow-clip-subtree-layout.html = IMAGE
+BUG23473 MAC : fast/repaint/overflow-delete-line.html = IMAGE
+BUG23473 MAC : fast/repaint/overflow-into-content.html = IMAGE
+BUG23473 MAC : fast/repaint/overflow-outline-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/overflow-scroll-delete.html = IMAGE
+BUG23473 MAC : fast/repaint/reflection-redraw.html = IMAGE
+BUG23473 MAC : fast/repaint/reflection-repaint-test.html = IMAGE
+BUG23473 MAC : fast/repaint/rel-positioned-inline-with-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/repaint-resized-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/search-field-cancel.html = IMAGE
+BUG23473 MAC : fast/repaint/selected-replaced.html = IMAGE
+BUG23473 MAC : fast/repaint/selection-after-delete.html = IMAGE
+BUG23473 MAC : fast/repaint/selection-after-remove.html = IMAGE
+BUG23473 MAC : fast/repaint/selection-clear.html = IMAGE
+BUG23473 MAC : fast/repaint/selection-gap-overflow-scroll.html = IMAGE
+BUG23473 MAC : fast/repaint/stacked-diacritics.html = IMAGE
+BUG23473 MAC : fast/repaint/static-to-positioned.html = IMAGE
+BUG23473 MAC : fast/repaint/subtree-layoutstate-transform.html = IMAGE
+BUG23473 MAC : fast/repaint/subtree-root-clip-2.html = IMAGE
+BUG23473 MAC : fast/repaint/subtree-root-clip.html = IMAGE
+BUG23473 MAC : fast/repaint/subtree-root-skipped.html = IMAGE
+BUG23473 MAC : fast/repaint/table-cell-move.html = IMAGE
+BUG23473 MAC : fast/repaint/table-cell-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/table-col-background.html = IMAGE
+BUG23473 MAC : fast/repaint/table-collapsed-border.html = IMAGE
+BUG23473 MAC : fast/repaint/table-extra-bottom-grow.html = IMAGE
+BUG23473 MAC : fast/repaint/table-outer-border.html = IMAGE
+BUG23473 MAC : fast/repaint/table-row.html = IMAGE
+BUG23473 MAC : fast/repaint/table-section-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/table-section-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/table-two-pass-layout-overpaint.html = IMAGE
+BUG23473 MAC : fast/repaint/text-append-dirty-lines.html = IMAGE
+BUG23473 MAC : fast/repaint/text-selection-rect-in-overflow-2.html = IMAGE
+BUG23473 MAC : fast/repaint/text-selection-rect-in-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/trailing-floats-root-line-box-overflow.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-absolute-child.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-absolute-in-positioned-container.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-disable-layoutstate.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-layout-repaint.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-relative-position.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-repaint-descendants.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-replaced-shadows.html = IMAGE
+BUG23473 MAC : fast/repaint/transform-translate.html = IMAGE
+
+BUGWK42249 MAC : fast/repaint/moving-shadow-on-container.html = IMAGE
+// Fails due to r67862.
+BUGWK39966 : fast/repaint/table-cell-collapsed-border.html = IMAGE
 
 // Thicker shadow than expected
 BUG23471 MAC : fast/text/stroking.html = IMAGE
-
-// Missing baselines
-// BUG23557 MAC : fast/text/text-letter-spacing.html = IMAGE
 
 // Failing on the bots but not locally; need investigation
 BUG23560 MAC : fast/images/animated-svg-as-image.html = IMAGE PASS
@@ -1786,9 +1801,6 @@ BUG10473 LINUX : fast/replaced/width100percent-searchfield.html = FAIL
 
 // This test isn't just slow -- sometimes it times out indefinitely.
 BUG27569 LINUX MAC WIN : http/tests/xmlhttprequest/redirect-cross-origin-tripmine.html = TIMEOUT PASS
-
-BUG9613 WIN LINUX : fast/dom/clientWidthAfterDocumentIsRemoved.html = IMAGE+TEXT TEXT
-BUG9613 MAC : fast/dom/clientWidthAfterDocumentIsRemoved.html = TEXT
 
 // Merge WebKit 42133:42199 regressions
 BUG20570 LINUX : fast/events/context-no-deselect.html = FAIL
@@ -1976,13 +1988,10 @@ BUG20345 : fast/dom/Window/window-property-descriptors.html = TEXT
 // Failures from Webkit merger 51724 -> 51772
 BUG20345 : http/tests/security/cross-frame-access-getOwnPropertyDescriptor.html = TEXT
 
-BUG10480 LINUX : editing/selection/move-by-line-001.html = FAIL
-
 // The linux layout result in build bot shows the changed method does not
 // executed.
 BUG21141 LINUX : fast/forms/select-double-onchange.html = FAIL
-BUG21141 LINUX RELEASE : fast/forms/select-script-onchange.html = FAIL
-BUG21141 LINUX DEBUG : fast/forms/select-script-onchange.html = FAIL
+BUG21141 LINUX : fast/forms/select-script-onchange.html = FAIL
 
 // Flaky, not clear as of when.
 BUG21411 WIN LINUX DEBUG : svg/dom/SVGScriptElement/script-load-and-error-events.svg = TEXT PASS
@@ -2006,8 +2015,7 @@ BUG22526 : http/tests/security/xss-DENIED-defineProperty.html = FAIL
 BUG22554 SKIP : mathml = FAIL
 
 // WebKit update 48796:48820
-BUG23956 WIN LINUX : fast/dom/Element/getBoundingClientRect.html = FAIL
-BUG23956 WIN LINUX : fast/dom/Range/getBoundingClientRect.html = FAIL
+// Test #9 throws an exception.
 BUG23956 WIN LINUX : fast/dom/Range/getClientRects.html = FAIL
 BUG24126 : fast/dom/HTMLInputElement/size-attribute.html = FAIL
 
@@ -2160,8 +2168,6 @@ BUG28646 : editing/selection/transformed-selection-rects.html = FAIL
 // New failures from merge 51412:51455.
 BUG28916 MAC : editing/pasteboard/paste-xml.xhtml = TEXT
 
-// New failures from WebKit r51534:r51576
-BUG29157 WIN LINUX MAC :  svg/animations/animVal-basics.html = TIMEOUT
 
 // New failures from WebKit r51577
 BUG29164 WIN LINUX MAC : fast/frames/sandboxed-iframe-plugins.html = TEXT
@@ -2181,29 +2187,12 @@ BUG33287 WIN LINUX : fast/canvas/set-colors.html = TEXT
 
 // Failures from WebKit merge 51711:51724
 BUG32003 : fast/js/string-property-deletion.html = TEXT
-BUG31998 LINUX : svg/carto.net/selectionlist.svg = IMAGE PASS
 BUG31997 DEBUG WIN : fast/body-propagation/overflow/004-xhtml.xhtml = IMAGE+TEXT PASS
 
 // Regression from Webkit merge 51772 -> 51784
 BUG35329 WIN : http/tests/appcache/resource-redirect-2.html = TIMEOUT PASS
 
 // Webkit Roll to r51875
-BUG29748 LINUX : tables/mozilla_expected_failures/bugs/bug10140.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/bugs/bug1055-2.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/bugs/bug106966.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/bugs/bug22122.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/bugs/bug80762-2.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/bugs/bug91057.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/core/backgrounds.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/core/captions1.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/core/col_span2.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/marvin/backgr_border-table-row-group.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/marvin/backgr_position-table-cell.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/marvin/backgr_position-table-column-group.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/marvin/backgr_position-table-row.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/marvin/table_overflow_dirty_reflow_row.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/other/empty_cells.html = IMAGE
-BUG29748 LINUX : tables/mozilla_expected_failures/other/test4.html = IMAGE
 BUG29748 WIN DEBUG : fast/forms/input-align-image.html = IMAGE+TEXT PASS
 
 // The scrollbar arrows exceed the height of the iframe.
@@ -2319,9 +2308,6 @@ BUG32864 WIN LINUX MAC : plugins/mouse-events-fixedpos.html = TEXT
 // WebKit roll 53655 -> 53704
 BUG32900 WIN LINUX : http/tests/misc/slow-loading-mask.html = IMAGE+TEXT
 
-// WebKit roll 53704 -> 53747
-BUG32949 WIN LINUX MAC : fast/dom/Window/invalid-protocol.html = TEXT
-
 // WebKit roll 53941 -> 54015
 BUG33358 WIN LINUX : fast/dom/Window/window-postmessage-clone-frames.html = TEXT
 
@@ -2350,9 +2336,6 @@ BUG35238 MAC : svg/overflow/overflow-on-outermost-svg-element-ignore-attribute-2
 BUG35238 MAC : svg/overflow/overflow-on-outermost-svg-element-ignore-attribute-3.svg = IMAGE
 BUG35238 MAC : svg/overflow/overflow-on-outermost-svg-element-in-xhtml-defaults.xhtml = IMAGE
 
-// WebKit roll 54559 to 54585
-BUG35237 : fast/events/multiline-link-arrow-navigation.html = TEXT
-
 // Due to not building TestNetscapePlugin.cpp.
 BUG35387 : platform/win/plugins/plugin-delayed-destroy.html = TIMEOUT
 BUG35387 : plugins/reentrant-update-widget-positions.html = TIMEOUT
@@ -2368,16 +2351,8 @@ BUG36019 WIN LINUX : fast/images/svg-as-tiled-background.html = IMAGE
 // WebKit roll 55250 to 55339
 BUG36966 : fast/loader/about-blank-hash-kept.html = FAIL
 
-// Bugs that went unreported when we upstreamed run_webkit_tests
-// This one may be an actual regression! Started being flaky after
-// http://trac.webkit.org/log/?verbose=on&rev=55742&stop_rev=55710
-BUG37896 LINUX : fast/events/standalone-image-drag-to-editable.html = IMAGE IMAGE+TEXT PASS TEXT
-BUG37896 WIN : fast/events/standalone-image-drag-to-editable.html = IMAGE+TEXT PASS TEXT
-BUG37896 MAC DEBUG : fast/events/standalone-image-drag-to-editable.html = IMAGE+TEXT PASS
 // New test, added http://trac.webkit.org/changeset/55546
 BUG37896 WIN LINUX : fast/multicol/hit-test-above-or-below.html = TEXT
-// Added in http://trac.webkit.org/changeset/55669
-BUG37896 : fast/repaint/no-caret-repaint-in-non-content-editable-element.html = IMAGE+TEXT
 BUG37896 WIN DEBUG : fast/text/firstline/001.html = PASS CRASH
 BUG37896 LINUX MAC DEBUG : fast/text/firstline/001.html = PASS CRASH TIMEOUT
 // Added in http://trac.webkit.org/changeset/55587
@@ -2423,22 +2398,16 @@ BUG40680 SKIP : fast/media/view-mode-media-feature.html = FAIL
 BUG38706 : svg/custom/deep-dynamic-updates.svg = IMAGE+TEXT IMAGE PASS
 
 // Caused by http://trac.webkit.org/changeset/56288/
-BUG_JSCHUH WIN LINUX : svg/filters/filterRes.svg = IMAGE+TEXT TEXT
+BUG29737 WIN LINUX : svg/filters/filterRes.svg = IMAGE
 
 // Caused by http://trac.webkit.org/changeset/56394.
 BUG_JAPHET WIN : http/tests/xmlhttprequest/xmlhttprequest-50ms-download-dispatch.html = TEXT
 
-// Due to the differences in iniialization checks in KURL and googleurl.
+// Due to the differences in initialization checks in KURL and googleurl.
 // Note: this test was also marked as flaky on WIN RELEASE above, BUG31342.
-BUG_39423 : security/block-test.html = TIMEOUT
+BUG39423 : security/block-test.html = TIMEOUT
 
 BUGWK36666 : storage/open-database-over-quota.html = TEXT
-
-// Caused by http://trac.webkit.org/changeset/56795
-// These are new tests that are failing in Chromium because of a missing API.
-BUG39904 : svg/animations/animate-points.html = TIMEOUT
-BUG39904 : svg/animations/animate-keySplines.html = TIMEOUT
-BUG39904 : svg/animations/animate-gradient-transform.html = TIMEOUT
 
 BUGWK37283 : fast/overflow/scrollbar-restored-and-then-locked.html = TEXT
 
@@ -2474,16 +2443,14 @@ BUGJAMESR BUG30048 BUG29737 WIN LINUX : svg/filters/shadow-on-rect-with-filter.s
 BUG42696 : http/tests/xmlhttprequest/cross-origin-authorization-with-embedder.html = TIMEOUT
 
 // Started failing at r57969
+// Becoming flaky on linux around r68501
 BUG8729 MAC : http/tests/multipart/invalid-image-data.html = IMAGE
+BUG8729 LINUX RELEASE : http/tests/multipart/invalid-image-data.html = IMAGE PASS
 
 // Started failing at r58152
 BUGWK38038 WIN LINUX MAC : fast/url/file-http-base.html = TEXT
 
-// Started failing at r58191
-BUGWK38100 WIN LINUX MAC : editing/inserting/caret-position.html = TEXT
-
 // New test, may be safe to just rebaseline.
-BUGWK38099 WIN LINUX : svg/custom/broken-internal-references.svg = IMAGE+TEXT
 
 // Started failing at 58212
 BUGWK38108 MAC : fast/backgrounds/size/contain-and-cover.html = IMAGE
@@ -2495,11 +2462,10 @@ BUGUKAI WIN MAC SKIP : fast/text/international/bold-bengali.html = FAIL
 // WebKit roll 58400:58523
 // We probably don't want to run these massive amount of new ECMA script conformance tests:
 BUG42875 SKIP DEFER : fast/js/sputnik = TEXT
-// Other failing layout test
-BUGWK38360 WIN LINUX SKIP : fast/images/svg-background-partial-redraw.html = TEXT
-BUGWK38360 WIN LINUX SKIP : svg/carto.net/tabgroup.svg = TEXT
-BUGWK38360 SKIP : traversal/node-iterator-prototype.html = TEXT
-BUG42895 : media/audio-only-video-intrinsic-size.html = TIMEOUT
+// These tests may just need to be rebaselined.
+BUGWK38360 WIN LINUX : fast/images/svg-background-partial-redraw.html = FAIL
+BUGWK38360 WIN LINUX : svg/carto.net/tabgroup.svg = FAIL
+
 BUG42895 : media/media-document-audio-size.html = TIMEOUT
 BUGYAAR MAC : svg/custom/dominant-baseline-hanging.svg = MISSING
 
@@ -2508,10 +2474,6 @@ BUG39855 LINUX RELEASE : editing/selection/extend-selection.html = PASS TIMEOUT
 
 // Failing a few times, flak dashboard seems to agree.
 BUG41973 MAC : svg/text/text-text-05-t.svg = IMAGE PASS
-
-// Rolling Skia forward in Chrome tree to get new baselines to check
-// in upstream.
-BUGEVAN : svg/clip-path/clip-path-child-clipped.svg = PASS FAIL
 
 // WebKit roll 58626:58719
 BUG43963 WIN : fast/forms/searchfield-heights.html = IMAGE
@@ -2543,66 +2505,23 @@ BUG44150 LINUX DEBUG : fast/forms/input-text-paste-maxlength.html = CRASH PASS
 // The following tests fail on all platforms and need further investigation.
 // Many of these are skipped on the Mac platform
 BUG45991 : canvas/philip/tests/2d.composite.operation.clear.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.operation.darker.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.operation.highlight.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.copy.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.destination-atop.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.destination-in.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.source-in.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.source-out.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.copy.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.destination-atop.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.destination-in.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.source-in.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.source-out.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.copy.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.destination-atop.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.destination-in.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.source-in.html = TEXT
-BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.source-out.html = TEXT
 BUG45991 : canvas/philip/tests/2d.drawImage.broken.html = TEXT
-BUG45991 : canvas/philip/tests/2d.drawImage.incomplete.html = TEXT
-BUG45991 : canvas/philip/tests/2d.fillStyle.parse.current.basic.html = TEXT
-BUG45991 : canvas/philip/tests/2d.fillStyle.parse.current.changed.html = TEXT
-BUG45991 : canvas/philip/tests/2d.fillStyle.parse.current.removed.html = TEXT
-BUG45991 : canvas/philip/tests/2d.fillStyle.parse.system.html = TEXT
-BUG45991 : canvas/philip/tests/2d.gradient.radial.cone.top.html = TEXT
-BUG45991 : canvas/philip/tests/2d.gradient.radial.negative.html = TEXT
+BUG45991 LINUX WIN RELEASE : canvas/philip/tests/2d.gradient.radial.cone.top.html = TEXT
+BUG45991 LINUX WIN DEBUG : canvas/philip/tests/2d.gradient.radial.cone.top.html = TEXT TIMEOUT
+BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.cone.top.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.cone.front.html = TEXT PASS
 BUG45991 : canvas/philip/tests/2d.imageData.create1.type.html = TEXT
 BUG45991 : canvas/philip/tests/2d.imageData.create2.type.html = TEXT
-BUG45991 : canvas/philip/tests/2d.imageData.get.source.negative.html = TEXT
 BUG45991 : canvas/philip/tests/2d.imageData.get.type.html = TEXT
 BUG45991 : canvas/philip/tests/2d.imageData.object.round.html = TEXT
 BUG45991 : canvas/philip/tests/2d.imageData.object.wrap.html = TEXT
 BUG45991 : canvas/philip/tests/2d.missingargs.html = TEXT
-BUG45991 : canvas/philip/tests/2d.path.arcTo.coincide.1.html = TEXT
-BUG45991 : canvas/philip/tests/2d.path.rect.winding.html = TEXT
-BUG45991 : canvas/philip/tests/2d.path.stroke.prune.arc.html = TEXT
+BUG45991 LINUX WIN DEBUG : canvas/philip/tests/2d.path.arcTo.coincide.1.html = TEXT
+BUG45991 WIN DEBUG : canvas/philip/tests/2d.path.stroke.prune.arc.html = TEXT
 BUG45991 : canvas/philip/tests/2d.pattern.image.broken.html = TEXT
 BUG45991 : canvas/philip/tests/2d.pattern.image.incomplete.html = TEXT
-BUG45991 : canvas/philip/tests/2d.pattern.image.undefined.html = TEXT
-BUG45991 : canvas/philip/tests/2d.shadow.enable.blur.html = TEXT
-BUG45991 : canvas/philip/tests/2d.shadow.gradient.alpha.html = TEXT
-BUG45991 : canvas/philip/tests/2d.shadow.gradient.basic.html = TEXT
-BUG45991 : canvas/philip/tests/2d.shadow.gradient.transparent.2.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.baseline.bottom.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.baseline.hanging.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.baseline.ideographic.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.baseline.middle.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.baseline.top.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.fill.maxWidth.fontface.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.end.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.nonspace.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.other.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.space.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.start.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.font.parse.basic.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.font.parse.complex.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.font.parse.invalid.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.font.parse.size.percentage.default.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.font.parse.size.percentage.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.font.parse.system.html = TEXT
-BUG45991 : canvas/philip/tests/2d.text.measure.width.space.html = TEXT
+BUG45991 LINUX WIN : canvas/philip/tests/2d.shadow.enable.blur.html = TEXT
+BUG45991 LINUX WIN : canvas/philip/tests/2d.text.draw.baseline.ideographic.html = TEXT
 BUG45991 : canvas/philip/tests/type.prototype.html = TEXT
 
 // These tests fail everywhere we use skia and are most likely skia bugs
@@ -2644,19 +2563,71 @@ BUG45991 LINUX WIN : canvas/philip/tests/2d.shadow.transform.2.html = TEXT
 BUG45991 LINUX WIN : canvas/philip/tests/2d.transformation.setTransform.skewed.html = TEXT
 BUG45991 LINUX WIN : canvas/philip/tests/2d.transformation.transform.skewed.html = TEXT
 
-// Many of these are skipped on the mac platform.
-BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.cone.front.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.inside2.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.inside3.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.outside1.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.imageData.get.source.outside.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.line.cap.closed.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.line.join.parallel.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.line.miter.lineedge.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.shadow.enable.x.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.shadow.enable.y.html = TEXT
-BUG45991 MAC : canvas/philip/tests/2d.strokeRect.zero.4.html = TEXT
-BUG45991 MAC : canvas/philip/tests/toDataURL.jpeg.alpha.html = TEXT
+// affected by http://trac.webkit.org/changeset/68737/
+// Please resit turning on these without an actual fix. 
+// These results look determiend by which machine it is run by.
+BUG45991 : canvas/philip/tests/2d.composite.operation.darker.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.operation.highlight.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.copy.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.destination-atop.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.destination-in.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.source-in.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.fill.source-out.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.copy.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.destination-atop.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.destination-in.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.source-in.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.image.source-out.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.copy.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.destination-atop.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.destination-in.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.source-in.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.composite.uncovered.pattern.source-out.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.drawImage.incomplete.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.fillStyle.parse.current.basic.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.fillStyle.parse.current.changed.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.fillStyle.parse.current.removed.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.fillStyle.parse.system.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.gradient.radial.negative.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.imageData.get.source.negative.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.path.rect.winding.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.pattern.image.undefined.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.shadow.gradient.alpha.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.shadow.gradient.basic.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.shadow.gradient.transparent.2.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.baseline.bottom.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.baseline.hanging.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.baseline.middle.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.baseline.top.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.fill.maxWidth.fontface.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.end.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.nonspace.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.other.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.space.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.draw.space.collapse.start.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.font.parse.basic.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.font.parse.complex.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.font.parse.invalid.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.font.parse.size.percentage.default.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.font.parse.size.percentage.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.font.parse.system.html = TEXT PASS
+BUG45991 : canvas/philip/tests/2d.text.measure.width.space.html = TEXT PASS
+
+BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.inside2.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.inside3.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.gradient.radial.outside1.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.line.cap.closed.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.line.join.parallel.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.line.miter.lineedge.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.shadow.enable.blur.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.shadow.enable.x.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.shadow.enable.y.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.strokeRect.zero.4.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/2d.text.draw.baseline.ideographic.html = TEXT PASS
+BUG45991 MAC : canvas/philip/tests/toDataURL.jpeg.alpha.html = TEXT PASS
+
+BUG45991 DEBUG : canvas/philip/tests/2d.imageData.get.source.outside.html = TEXT
+BUG45991 MAC RELEASE : canvas/philip/tests/2d.imageData.get.source.outside.html = TEXT
 
 // This seems to be failing on windows only.
 BUG45991 WIN : canvas/philip/tests/2d.gradient.radial.touch2.html = TEXT
@@ -2770,8 +2741,9 @@ BUG48239 : fast/js/function-apply.html = TEXT
 BUG48239 WIN LINUX : fast/js/function-apply-aliased.html = TEXT PASS
 BUG48239 : fast/js/function-apply-many-args.html = TEXT
 
-// Needs rebaselining after http://trac.webkit.org/changeset/62662/
-BUG48452 LINUX MAC : svg/custom/use-font-face-crash.svg = IMAGE+TEXT IMAGE
+// The error gives a different line number than upstream.  Maybe a V8/JSC
+// difference?
+BUG48452 : svg/custom/use-font-face-crash.svg = FAIL
 
 // Times out after http://trac.webkit.org/changeset/62739/
 BUG48550 SKIP : plugins/return-negative-one-from-write.html = TIMEOUT
@@ -2818,14 +2790,7 @@ BUG48859 WIN : fast/inline/continuation-outlines-with-layers-2.html = IMAGE+TEXT
 // Need investigation.
 BUGWK38016 WIN : svg/custom/foreign-object-skew.svg = FAIL
 
-BUG49021 : userscripts/mixed-case-stylesheet.html = TEXT
-BUG49021 : userscripts/simple-stylesheet.html = TEXT
-BUG49021 : userscripts/user-style-all-frames.html = TEXT
-BUG49021 : userscripts/user-style-top-frame-only.html = TEXT
-
 BUGWK42241 LINUX : svg/custom/text-rotated-gradient.svg = IMAGE PASS
-
-BUGWK42249 MAC : fast/repaint/moving-shadow-on-container.html = IMAGE
 
 // These tests all fail because the expected output is wrong. The
 // reason is that JSC does not currently implement Object.freeze and
@@ -2950,9 +2915,6 @@ BUG49343 : fast/js/reserved-words-as-property.html = TEXT
 BUG42598 : http/tests/misc/401-alternative-content.php = TEXT
 BUG42598 : http/tests/xmlhttprequest/failed-auth.html = TEXT
 
-// This one started failing at r63728.
-BUGWK42845 : html5lib/runner.html = TEXT
-
 BUGWK42769 : http/tests/xmlhttprequest/remember-bad-password.html = TEXT
 BUGWK42769 : http/tests/security/401-logout/401-logout.php = TIMEOUT
 
@@ -2976,9 +2938,6 @@ BUG50787 : plugins/npruntime/plugin-scriptable-object-invoke-default.html = TEXT
 // New plugin test added in r64444
 BUG50910 : plugins/npruntime/remove-property.html = TEXT
 
-// New test added in r64409 fails in Chromium.
-BUG50832 : printing/stretch-to-view-height.html = TEXT
-
 // Application Cache Quotas
 BUGWK43459 : http/tests/appcache/origin-quota.html = TEXT MISSING
 
@@ -2987,11 +2946,7 @@ BUG51161 LINUX DEBUG : svg/clip-path/clip-path-text.svg = CRASH
 
 // Fixed only on Mac
 // This test has not landed yet, though the fix has.
-//BUG41968 LINUX WIN : svg/hittest/svg-rect-hit.html = TEXT
-
-// Speech input tests sending click events to HTML elements, being investigated.
-BUGWK45296: fast/speech/input-text-speechbutton.html = TIMEOUT
-BUGWK45296: fast/speech/speech-button-ignore-generated-events.html = TIMEOUT
+//BUGWK41968 LINUX WIN : svg/hittest/svg-rect-hit.html = TEXT
 
 // Need to support DeviceMotion.
 BUG51416 : fast/dom/DeviceMotion/window-property.html = TEXT
@@ -3047,7 +3002,6 @@ BUG53073 LINUX : svg/custom/clip-path-units-changes.svg = TEXT PASS
 // pass them because they rely on QuickTime being installed. We wontfix these
 // tests and let the Mac/Win coverage ensure that the (cross-platform)
 // special-document machinery still works. 
-BUG53546 WONTFIX LINUX : userscripts/user-script-audio-document.html = TEXT
 BUG53546 WONTFIX LINUX : userscripts/user-script-video-document.html = TEXT
 
 // These tests are flaky on Mac and Linux.
@@ -3055,7 +3009,7 @@ BUG53554 MAC LINUX : svg/W3C-SVG-1.1/fonts-elem-07-b.svg = PASS IMAGE
 BUG53554 MAC LINUX : svg/custom/svg-fonts-without-missing-glyph.xhtml = PASS IMAGE
 
 // New test, need to verify if it's safe to rebaseline.
-BUGWK44770 WIN LINUX : svg/repaint/filter-repaint.svg = IMAGE+TEXT
+BUGWK44770 WIN LINUX : svg/repaint/filter-repaint.svg = IMAGE+TEXT CRASH
 
 // Full Screen JS API is not yet enabled.
 BUGWK44797 : fullscreen = FAIL
@@ -3065,10 +3019,6 @@ WONTFIX SKIP : media/video-does-not-loop.html = TIMEOUT
 
 // Passes in Chromium DRT.
 BUGWK44961 : fast/notifications/notifications-click-event.html = TIMEOUT
-
-// These might just need a new baseline.
-BUGWK44967 MAC : fast/multicol/paginate-block-replaced.html = IMAGE
-BUGWK44967 MAC : fast/multicol/float-paginate.html = IMAGE
 
 // Not focusing an anchor when tab is pressed.
 BUGWK45061 : fast/forms/focus2.html = FAIL
@@ -3114,6 +3064,7 @@ BUGWK45652 SKIP : fast/viewport/viewport-84.html = TEXT
 BUGWK45652 SKIP : fast/viewport/viewport-87.html = TEXT
 BUGWK45652 SKIP : fast/viewport/viewport-126.html = TEXT
 BUGWK45652 SKIP : fast/viewport/viewport-127.html = TEXT
+BUGWK45652 SKIP : fast/viewport/viewport-128.html = TIMEOUT TEXT
 
 // Regressions from r67349?
 BUGDPRANKE LINUX MAC : http/tests/navigation/postredirect-frames.html = IMAGE
@@ -3122,11 +3073,6 @@ BUGWK45667 LINUX : fast/files/read-file-async.html = CRASH PASS
 BUGWK45667 LINUX : fast/files/read-blob-async.html = CRASH PASS
 
 BUGWK45737 DEBUG SLOW : fast/frames/frame-limit.html = PASS
-
-BUGWK45753 WIN LINUX : fast/repaint/block-layout-inline-children-float-positioned.html = IMAGE+TEXT
-BUGWK45753 MAC : fast/repaint/block-layout-inline-children-float-positioned.html = IMAGE
-BUGWK45753 WIN LINUX : fast/repaint/block-layout-inline-children-replaced.html = IMAGE+TEXT
-BUGWK45753 MAC : fast/repaint/block-layout-inline-children-replaced.html = IMAGE
 
 // Regressions from webkit roll r67178:t67358
 BUGDPRANKE WIN LINUX DEBUG : fast/forms/select-set-length-with-mutation-remove.html = TIMEOUT PASS
@@ -3137,26 +3083,20 @@ BUGDPRANKE WIN LINUX : media/video-poster.html = PASS TEXT
 
 BUGWK45898 : editing/selection/context-menu-on-text.html = TEXT
 
-// These are failing due to new-run-webkit-tests's diff trimming line ends.
-BUGWEBGL MAC : fast/canvas/webgl/null-object-behaviour.html = TEXT
-BUGWEBGL MAC : fast/canvas/webgl/uniform-location.html = TEXT
-
 BUGWEBGL WIN LINUX : fast/canvas/webgl/context-attributes-alpha-depth-stencil-antialias.html = TEXT
 BUGWEBGL : fast/canvas/webgl/css-webkit-canvas-repaint.html = IMAGE
 BUGWEBGL : fast/canvas/webgl/css-webkit-canvas.html = IMAGE
-BUGWEBGL WIN LINUX : fast/canvas/webgl/gl-object-get-calls.html = TEXT
-BUGWEBGL MAC : fast/canvas/webgl/gl-teximage.html = TEXT
+BUGWEBGL WIN LINUX : fast/canvas/webgl/gl-object-get-calls.html = TEXT TIMEOUT
 BUGWEBGL WIN LINUX : fast/canvas/webgl/gl-uniform-arrays.html = TEXT
+BUGWEBGL WIN LINUX : fast/canvas/webgl/object-deletion-behaviour.html = TEXT
 BUGWEBGL WIN LINUX : fast/canvas/webgl/point-size.html = TEXT
-BUGWEBGL MAC : fast/canvas/webgl/tex-image-and-sub-image-2d-with-video.html = TEXT PASS
+BUGWEBGL WIN MAC : fast/canvas/webgl/tex-image-and-sub-image-2d-with-video.html = TEXT PASS
+BUGWEBGL WIN LINUX : fast/canvas/webgl/tex-image-and-uniform-binding-bugs.html = TIMEOUT
 BUGWEBGL MAC : fast/canvas/webgl/texture-npot.html = TEXT
-BUGWEBGL WIN LINUX : fast/canvas/webgl/uniform-location.html = TEXT
+BUGWEBGL WIN LINUX : fast/canvas/webgl/uniform-location.html = TEXT TIMEOUT
 
 // Pre-HTML5 parser quirks only apply to the mac port for now.
 WONTFIX SKIP : fast/parser/pre-html5-parser-quirks.html = FAIL
-
-// Fails due to r67862.
-BUGWK39966 : fast/repaint/table-cell-collapsed-border.html = IMAGE
 
 // Regressions after r67771
 BUG56246 : printing/css2.1/page-break-after-000.html = TEXT
@@ -3164,4 +3104,51 @@ BUG56246 : printing/css2.1/page-break-after-003.html = TEXT
 BUG56246 : printing/css2.1/page-break-after-004.html = TEXT
 BUG56246 : printing/css2.1/page-break-before-000.html = TEXT
 
-BUG56220 : userscripts/user-script-top-frame-only.html = TEXT
+// This test needs enhanced eventSender.contextMenu() return value.
+// See https://bugs.webkit.org/show_bug.cgi?id=45021 for more info.
+BUGWK45021 : media/context-menu-actions.html = TIMEOUT
+
+BUG_AUTO LINUX WIN DEBUG : animations/suspend-resume-animation.html = PASS TEXT
+BUG_AUTO LINUX RELEASE : animations/3d/transform-origin-vs-functions.html = PASS TEXT
+BUG_AUTO WIN DEBUG : animations/3d/transform-origin-vs-functions.html = PASS TEXT
+BUG_AUTO WIN DEBUG : animations/multiple-keyframes.html = PASS TEXT
+BUG_AUTO WIN DEBUG : canvas/philip/tests/2d.text.draw.align.center.html = PASS TEXT
+
+// Seems to have been crashing intermittently for as long as we have test history.
+BUG_SENORBLANCO WIN LINUX : svg/clip-path/clip-path-text-and-stroke.svg = CRASH PASS
+
+// nodesFromRect() removed from Document.idl and test skipped on other platforms at r68345.
+BUGWK46596 : fast/dom/nodesFromRect-basic.html = TIMEOUT
+
+// Possibly regressed within 68216:68246 (flakiness rate increased)
+BUG57056 LINUX : svg/custom/clip-path-referencing-use2.svg = PASS FAIL
+BUG57056 LINUX : svg/custom/circular-marker-reference-4.svg = PASS FAIL
+
+// Flaky since http://trac.webkit.org/changeset/68440 (where this test added at).
+BUGWK46689 : fast/dom/HTMLElement/class-list.html = TEXT PASS
+
+// Flaky since r68438:r68445 or before that.
+BUGWK46693 MAC : fast/repaint/repaint-svg-after-style-change.html = TEXT
+
+// New test; was added in http://trac.webkit.org/changeset/68520
+BUGWK46735 WIN : platform/win/plugins/window-geometry-initialized-before-set-window.html = TEXT
+
+// Broken somewhere in the range 68574:68591.
+BUG_SENORBLANCO WIN LINUX : svg/W3C-SVG-1.1/animate-elem-30-t.svg = IMAGE
+BUG_SENORBLANCO WIN LINUX : svg/custom/image-small-width-height.svg = CRASH IMAGE
+BUG_SENORBLANCO WIN LINUX : svg/carto.net/selectionlist.svg = IMAGE
+// thai-baht-space needs to run to rebaseline.
+//BUG_SENORBLANCO LINUX : fast/text/international/thai-baht-space.html = IMAGE
+BUG_SENORBLANCO LINUX : fast/text/midword-break-after-breakable-char.html = TEXT
+
+// Flaky since 68620
+BUGWK46779 WIN LINUX : fast/filesystem/flags-passing.html = TEXT PASS
+
+// NPP_HandleEvent doesn't be implemented/work on mac/linux.
+BUG48033 LINUX MAC SKIP : plugins/plugin-initiate-popup-window.html = PASS TIMEOUT
+
+// New test added in 68808.
+BUGWK46940 WIN : fast/dom/Window/window-screen-properties.html = TEXT
+
+// New test added in 68809
+BUGWK46941 WIN : fast/media/color-does-not-include-alpha.html = TEXT

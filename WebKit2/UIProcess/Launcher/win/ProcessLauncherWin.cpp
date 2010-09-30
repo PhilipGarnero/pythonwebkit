@@ -27,12 +27,19 @@
 
 #include "Connection.h"
 #include "RunLoop.h"
+#include <shlwapi.h>
 #include <wtf/text/WTFString.h>
 
 #if !defined(NDEBUG) && (!defined(DEBUG_INTERNAL) || defined(DEBUG_ALL))
 const LPCWSTR webProcessName = L"WebKit2WebProcess_debug.exe";
 #else
 const LPCWSTR webProcessName = L"WebKit2WebProcess.exe";
+#endif
+
+#ifdef DEBUG_ALL
+const LPCWSTR webKitDLLName = L"WebKit_debug.dll";
+#else
+const LPCWSTR webKitDLLName = L"WebKit.dll";
 #endif
 
 namespace WebKit {
@@ -48,14 +55,28 @@ void ProcessLauncher::launchProcess()
 
     // Ensure that the child process inherits the client identifier.
     ::SetHandleInformation(clientIdentifier, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-        
+
+    // To get the full file path to WebKit2WebProcess.exe, we fild the location of WebKit.dll,
+    // remove the last path component, and then append WebKit2WebProcess(_debug).exe.
+    HMODULE webKitModule = ::GetModuleHandleW(webKitDLLName);
+    ASSERT(webKitModule);
+    if (!webKitModule)
+        return;
+
+    WCHAR pathStr[MAX_PATH];
+    if (!::GetModuleFileNameW(webKitModule, pathStr, _countof(pathStr)))
+        return;
+
+    ::PathRemoveFileSpecW(pathStr);
+    if (!::PathAppendW(pathStr, webProcessName))
+        return;
+
+    String commandLine(pathStr);
+
+    // FIXME: It would be nice if we could just create a CommandLine object and output a command line vector from it.
     Vector<UChar> commandLineVector;
-
-    // FIXME: We would like to pass a full path to the .exe here.
-
-    String commandLine(webProcessName);
     append(commandLineVector, commandLine);
-    append(commandLineVector, " -mode webprocess");
+    append(commandLineVector, " -type webprocess");
     append(commandLineVector, " -clientIdentifier ");
     append(commandLineVector, String::number(reinterpret_cast<uintptr_t>(clientIdentifier)));
     commandLineVector.append('\0');
@@ -87,6 +108,15 @@ void ProcessLauncher::terminateProcess()
         return;
 
     ::TerminateProcess(m_processIdentifier, 0);
+}
+
+void ProcessLauncher::platformInvalidate()
+{
+    if (!m_processIdentifier)
+        return;
+
+    ::CloseHandle(m_processIdentifier);
+    m_processIdentifier = 0;
 }
 
 } // namespace WebKit

@@ -53,14 +53,18 @@ public:
 
     Length styleOrColWidth() const;
 
-    virtual void calcPrefWidths();
+    virtual void computePreferredLogicalWidths();
 
     void updateWidth(int);
 
-    int borderLeft() const;
-    int borderRight() const;
-    int borderTop() const;
-    int borderBottom() const;
+    virtual int borderLeft() const;
+    virtual int borderRight() const;
+    virtual int borderTop() const;
+    virtual int borderBottom() const;
+    virtual int borderStart() const;
+    virtual int borderEnd() const;
+    virtual int borderBefore() const;
+    virtual int borderAfter() const;
 
     int borderHalfLeft(bool outer) const;
     int borderHalfRight(bool outer) const;
@@ -122,7 +126,7 @@ private:
 
     virtual bool requiresLayer() const { return isPositioned() || isTransparent() || hasOverflowClip() || hasTransform() || hasMask() || hasReflection(); }
 
-    virtual void calcWidth();
+    virtual void computeLogicalWidth();
 
     virtual void paintBoxDecorations(PaintInfo&, int tx, int ty);
     virtual void paintMask(PaintInfo&, int tx, int ty);

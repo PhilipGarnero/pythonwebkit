@@ -48,12 +48,10 @@ bool PageClientQWidget::inputMethodEnabled() const
     return view->testAttribute(Qt::WA_InputMethodEnabled);
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
 void PageClientQWidget::setInputMethodHints(Qt::InputMethodHints hints)
 {
     view->setInputMethodHints(hints);
 }
-#endif
 
 #ifndef QT_NO_CURSOR
 QCursor PageClientQWidget::cursor() const
@@ -107,6 +105,7 @@ QRectF PageClientQWidget::windowRect() const
 
 PageClientQGraphicsWidget::~PageClientQGraphicsWidget()
 {
+    delete overlay;
 #if USE(ACCELERATED_COMPOSITING)
     if (!rootGraphicsLayer)
         return;
@@ -152,11 +151,15 @@ void PageClientQGraphicsWidget::createOrDeleteOverlay()
     }
     if (useOverlay == !!overlay)
         return;
+
     if (useOverlay) {
-        overlay = QSharedPointer<QGraphicsItemOverlay>(new QGraphicsItemOverlay(view, page));
+        overlay = new QGraphicsItemOverlay(view, page);
         overlay->setZValue(OverlayZValue);
-    } else
-        overlay.clear();
+    } else {
+        // Changing the overlay might be done inside paint events.
+        overlay->deleteLater();
+        overlay = 0;
+    }
 }
 
 #if USE(ACCELERATED_COMPOSITING)
@@ -215,26 +218,18 @@ void PageClientQGraphicsWidget::updateTiledBackingStoreScale()
 
 void PageClientQGraphicsWidget::setInputMethodEnabled(bool enable)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
     view->setFlag(QGraphicsItem::ItemAcceptsInputMethod, enable);
-#endif
 }
 
 bool PageClientQGraphicsWidget::inputMethodEnabled() const
 {
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
     return view->flags() & QGraphicsItem::ItemAcceptsInputMethod;
-#else
-    return false;
-#endif
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(4, 6, 0)
 void PageClientQGraphicsWidget::setInputMethodHints(Qt::InputMethodHints hints)
 {
     view->setInputMethodHints(hints);
 }
-#endif
 
 #ifndef QT_NO_CURSOR
 QCursor PageClientQGraphicsWidget::cursor() const
@@ -318,9 +313,6 @@ QStyle* PageClientQGraphicsWidget::style() const
 
 QRectF PageClientQGraphicsWidget::windowRect() const
 {
-    if (!view->deviceSize().isEmpty())
-        return QRectF(QRect(QPoint(0, 0), view->deviceSize()));
-
     if (!view->scene())
         return QRectF();
 

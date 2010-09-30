@@ -27,6 +27,7 @@
 
 #include "DrawingAreaProxy.h"
 #include "MessageID.h"
+#include "NativeWebKeyboardEvent.h"
 #include "PageClient.h"
 #include "WebBackForwardList.h"
 #include "WebBackForwardListItem.h"
@@ -39,7 +40,8 @@
 #include "WebEvent.h"
 #include "WebFormSubmissionListenerProxy.h"
 #include "WebFramePolicyListenerProxy.h"
-#include "WebPageMessageKinds.h"
+#include "WebPageCreationParameters.h"
+#include "WebPageMessages.h"
 #include "WebPageNamespace.h"
 #include "WebPageProxyMessageKinds.h"
 #include "WebPreferences.h"
@@ -145,16 +147,16 @@ void WebPageProxy::revive()
     processDidRevive();
 }
 
-void WebPageProxy::initializeWebPage(const IntSize& size, PassOwnPtr<DrawingAreaProxy> drawingArea)
+void WebPageProxy::initializeWebPage(const IntSize& size)
 {
     if (!isValid()) {
-        puts("initializeWebPage called with a dead WebProcess");
         revive();
         return;
     }
 
-    m_drawingArea = drawingArea;
-    process()->send(WebProcessMessage::Create, m_pageID, CoreIPC::In(size, pageNamespace()->context()->preferences()->store(), *(m_drawingArea.get())));
+    ASSERT(m_drawingArea);
+
+    process()->send(WebProcessMessage::Create, m_pageID, CoreIPC::In(creationParameters(size)));
 }
 
 void WebPageProxy::reinitializeWebPage(const WebCore::IntSize& size)
@@ -163,7 +165,8 @@ void WebPageProxy::reinitializeWebPage(const WebCore::IntSize& size)
         return;
 
     ASSERT(m_drawingArea);
-    process()->send(WebProcessMessage::Create, m_pageID, CoreIPC::In(size, pageNamespace()->context()->preferences()->store(), *(m_drawingArea.get())));
+
+    process()->send(WebProcessMessage::Create, m_pageID, CoreIPC::In(creationParameters(size)));
 }
 
 void WebPageProxy::close()
@@ -211,7 +214,7 @@ void WebPageProxy::close()
 
     m_drawingArea.clear();
 
-    process()->send(WebPageMessage::Close, m_pageID, CoreIPC::In());
+    process()->send(Messages::WebPage::Close(), m_pageID);
     process()->removeWebPage(m_pageID);
 }
 
@@ -220,7 +223,7 @@ bool WebPageProxy::tryClose()
     if (!isValid())
         return true;
 
-    process()->send(WebPageMessage::TryClose, m_pageID, CoreIPC::In());
+    process()->send(Messages::WebPage::TryClose(), m_pageID);
     return false;
 }
 
@@ -231,7 +234,7 @@ void WebPageProxy::loadURL(const String& url)
         revive();
     }
 
-    process()->send(WebPageMessage::LoadURL, m_pageID, CoreIPC::In(url));
+    process()->send(Messages::WebPage::LoadURL(url), m_pageID);
 }
 
 void WebPageProxy::loadURLRequest(WebURLRequest* urlRequest)
@@ -241,35 +244,35 @@ void WebPageProxy::loadURLRequest(WebURLRequest* urlRequest)
         revive();
     }
 
-    process()->send(WebPageMessage::LoadURLRequest, m_pageID, CoreIPC::In(urlRequest->resourceRequest()));
+    process()->send(Messages::WebPage::LoadURLRequest(urlRequest->resourceRequest()), m_pageID);
 }
 
 void WebPageProxy::loadHTMLString(const String& htmlString, const String& baseURL)
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::LoadHTMLString, m_pageID, CoreIPC::In(htmlString, baseURL));
+    process()->send(Messages::WebPage::LoadHTMLString(htmlString, baseURL), m_pageID);
 }
 
 void WebPageProxy::loadPlainTextString(const String& string)
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::LoadPlainTextString, m_pageID, CoreIPC::In(string));
+    process()->send(Messages::WebPage::LoadPlainTextString(string), m_pageID);
 }
 
 void WebPageProxy::stopLoading()
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::StopLoading, m_pageID, CoreIPC::In());
+    process()->send(Messages::WebPage::StopLoading(), m_pageID);
 }
 
 void WebPageProxy::reload(bool reloadFromOrigin)
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::Reload, m_pageID, CoreIPC::In(reloadFromOrigin));
+    process()->send(Messages::WebPage::Reload(reloadFromOrigin), m_pageID);
 }
 
 void WebPageProxy::goForward()
@@ -280,7 +283,7 @@ void WebPageProxy::goForward()
     if (!canGoForward())
         return;
 
-    process()->send(WebPageMessage::GoForward, m_pageID, CoreIPC::In(m_backForwardList->forwardItem()->itemID()));
+    process()->send(Messages::WebPage::GoForward(m_backForwardList->forwardItem()->itemID()), m_pageID);
 }
 
 bool WebPageProxy::canGoForward() const
@@ -296,7 +299,7 @@ void WebPageProxy::goBack()
     if (!canGoBack())
         return;
 
-    process()->send(WebPageMessage::GoBack, m_pageID, CoreIPC::In(m_backForwardList->backItem()->itemID()));
+    process()->send(Messages::WebPage::GoBack(m_backForwardList->backItem()->itemID()), m_pageID);
 }
 
 bool WebPageProxy::canGoBack() const
@@ -309,7 +312,7 @@ void WebPageProxy::goToBackForwardItem(WebBackForwardListItem* item)
     if (!isValid())
         return;
 
-    process()->send(WebPageMessage::GoToBackForwardItem, m_pageID, CoreIPC::In(item->itemID()));
+    process()->send(Messages::WebPage::GoToBackForwardItem(item->itemID()), m_pageID);
 }
 
 void WebPageProxy::didChangeBackForwardList()
@@ -321,46 +324,36 @@ void WebPageProxy::setFocused(bool isFocused)
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::SetFocused, m_pageID, CoreIPC::In(isFocused));
+    process()->send(Messages::WebPage::SetFocused(isFocused), m_pageID);
 }
 
 void WebPageProxy::setActive(bool active)
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::SetActive, m_pageID, CoreIPC::In(active));
+    process()->send(Messages::WebPage::SetActive(active), m_pageID);
 }
 
-void WebPageProxy::selectAll()
+void WebPageProxy::setWindowResizerSize(const IntSize& windowResizerSize)
+{
+    if (!isValid())
+        return;
+    process()->send(Messages::WebPage::SetWindowResizerSize(windowResizerSize), m_pageID);
+}
+
+void WebPageProxy::validateMenuItem(const String& commandName)
+{
+    if (!isValid())
+        return;
+    process()->send(Messages::WebPage::ValidateMenuItem(commandName), m_pageID);
+}
+    
+void WebPageProxy::executeEditCommand(const String& commandName)
 {
     if (!isValid())
         return;
 
-    process()->send(WebPageMessage::SelectAll, m_pageID, CoreIPC::In());
-}
-
-void WebPageProxy::copy()
-{
-    if (!isValid())
-        return;
-
-    process()->send(WebPageMessage::Copy, m_pageID, CoreIPC::In());
-}
-
-void WebPageProxy::cut()
-{
-    if (!isValid())
-        return;
-
-    process()->send(WebPageMessage::Cut, m_pageID, CoreIPC::In());
-}
-
-void WebPageProxy::paste()
-{
-    if (!isValid())
-        return;
-
-    process()->send(WebPageMessage::Paste, m_pageID, CoreIPC::In());
+    process()->send(Messages::WebPage::ExecuteEditCommand(commandName), m_pageID);
 }
     
 void WebPageProxy::setIsInWindow(bool isInWindow)
@@ -371,10 +364,27 @@ void WebPageProxy::setIsInWindow(bool isInWindow)
     m_isInWindow = isInWindow;
     if (!isValid())
         return;
-    process()->send(WebPageMessage::SetIsInWindow, m_pageID, CoreIPC::In(isInWindow));
+    process()->send(Messages::WebPage::SetIsInWindow(isInWindow), m_pageID);
 }
-    
-void WebPageProxy::mouseEvent(const WebMouseEvent& event)
+
+#if PLATFORM(MAC)
+void WebPageProxy::setWindowIsVisible(bool windowIsVisible)
+{
+    if (!isValid())
+        return;
+    process()->send(Messages::WebPage::SetWindowIsVisible(windowIsVisible), m_pageID);
+}
+
+void WebPageProxy::setWindowFrame(const IntRect& windowFrame)
+{
+    if (!isValid())
+        return;
+    process()->send(Messages::WebPage::SetWindowFrame(windowFrame), m_pageID);
+}
+
+#endif
+
+void WebPageProxy::handleMouseEvent(const WebMouseEvent& event)
 {
     if (!isValid())
         return;
@@ -382,33 +392,35 @@ void WebPageProxy::mouseEvent(const WebMouseEvent& event)
     // NOTE: This does not start the responsiveness timer because mouse move should not indicate interaction.
     if (event.type() != WebEvent::MouseMove)
         process()->responsivenessTimer()->start();
-    process()->send(WebPageMessage::MouseEvent, m_pageID, CoreIPC::In(event));
+    process()->send(Messages::WebPage::MouseEvent(event), m_pageID);
 }
 
-void WebPageProxy::wheelEvent(const WebWheelEvent& event)
+void WebPageProxy::handleWheelEvent(const WebWheelEvent& event)
 {
     if (!isValid())
         return;
 
     process()->responsivenessTimer()->start();
-    process()->send(WebPageMessage::WheelEvent, m_pageID, CoreIPC::In(event));
+    process()->send(Messages::WebPage::WheelEvent(event), m_pageID);
 }
 
-void WebPageProxy::keyEvent(const WebKeyboardEvent& event)
+void WebPageProxy::handleKeyboardEvent(const NativeWebKeyboardEvent& event)
 {
     if (!isValid())
         return;
 
+    m_keyEventQueue.append(event);
+
     process()->responsivenessTimer()->start();
-    process()->send(WebPageMessage::KeyEvent, m_pageID, CoreIPC::In(event));
+    process()->send(Messages::WebPage::KeyEvent(event), m_pageID);
 }
 
 #if ENABLE(TOUCH_EVENTS)
-void WebPageProxy::touchEvent(const WebTouchEvent& event)
+void WebPageProxy::handleTouchEvent(const WebTouchEvent& event)
 {
     if (!isValid())
         return;
-    process()->send(WebPageMessage::TouchEvent, m_pageID, CoreIPC::In(event)); 
+    process()->send(Messages::WebPage::TouchEvent(event), m_pageID); 
 }
 #endif
 
@@ -417,7 +429,7 @@ void WebPageProxy::receivedPolicyDecision(WebCore::PolicyAction action, WebFrame
     if (!isValid())
         return;
 
-    process()->send(WebPageMessage::DidReceivePolicyDecision, m_pageID, CoreIPC::In(frame->frameID(), listenerID, (uint32_t)action));
+    process()->send(Messages::WebPage::DidReceivePolicyDecision(frame->frameID(), listenerID, action), m_pageID);
 }
 
 void WebPageProxy::setCustomUserAgent(const String& userAgent)
@@ -425,7 +437,7 @@ void WebPageProxy::setCustomUserAgent(const String& userAgent)
     if (!isValid())
         return;
 
-    process()->send(WebPageMessage::SetCustomUserAgent, m_pageID, CoreIPC::In(userAgent));
+    process()->send(Messages::WebPage::SetCustomUserAgent(userAgent), m_pageID);
 }
 
 void WebPageProxy::terminateProcess()
@@ -456,7 +468,7 @@ void WebPageProxy::setTextZoomFactor(double zoomFactor)
         return;
 
     m_textZoomFactor = zoomFactor;
-    process()->send(WebPageMessage::SetTextZoomFactor, m_pageID, CoreIPC::In(m_textZoomFactor)); 
+    process()->send(Messages::WebPage::SetTextZoomFactor(m_textZoomFactor), m_pageID); 
 }
 
 void WebPageProxy::setPageZoomFactor(double zoomFactor)
@@ -468,7 +480,7 @@ void WebPageProxy::setPageZoomFactor(double zoomFactor)
         return;
 
     m_pageZoomFactor = zoomFactor;
-    process()->send(WebPageMessage::SetPageZoomFactor, m_pageID, CoreIPC::In(m_pageZoomFactor)); 
+    process()->send(Messages::WebPage::SetPageZoomFactor(m_pageZoomFactor), m_pageID); 
 }
 
 void WebPageProxy::setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFactor)
@@ -481,7 +493,7 @@ void WebPageProxy::setPageAndTextZoomFactors(double pageZoomFactor, double textZ
 
     m_pageZoomFactor = pageZoomFactor;
     m_textZoomFactor = textZoomFactor;
-    process()->send(WebPageMessage::SetPageAndTextZoomFactors, m_pageID, CoreIPC::In(m_pageZoomFactor, m_textZoomFactor)); 
+    process()->send(Messages::WebPage::SetPageAndTextZoomFactors(m_pageZoomFactor, m_textZoomFactor), m_pageID); 
 }
 
 void WebPageProxy::runJavaScriptInMainFrame(const String& script, PassRefPtr<ScriptReturnValueCallback> prpCallback)
@@ -489,7 +501,7 @@ void WebPageProxy::runJavaScriptInMainFrame(const String& script, PassRefPtr<Scr
     RefPtr<ScriptReturnValueCallback> callback = prpCallback;
     uint64_t callbackID = callback->callbackID();
     m_scriptReturnValueCallbacks.set(callbackID, callback.get());
-    process()->send(WebPageMessage::RunJavaScriptInMainFrame, m_pageID, CoreIPC::In(script, callbackID));
+    process()->send(Messages::WebPage::RunJavaScriptInMainFrame(script, callbackID), m_pageID);
 }
 
 void WebPageProxy::getRenderTreeExternalRepresentation(PassRefPtr<RenderTreeExternalRepresentationCallback> prpCallback)
@@ -497,7 +509,7 @@ void WebPageProxy::getRenderTreeExternalRepresentation(PassRefPtr<RenderTreeExte
     RefPtr<RenderTreeExternalRepresentationCallback> callback = prpCallback;
     uint64_t callbackID = callback->callbackID();
     m_renderTreeExternalRepresentationCallbacks.set(callbackID, callback.get());
-    process()->send(WebPageMessage::GetRenderTreeExternalRepresentation, m_pageID, callbackID);
+    process()->send(Messages::WebPage::GetRenderTreeExternalRepresentation(callbackID), m_pageID);
 }
 
 void WebPageProxy::getSourceForFrame(WebFrameProxy* frame, PassRefPtr<FrameSourceCallback> prpCallback)
@@ -505,7 +517,7 @@ void WebPageProxy::getSourceForFrame(WebFrameProxy* frame, PassRefPtr<FrameSourc
     RefPtr<FrameSourceCallback> callback = prpCallback;
     uint64_t callbackID = callback->callbackID();
     m_frameSourceCallbacks.set(callbackID, callback.get());
-    process()->send(WebPageMessage::GetSourceForFrame, m_pageID, CoreIPC::In(frame->frameID(), callbackID));
+    process()->send(Messages::WebPage::GetSourceForFrame(frame->frameID(), callbackID), m_pageID);
 }
 
 void WebPageProxy::preferencesDidChange()
@@ -515,7 +527,7 @@ void WebPageProxy::preferencesDidChange()
 
     // FIXME: It probably makes more sense to send individual preference changes.
     // However, WebKitTestRunner depends on getting a preference change notification even if nothing changed in UI process, so that overrides get removed.
-    process()->send(WebPageMessage::PreferencesDidChange, m_pageID, CoreIPC::In(pageNamespace()->context()->preferences()->store()));
+    process()->send(Messages::WebPage::PreferencesDidChange(pageNamespace()->context()->preferences()->store()), m_pageID);
 }
 
 void WebPageProxy::getStatistics(WKContextStatistics* statistics)
@@ -669,6 +681,18 @@ void WebPageProxy::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::M
             didFirstVisuallyNonEmptyLayoutForFrame(process()->webFrame(frameID), userData.get());
             break;
         }
+        case WebPageProxyMessage::DidRemoveFrameFromHierarchy: {
+            uint64_t frameID;
+
+            RefPtr<APIObject> userData;
+            WebContextUserMessageDecoder messageDecoder(userData, pageNamespace()->context());
+
+            if (!arguments->decode(CoreIPC::Out(frameID, messageDecoder)))
+                return;
+
+            didRemoveFrameFromHierarchy(process()->webFrame(frameID), userData.get());
+            break;
+        }
         case WebPageProxyMessage::DidStartProgress:
             didStartProgress();
             break;
@@ -684,9 +708,10 @@ void WebPageProxy::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::M
             break;
         case WebPageProxyMessage::DidReceiveEvent: {
             uint32_t type;
-            if (!arguments->decode(type))
+            bool handled;
+            if (!arguments->decode(CoreIPC::Out(type, handled)))
                 return;
-            didReceiveEvent((WebEvent::Type)type);
+            didReceiveEvent((WebEvent::Type)type, handled);
             break;
         }
         case WebPageProxyMessage::TakeFocus: {
@@ -716,7 +741,7 @@ void WebPageProxy::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::M
             int32_t mouseButton;
             String url;
             uint64_t listenerID;
-            if (!arguments->decode(CoreIPC::Out(frameID, navigationType, modifiers, url, mouseButton, listenerID)))
+            if (!arguments->decode(CoreIPC::Out(frameID, navigationType, modifiers, mouseButton, url, listenerID)))
                 return;
             decidePolicyForNewWindowAction(process()->webFrame(frameID), static_cast<NavigationType>(navigationType), static_cast<WebEvent::Modifiers>(modifiers), static_cast<WebMouseEvent::Button>(mouseButton), url, listenerID);
             break;
@@ -835,6 +860,26 @@ void WebPageProxy::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::M
         case WebPageProxyMessage::ClearAllEditCommands:
             clearAllEditCommands();
             break;
+        case WebPageProxyMessage::DidValidateMenuItem: {
+            int state;
+            bool isEnabled;
+            String commandName;
+            if (!arguments->decode(CoreIPC::Out(commandName, isEnabled, state)))
+                return;
+            m_pageClient->setEditCommandState(commandName, isEnabled, state);
+            break;
+        }
+        case WebPageProxyMessage::MouseDidMoveOverElement: {
+            uint32_t modifiers;
+            RefPtr<APIObject> userData;
+            WebContextUserMessageDecoder messageDecoder(userData, pageNamespace()->context());
+
+            if (!arguments->decode(CoreIPC::Out(modifiers, messageDecoder)))
+                return;
+
+            mouseDidMoveOverElement(static_cast<WebEvent::Modifiers>(modifiers), userData.get());
+            break;
+        }
         default:
             ASSERT_NOT_REACHED();
             break;
@@ -851,13 +896,13 @@ void WebPageProxy::didReceiveSyncMessage(CoreIPC::Connection* connection, CoreIP
     switch (messageID.get<WebPageProxyMessage::Kind>()) {
         case WebPageProxyMessage::CreateNewPage: {
             RefPtr<WebPageProxy> newPage = createNewPage();
+            WebPageCreationParameters parameters;
             if (newPage) {
                 // FIXME: Pass the real size.
-                reply->encode(CoreIPC::In(newPage->pageID(), IntSize(100, 100), 
-                                          newPage->pageNamespace()->context()->preferences()->store(),
-                                          *(newPage->drawingArea())));
+                parameters = newPage->creationParameters(IntSize(100, 100));
+                reply->encode(CoreIPC::In(newPage->pageID(), parameters));
             } else {
-                reply->encode(CoreIPC::In(static_cast<uint64_t>(0), IntSize(), WebPreferencesStore(), DrawingAreaBase::DrawingAreaInfo()));
+                reply->encode(CoreIPC::In(static_cast<uint64_t>(0), parameters));
             }
             break;
         }
@@ -938,7 +983,7 @@ void WebPageProxy::didReceiveSyncMessage(CoreIPC::Connection* connection, CoreIP
                 return;
 
             didChangeAcceleratedCompositing(compositing);
-            reply->encode(*(drawingArea()));
+            reply->encode(drawingArea()->info());
             break;
         }
 #endif // USE(ACCELERATED_COMPOSITING)
@@ -1045,6 +1090,11 @@ void WebPageProxy::didFirstVisuallyNonEmptyLayoutForFrame(WebFrameProxy* frame, 
     m_loaderClient.didFirstVisuallyNonEmptyLayoutForFrame(this, frame, userData);
 }
 
+void WebPageProxy::didRemoveFrameFromHierarchy(WebFrameProxy* frame, APIObject* userData)
+{
+    m_loaderClient.didRemoveFrameFromHierarchy(this, frame, userData);
+}
+
 // PolicyClient
 
 void WebPageProxy::decidePolicyForNavigationAction(WebFrameProxy* frame, NavigationType navigationType, WebEvent::Modifiers modifiers, WebMouseEvent::Button mouseButton, const String& url, uint64_t listenerID)
@@ -1114,6 +1164,11 @@ void WebPageProxy::setStatusText(const String& text)
     m_uiClient.setStatusText(this, text);
 }
 
+void WebPageProxy::mouseDidMoveOverElement(WebEvent::Modifiers modifiers, APIObject* userData)
+{
+    m_uiClient.mouseDidMoveOverElement(this, modifiers, userData);
+}
+
 void WebPageProxy::contentsSizeChanged(WebFrameProxy* frame, const WebCore::IntSize& size)
 {
     m_uiClient.contentsSizeChanged(this, size, frame);
@@ -1164,7 +1219,7 @@ void WebPageProxy::removeEditCommand(WebEditCommandProxy* command)
 
     if (!isValid())
         return;
-    process()->send(WebPageMessage::DidRemoveEditCommand, m_pageID, command->commandID());
+    process()->send(Messages::WebPage::DidRemoveEditCommand(command->commandID()), m_pageID);
 }
 
 // Other
@@ -1186,7 +1241,7 @@ void WebPageProxy::setCursor(const WebCore::Cursor& cursor)
     m_pageClient->setCursor(cursor);
 }
 
-void WebPageProxy::didReceiveEvent(WebEvent::Type type)
+void WebPageProxy::didReceiveEvent(WebEvent::Type type, bool handled)
 {
     switch (type) {
         case WebEvent::MouseMove:
@@ -1202,6 +1257,18 @@ void WebPageProxy::didReceiveEvent(WebEvent::Type type)
             process()->responsivenessTimer()->stop();
             break;
     }
+
+    if (!WebKeyboardEvent::isKeyboardEventType(type))
+        return;
+
+    NativeWebKeyboardEvent event = m_keyEventQueue.first();
+    ASSERT(type == event.type());
+    m_keyEventQueue.removeFirst();
+
+    if (handled)
+        return;
+
+    m_uiClient.didNotHandleKeyEvent(this, event);
 }
 
 void WebPageProxy::didRunJavaScriptInMainFrame(const String& resultString, uint64_t callbackID)
@@ -1306,6 +1373,20 @@ void WebPageProxy::processDidRevive()
 {
     ASSERT(m_pageClient);
     m_pageClient->processDidRevive();
+}
+
+WebPageCreationParameters WebPageProxy::creationParameters(const IntSize& size) const
+{
+    WebPageCreationParameters parameters;
+    parameters.viewSize = size;
+    parameters.store = pageNamespace()->context()->preferences()->store();
+    parameters.drawingAreaInfo = m_drawingArea->info();
+
+#if PLATFORM(WIN)
+    parameters.nativeWindow = m_pageClient->nativeWindow();
+#endif
+
+    return parameters;
 }
 
 #if USE(ACCELERATED_COMPOSITING)

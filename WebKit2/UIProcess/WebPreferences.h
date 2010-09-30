@@ -73,8 +73,32 @@ public:
     void setXSSAuditorEnabled(bool);
     bool xssAuditorEnabled() const;
 
+    void setFrameFlatteningEnabled(bool);
+    bool frameFlatteningEnabled() const;
+
+    void setPluginsEnabled(bool);
+    bool pluginsEnabled() const;
+
     void setFontSmoothingLevel(FontSmoothingLevel);
     FontSmoothingLevel fontSmoothingLevel() const;
+
+    void setStandardFontFamily(const String&);
+    const String& standardFontFamily() const;
+
+    void setFixedFontFamily(const String&);
+    const String& fixedFontFamily() const;
+
+    void setSerifFontFamily(const String&);
+    const String& serifFontFamily() const;
+
+    void setSansSerifFontFamily(const String&);
+    const String& sansSerifFontFamily() const;
+
+    void setCursiveFontFamily(const String&);
+    const String& cursiveFontFamily() const;
+
+    void setFantasyFontFamily(const String&);
+    const String& fantasyFontFamily() const;
 
 private:
     WebPreferences();

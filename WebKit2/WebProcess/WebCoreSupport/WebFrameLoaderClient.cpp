@@ -29,7 +29,6 @@
 #include "NotImplemented.h"
 
 #include "InjectedBundleUserMessageCoders.h"
-#include "NetscapePlugin.h"
 #include "PlatformCertificateInfo.h"
 #include "PluginView.h"
 #include "WebCoreArgumentCoders.h"
@@ -116,7 +115,17 @@ void WebFrameLoaderClient::setCopiesOnScroll()
 
 void WebFrameLoaderClient::detachedFromParent2()
 {
-    notImplemented();
+    WebPage* webPage = m_frame->page();
+    if (!webPage)
+        return;
+
+    RefPtr<APIObject> userData;
+
+    // Notify the bundle client.
+    webPage->injectedBundleLoaderClient().didRemoveFrameFromHierarchy(webPage, m_frame, userData);
+
+    // Notify the UIProcess.
+    WebProcess::shared().connection()->send(WebPageProxyMessage::DidRemoveFrameFromHierarchy, webPage->pageID(), CoreIPC::In(m_frame->frameID(), InjectedBundleUserMessageEncoder(userData.get())));
 }
 
 void WebFrameLoaderClient::detachedFromParent3()
@@ -953,39 +962,25 @@ PassRefPtr<Frame> WebFrameLoaderClient::createFrame(const KURL& url, const Strin
     return coreSubframe;
 }
 
-void WebFrameLoaderClient::didTransferChildFrameToNewDocument()
+void WebFrameLoaderClient::didTransferChildFrameToNewDocument(Page*)
 {
     notImplemented();
-}    
+}
 
 PassRefPtr<Widget> WebFrameLoaderClient::createPlugin(const IntSize&, HTMLPlugInElement* pluginElement, const KURL& url, const Vector<String>& paramNames, const Vector<String>& paramValues, const String& mimeType, bool loadManually)
 {
     ASSERT(paramNames.size() == paramValues.size());
     
-    String pluginPath;
-
-    // FIXME: In the future, this should return a real CoreIPC connection to the plug-in host, but for now we just
-    // return the path and load the plug-in in the web process.
-    if (!WebProcess::shared().connection()->sendSync(WebProcessProxyMessage::GetPluginHostConnection, 0, 
-                                                     CoreIPC::In(mimeType, url.string()), 
-                                                     CoreIPC::Out(pluginPath), 
-                                                     CoreIPC::Connection::NoTimeout))
-        return 0;
-
-    if (pluginPath.isNull())
-        return 0;
-
-    RefPtr<NetscapePluginModule> pluginModule = NetscapePluginModule::getOrCreate(pluginPath);
-    if (!pluginModule)
-        return 0;
-
+    WebPage* webPage = m_frame->page();
+    ASSERT(webPage);
+    
     Plugin::Parameters parameters;
     parameters.url = url;
     parameters.names = paramNames;
     parameters.values = paramValues;
     parameters.mimeType = mimeType;
     parameters.loadManually = loadManually;
-    
+
     // <rdar://problem/8440903>: AppleConnect has a bug where it does not
     // understand the parameter names specified in the <object> element that
     // embeds its plug-in. This hack works around the issue by converting the
@@ -998,7 +993,10 @@ PassRefPtr<Widget> WebFrameLoaderClient::createPlugin(const IntSize&, HTMLPlugIn
             parameters.names[i] = paramNames[i].lower();
     }
 
-    RefPtr<Plugin> plugin = NetscapePlugin::create(pluginModule.release());
+    RefPtr<Plugin> plugin = webPage->createPlugin(parameters);
+    if (!plugin)
+        return 0;
+    
     return PluginView::create(pluginElement, plugin.release(), parameters);
 }
 

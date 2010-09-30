@@ -1,3 +1,2719 @@
+2010-09-30  Brady Eidson  <beidson@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        https://bugs.webkit.org/show_bug.cgi?id=46774 - Add WKStringIsEqual API
+
+        * Shared/API/c/WKString.cpp:
+        (WKStringIsEqual):
+        * Shared/API/c/WKString.h:
+
+2010-09-30  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Forward declare structs with 'struct' in the message headers
+        https://bugs.webkit.org/show_bug.cgi?id=46925
+        <rdar://problem/8497940>
+
+        * Scripts/webkit2/messages.py:
+        (struct_or_class): New function which given a type and a namespace returns the correct
+        forward declaration syntax (struct or class).
+
+        * Scripts/webkit2/messages_unittest.py:
+        Update expected results.
+
+2010-09-30  Kenneth Rohde Christiansen  <kenneth@webkit.org>
+
+        Reviewed by Antti Koivisto.
+
+        Original patch by Zalan Bujtas.
+
+        The m_readBuffer might be smaller than the incoming message size and
+        thus result in memory corruption. Do a similar fix as the win port,
+        resizing the m_readBuffer to have room for the message.
+
+        * Platform/CoreIPC/qt/ConnectionQt.cpp:
+        (CoreIPC::Connection::readyReadHandler):
+
+2010-09-29  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Simon Fraser.
+
+        Calling Connection::send/sendSync from Connection::Client::didClose should always fail
+        https://bugs.webkit.org/show_bug.cgi?id=46859
+        <rdar://problem/8212583>
+
+        * Platform/CoreIPC/Connection.cpp:
+        (CoreIPC::Connection::dispatchConnectionDidClose):
+
+2010-09-29  Simon Fraser  <simon.fraser@apple.com>
+
+        Reviewed by Anders Carlsson.
+
+        Assertion then crash closing WebKit2 window with accelerated compositing in
+        https://bugs.webkit.org/show_bug.cgi?id=46857
+        
+        Fix two issues when closing a WebKit2 window using accelerated
+        compositing.
+        
+        The first is that the response to the sync DidChangeAcceleratedCompositing message
+        sent by changeAcceleratedCompositingMode() may be empty, because the corresponding
+        page may have been destroyed already in the UI process. In that case newDrawingAreaInfo
+        is not filled in, so we get a DrawingArea::Type of None. Don't attempt to make a new
+        drawing area in that case.
+        
+        We then have to null-check the drawing area in WebPage::didReceiveMessage(),
+        in the case where the UI process is calling back with a SuspendPainting message,
+        before our page has gone away.
+        
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::changeAcceleratedCompositingMode):
+        (WebKit::WebPage::didReceiveMessage):
+
+2010-09-29  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Implement more of PluginProxy and PLuginControllerProxy.
+
+        * Platform/CoreIPC/ArgumentDecoder.cpp:
+        (CoreIPC::ArgumentDecoder::decodeBytes):
+        * Platform/CoreIPC/ArgumentDecoder.h:
+        Add new overload that takes a DataReference. Wrap the debug function in #ifndef NDEBUG.
+
+        * Platform/CoreIPC/ArgumentEncoder.cpp:
+        * Platform/CoreIPC/ArgumentEncoder.h:
+        Wrap the debug function in #ifndef NDEBUG.
+
+        * Platform/CoreIPC/Arguments.h:
+        Add new typedefs.
+        
+        * Platform/CoreIPC/DataReference.cpp:
+        * Platform/CoreIPC/DataReference.h:
+        Add a DataReference class.
+    
+        * Platform/CoreIPC/HandleMessage.h:
+        (CoreIPC::handleMessage):
+        Add new overload.
+
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::didEvaluateJavaScript):
+        (WebKit::PluginControllerProxy::streamDidReceiveResponse):
+        (WebKit::PluginControllerProxy::streamDidReceiveData):
+        (WebKit::PluginControllerProxy::streamDidFinishLoading):
+        (WebKit::PluginControllerProxy::streamDidFail):
+        call Plugin member functions.
+
+        * PluginProcess/PluginControllerProxy.messages.in:
+        Add new messages.
+        
+        * WebKit2.pro:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * win/WebKit2.vcproj:
+        Add DataReference.cpp and DataReference.h
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::didEvaluateJavaScript):
+        (WebKit::PluginProxy::streamDidReceiveResponse):
+        (WebKit::PluginProxy::streamDidReceiveData):
+        (WebKit::PluginProxy::streamDidFinishLoading):
+        (WebKit::PluginProxy::streamDidFail):
+        Send messages.
+
+2010-09-29  Anders Carlsson  <andersca@apple.com>
+
+        Update expected results.
+
+        * Scripts/webkit2/messages_unittest.py:
+
+2010-09-29  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Implement LoadURL
+        https://bugs.webkit.org/show_bug.cgi?id=46826
+
+        * Platform/CoreIPC/ArgumentCoders.h:
+        Move String argument coder here from WebCoreArgumentCoders.h. Add
+        argument coder for AtomicString.
+
+        * Platform/CoreIPC/Arguments.h:
+        Add typedefs for Arguments7.
+
+        * Platform/CoreIPC/HandleMessage.h:
+        (CoreIPC::handleMessage):
+        Add handleMessage overload that takes 7 parameters.
+
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::loadURL):
+        Send the LoadURL message.
+
+        * Scripts/webkit2/messages.py:
+        (parse_parameter_string): Use rsplit in case the type name contains spaces.
+        (argument_coder_headers_for_type): Special case Vector.
+        
+        * Scripts/webkit2/messages_unittest.py:
+        Update results.
+
+        * Shared/WebCoreArgumentCoders.h:
+        Add argument coder for HTTPHeaderMap.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::loadURL):
+        Ask the plug-in controller to load the URL.
+
+        * WebProcess/Plugins/PluginProxy.messages.in:
+        Add LoadURL message.
+
+2010-09-29  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Handle getting the user agent in the plug-in process
+        https://bugs.webkit.org/show_bug.cgi?id=46819
+
+        * Platform/CoreIPC/HandleMessage.h:
+        (CoreIPC::handleMessage):
+        Add new handleMessage overload.
+
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::create):
+        (WebKit::PluginControllerProxy::PluginControllerProxy):
+        Pass the user agent to the plug-in controller proxy.
+
+        (WebKit::PluginControllerProxy::userAgent):
+        Return the user agent.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::createPlugin):
+        Pass the user agent when creating the plug-in controller proxy.
+
+        * PluginProcess/WebProcessConnection.messages.in:
+        Add userAgent.
+
+        * WebProcess/Plugins/Netscape/NetscapePlugin.cpp:
+        (WebKit::NetscapePlugin::userAgent):
+        * WebProcess/Plugins/PluginController.h:
+        Remove the URL parameter to userAgent.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::initialize):
+        Pass the user agent to WebProcessConnection::CreatePlugin.
+
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::PluginView::userAgent):
+        Remove url parameter.
+
+2010-09-29  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Implement more PluginProxy member functions
+        https://bugs.webkit.org/show_bug.cgi?id=46815
+
+        * Platform/CoreIPC/HandleMessage.h:
+        (CoreIPC::handleMessage):
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::handleMouseEvent):
+        (WebKit::PluginControllerProxy::handleWheelEvent):
+        (WebKit::PluginControllerProxy::handleMouseEnterEvent):
+        (WebKit::PluginControllerProxy::handleMouseLeaveEvent):
+        (WebKit::PluginControllerProxy::setFocus):
+        (WebKit::PluginControllerProxy::windowFocusChanged):
+        (WebKit::PluginControllerProxy::windowFrameChanged):
+        (WebKit::PluginControllerProxy::windowVisibilityChanged):
+        Call the appropriate Plugin member functions.
+
+        * PluginProcess/PluginControllerProxy.messages.in:
+        Add new messages.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::didReceiveMessage):
+        It's OK to get a message for a plug-in controller proxy that has gone away.
+
+        (WebKit::WebProcessConnection::didReceiveSyncMessage):
+        Forward the message to the PluginControllerProxy handler.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::handleMouseEvent):
+        (WebKit::PluginProxy::handleWheelEvent):
+        (WebKit::PluginProxy::handleMouseEnterEvent):
+        (WebKit::PluginProxy::handleMouseLeaveEvent):
+        (WebKit::PluginProxy::setFocus):
+        (WebKit::PluginProxy::windowFocusChanged):
+        (WebKit::PluginProxy::windowFrameChanged):
+        (WebKit::PluginProxy::windowVisibilityChanged):
+        Send messages to the plug-in process.
+        
+        (WebKit::PluginProxy::controller):
+        Return the plug-in controller.
+
+2010-09-29  Adam Roben  <aroben@apple.com>
+
+        Look for WebKit.dll (not WebKit_debug.dll) when launching the web
+        process in Debug builds
+
+        Fixes <http://webkit.org/b/46809> <rdar://problem/8491809> REGRESSION
+        (r67979): All tests crashing on Windows WebKit2 test bot
+
+        Reviewed by Sam Weinig.
+
+        * UIProcess/Launcher/win/ProcessLauncherWin.cpp: WebKit_debug.dll is
+        only used in Debug_All builds (but WebKit2WebProcess_debug.exe is used
+        in all non-Debug_Internal debug-style builds).
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Paint the plug-in backing store into the WebProcess backing store
+        https://bugs.webkit.org/show_bug.cgi?id=46768
+
+        * DerivedSources.make:
+        Add PluginProxy.
+        
+        * Platform/CoreIPC/MessageID.h:
+        Add PluginProxy message class.
+
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::paint):
+        Let the web process know that we've painted.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add new files.
+
+        * WebProcess/Plugins/PluginProcessConnection.cpp:
+        (WebKit::PluginProcessConnection::didReceiveMessage):
+        Pass the message on to a plug-in proxy.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::paint):
+        Paint our backing store into the graphics context.
+
+        (WebKit::PluginProxy::controller):
+        Add notImplemented().
+
+        (WebKit::PluginProxy::update):
+        Blit the plug-in backing store into the local backing store and tell the plug-in
+        controller that we want to repaint.
+
+        * WebProcess/Plugins/PluginProxy.messages.in: Added.
+
+2010-09-28  Jenn Braithwaite  <jennb@chromium.org>
+
+        Reviewed by Dmitry Titov.
+
+        Added oldPage param to FrameLoaderClient::didTransferChildFrameToNewDocument.
+        https://bugs.webkit.org/show_bug.cgi?id=46663
+
+        * WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp:
+        (WebKit::WebFrameLoaderClient::didTransferChildFrameToNewDocument):
+        * WebProcess/WebCoreSupport/WebFrameLoaderClient.h:
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Begin hooking up painting in the plug-in process
+        https://bugs.webkit.org/show_bug.cgi?id=46766
+
+        * DerivedSources.make:
+        Add PluginControllerProxy.
+    
+        * Platform/CoreIPC/MessageID.h:
+        Add a MessageClassPluginControllerProxy message class.
+
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::PluginControllerProxy):
+        Initialize the paint timer.
+
+        (WebKit::PluginControllerProxy::paint):
+        Create a graphics context referencing our backing store and paint into it.
+
+        (WebKit::PluginControllerProxy::invalidate):
+        Update the dirty rect and start the paint timer if necessary.
+
+        (WebKit::PluginControllerProxy::geometryDidChange):
+        If we're passed a new backing store handle, reinitialize the backing store.
+
+        * PluginProcess/PluginControllerProxy.messages.in: Added.
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::didReceiveMessage):
+        If the message has a destination ID, forward it to the plug-in controller proxy.
+
+        * Scripts/webkit2/messages.py:
+        Always include WebCoreArgumentCoders.h if the type is in the WebCore namespace.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add new files.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::geometryDidChange):
+        Update the size of the backing store. Create a new plug-in backing store if needed and send
+        it over to the plug-in process.
+        
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        ASSERT when launching the plugin process
+        https://bugs.webkit.org/show_bug.cgi?id=46754
+        <rdar://problem/8484570>
+
+        * UIProcess/Launcher/mac/ProcessLauncherMac.mm:
+        (WebKit::ProcessLauncher::launchProcess):
+        Don't assert if we fail to launch the process. Instead, set the connection identifier
+        and process ID to null and deallocate the port we created.
+
+        * UIProcess/Plugins/PluginProcessProxy.cpp:
+        (WebKit::PluginProcessProxy::pluginProcessCrashedOrFailedToLaunch):
+        Move all code from didClose here.
+
+        (WebKit::PluginProcessProxy::didClose):
+        Call pluginProcessCrashedOrFailedToLaunch.
+
+        (WebKit::PluginProcessProxy::didFinishLaunching):
+        If we failed to launch, call pluginProcessCrashedOrFailedToLaunch.
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Differentiate waitForSyncReply from waitForReply
+        https://bugs.webkit.org/show_bug.cgi?id=46752
+
+        Since waitForSyncReply is going to need to dispatch incoming sync messages while
+        waiting for the correct reply, we need to add a new waitForSyncReply function that
+        can do this.
+
+        * Platform/CoreIPC/Connection.cpp:
+        (CoreIPC::Connection::sendSyncMessage):
+        Push the pending sync reply information on the m_pendingSyncReplies stack,
+        send the message, wait for a reply and pop the information off the stack.
+
+        (CoreIPC::Connection::waitForSyncReply):
+        Block while waiting for a reply to the sync message with the given ID.
+        
+        (CoreIPC::Connection::processIncomingMessage):
+        If the incoming message is a sync reply, set the didReceiveReply flag and the replyDecoder
+        members in the pending sync reply and signal the client thread to wakeup.
+
+        * Platform/CoreIPC/Connection.h:
+        Add a stack of PendingSyncReply structs.
+
+2010-09-28  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Darin Adler and Dave Hyatt.
+
+        Vertical scroll bar on apple.com is too short with WebKit2
+        <rdar://problem/8379230>
+        https://bugs.webkit.org/show_bug.cgi?id=46739
+
+        This gets us most of the way to having correct scroll corner behavior. We should
+        follow this up by moving to painting the window re-sizer in WebCore.
+
+        * UIProcess/API/mac/WKView.mm:
+        (-[WKView _ownsWindowGrowBox]):
+        (-[WKView _updateGrowBoxForWindowFrameChange]): Calculate whether we should
+        be taking the scroll corner into account when laying out scrollbars.
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::setWindowResizerSize):
+        * UIProcess/WebPageProxy.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::setWindowResizerSize):
+        (WebKit::WebPage::windowResizerRect): This now returns IntRect() for
+        non-mac platforms (or any platform that never sends a setWindowResizerSize
+        message).
+        * WebProcess/WebPage/WebPage.h:
+        * WebProcess/WebPage/WebPage.messages.in:
+
+2010-09-28  Adam Roben  <aroben@apple.com>
+
+        Tell the UI client when a key event is not handled
+
+        When the web process receives an event, it sends a
+        WebPageProxyMessage::DidReceiveEvent message back to the UI process.
+        That message is now sent after handling the event, and includes a
+        boolean signifying whether or not the event was actually handled.
+
+        Every time WebPageProxy receives a key event, it adds it to a queue.
+        When it receives a WebPageProxyMessage::DidReceiveEvent for a key
+        event, the event is removed from the queue. If the event was not
+        handled, we tell the UI client.
+
+        Fixes <http://webkit.org/b/46660> <rdar://problem/8483465> Need API to
+        tell a WebKit2 client application that a key event was not handled
+
+        Reviewed by Kenneth Rohde Christiansen and Sam Weinig.
+
+        * Shared/NativeWebKeyboardEvent.h: Added. This class wraps a
+        WebKeyboardEvent and the native event that was used to construct it.
+        (WebKit::NativeWebKeyboardEvent::nativeEvent): Simple getter.
+
+        * Shared/WebEvent.h: Made isKeyboardEventType public for
+        WebPageProxy's benefit.
+
+        * Shared/mac/NativeWebKeyboardEventMac.mm: Added.
+        (WebKit::NativeWebKeyboardEvent::NativeWebKeyboardEvent):
+        * Shared/qt/NativeWebKeyboardEventQt.cpp: Added.
+        (WebKit::NativeWebKeyboardEvent::NativeWebKeyboardEvent):
+        * Shared/win/NativeWebKeyboardEventWin.cpp: Added.
+        (WebKit::NativeWebKeyboardEvent::NativeWebKeyboardEvent):
+        The constructor creates a WebKeyboardEvent and stores the native
+        event.
+
+        * UIProcess/API/C/WKNativeEvent.h: Added.
+
+        * UIProcess/API/C/WKPage.h: Added WKPageDidNotHandleKeyEventCallback
+        and WKPageUIClient::didNotHandleKeyEvent.
+
+        * UIProcess/API/mac/WKView.mm:
+        (-[WKView keyUp:]):
+        (-[WKView keyDown:]):
+        * UIProcess/win/WebView.cpp:
+        (WebKit::WebView::onKeyEvent):
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPagePrivate::keyPressEvent):
+        (QWKPagePrivate::keyReleaseEvent):
+        Changed to use NativeWebKeyboardEvent.
+
+        (QWKPage::QWKPage): Updated for addition of didNotHandleKeyEvent.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::handleKeyboardEvent): Changed to take a
+        NativeWebKeyboardEvent and to add it to m_keyEventQueue.
+        (WebKit::WebPageProxy::didReceiveMessage): Changed to expect a boolean
+        parameter in WebPageProxyMessage::DidReceiveEvent.
+        (WebKit::WebPageProxy::didReceiveEvent): Added a boolean "handled"
+        parameter. If the event was a keyboard event, we remove it from
+        m_keyEventQueue, and if it wasn't handled by WebCore, we tell the UI
+        client.
+
+        * UIProcess/WebPageProxy.h: Added m_keyEventQueue.
+
+        * UIProcess/WebUIClient.cpp:
+        (WebKit::WebUIClient::didNotHandleKeyEvent):
+        * UIProcess/WebUIClient.h:
+        Added. Just calls through to the WKPageUIClient.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::handleMouseEvent):
+        (WebKit::WebPage::mouseEvent):
+        (WebKit::handleWheelEvent):
+        (WebKit::WebPage::wheelEvent):
+        (WebKit::handleKeyEvent):
+        (WebKit::WebPage::keyEvent):
+        (WebKit::handleTouchEvent):
+        (WebKit::WebPage::touchEvent):
+        Moved code from the *Event functions into new helper handle*Event
+        functions, and changed to pass a boolean to
+        WebPageProxyMessage::DidReceiveEvent signaling whether the event was
+        handled or not.
+
+        * WebKit2.pro:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * win/WebKit2.vcproj:
+        * win/WebKit2Generated.make:
+        Added WKNativeEvent.h and NativeWebKeyboardEvent.
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Implement PluginProxy::destroy
+        https://bugs.webkit.org/show_bug.cgi?id=46737
+
+        * Platform/CoreIPC/HandleMessage.h:
+        (CoreIPC::handleMessage):
+        Add overload for a sync message with one in parameter and no out parameters.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::destroyPluginControllerProxy):
+        Rename this to avoid conflicts with the destroyPlugin message handler.
+
+        (WebKit::WebProcessConnection::destroyPlugin):
+        Call destroyPluginControllerProxy.
+
+        * PluginProcess/WebProcessConnection.messages.in:
+        Add DestroyPlugin message.
+
+        * WebProcess/Plugins/PluginProcessConnection.cpp:
+        (WebKit::PluginProcessConnection::didClose):
+        
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::PluginProxy):
+        (WebKit::PluginProxy::~PluginProxy):
+        Don't add and/the plug-in proxy from the map in the constructor/destructor. Instead,
+        do it in initialize/destroy, since otherwise we could be calling pluginProcessCrashed on a
+        PluginController that had already been freed.
+
+        (WebKit::PluginProxy::initialize):
+        (WebKit::PluginProxy::destroy):
+        send the DestroyPlugin message.
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Improve plug-in process lifecycle handling
+        https://bugs.webkit.org/show_bug.cgi?id=46734
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::destroyPlugin):
+        Destroy and delete the plug-in.
+
+        (WebKit::WebProcessConnection::didClose):
+        Our web process crashed, go through and delete all plug-in instances.
+
+        * UIProcess/Plugins/PluginProcessProxy.cpp:
+        (WebKit::PluginProcessProxy::didClose):
+        The plug-in process crashed. Go through all pending replies and send them so the
+        web processes won't be blocked waiting for a reply.
+
+        (WebKit::PluginProcessProxy::didCreateWebProcessConnection):
+        We need to remove the pending reply connection once we've sent the reply.
+
+        * WebProcess/Plugins/PluginProcessConnection.cpp:
+        (WebKit::PluginProcessConnection::didClose):
+        The plug-in process crashed. Iterate over all proxies and let them know that the plug-in
+        process has crashed.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::PluginProxy::pluginProcessCrashed):
+        Tell our controller that the plug-in process crashed.
+
+        (WebKit::PluginProxy::destroy):
+        Null out the controller.
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Implement PluginControllerProxy::initialize and have it create a plug-in
+        https://bugs.webkit.org/show_bug.cgi?id=46731
+
+        * PluginProcess/PluginControllerProxy.cpp:
+        (WebKit::PluginControllerProxy::initialize):
+        Create the plug-in and try to initialize it.
+
+        (WebKit::PluginControllerProxy::destroy):
+        Destroy the plug-in.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::addPluginControllerProxy):
+        Add the given plug-in controller proxy to the map and assume ownership of it.
+
+        (WebKit::WebProcessConnection::removePluginControllerProxy):
+        Remove the given plug-in controller proxy from the map and delete it.
+
+        (WebKit::WebProcessConnection::createPlugin):
+        Create a plug-in controller proxy and try to initialize it.
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Add PluginControllerProxy class
+        https://bugs.webkit.org/show_bug.cgi?id=46728
+
+        * PluginProcess/PluginControllerProxy.cpp: Added.
+        * PluginProcess/PluginControllerProxy.h: Added.
+        Add stubbed out PluginControllerProxy class.
+        
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::~WebProcessConnection):
+        Assert that we don't have any live plug-in controller proxies.
+
+        (WebKit::WebProcessConnection::addPluginControllerProxy):
+        Add the plug-in controller proxy to the map.
+                
+        (WebKit::WebProcessConnection::removePluginControllerProxy):
+        Remove the plug-in controller proxy from the map. If the last plug-in controller
+        proxy went away, invalidate the connection.
+        
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add files.
+
+2010-09-28  Adam Roben  <aroben@apple.com>
+
+        Don't call NPP_SetWindow until the plugin's HWND has been
+        sized/positioned
+
+        Test: platform/win/plugins/window-geometry-initialized-before-set-window.html
+
+        Reviewed by Anders Carlsson.
+
+        Fixes <http://webkit.org/b/46716> <rdar://problem/8482014> Full-page
+        Adobe Reader does not paint until window is resized
+
+        * WebProcess/Plugins/Netscape/NetscapePlugin.cpp:
+        (WebKit::NetscapePlugin::geometryDidChange): Call NPP_SetWindow after
+        updating the platform (HWND) geometry.
+
+2010-09-28  Anders Carlsson  <andersca@apple.com>
+
+        Out of process plug-ins shouldn't be turned on just yet...
+
+        * WebKit2Prefix.h:
+
+2010-09-28  Andras Becsi  <abecsi@webkit.org>
+
+        Reviewed by Kenneth Rohde Christiansen.
+
+        [Qt] ProcessLauncherHelper should not leave stray socket files in /tmp.
+        https://bugs.webkit.org/show_bug.cgi?id=46722
+
+        * UIProcess/Launcher/qt/ProcessLauncherQt.cpp:
+        (WebKit::ProcessLauncherHelper::~ProcessLauncherHelper): close the socket.
+        (WebKit::ProcessLauncherHelper::ProcessLauncherHelper): delete the helper on exit.
+
+2010-09-28  Benjamin Poulain  <benjamin.poulain@nokia.com>
+
+        Reviewed by Andreas Kling.
+
+        [Qt] Remove support for Qt 4.5
+        https://bugs.webkit.org/show_bug.cgi?id=46718
+
+        Remove the code for versions of Qt prior to 4.6.
+
+        * UIProcess/API/qt/qgraphicswkview.cpp:
+        (QGraphicsWKView::event):
+        * UIProcess/API/qt/qwkpage.cpp:
+        * UIProcess/API/qt/qwkpage_p.h:
+
+2010-09-28  Andras Becsi  <abecsi@webkit.org>
+
+        Reviewed by Csaba Osztrogonác.
+
+        [Qt] Fix generation of WebPageMessages.h and WebPageMessageReceiver.cpp
+        to avoid rebuilding them every time.
+
+        * DerivedSources.pro: add target to extra compilers.
+
+2010-09-27  Brady Eidson  <beidson@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        https://bugs.webkit.org/show_bug.cgi?id=46688 - Add an API to get the WKBackForwardItem at an arbitrary index.
+
+        * UIProcess/API/C/WKBackForwardList.cpp:
+        (WKBackForwardListGetItemAtIndex):
+        * UIProcess/API/C/WKBackForwardList.h:
+
+2010-09-27  Anders Carlsson  <andersca@apple.com>
+
+        Turns out people other than me might want to build this thing.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+
+2010-09-27  Darin Adler  <darin@apple.com>
+
+        * Scripts/webkit2: Added property svn:ignore.
+
+2010-09-27  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        * Platform/CoreIPC/Connection.h:
+        (CoreIPC::Connection::sendSync):
+        Add new sendSync overload that takes a message struct.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::didReceiveSyncMessage):
+        Call didReceiveSyncWebProcessConnectionMessage.
+        
+        * WebProcess/Plugins/PluginProcessConnection.cpp:
+        (WebKit::PluginProcessConnection::addPluginProxy):
+        Add the plug-in proxy to the map.
+
+        (WebKit::PluginProcessConnection::removePluginProxy):
+        Remove the plug-in proxy from the map. If the map is empty, disconnect from the
+        plug-in process.
+
+        * WebProcess/Plugins/PluginProxy.cpp:
+        (WebKit::generatePluginInstanceID):
+        Generate a unique plug-in instance ID.
+
+        (WebKit::PluginProxy::PluginProxy):
+        Add the plug-in proxy to the map.
+        
+        (WebKit::PluginProxy::~PluginProxy):
+        Remove the plug-in proxy from the map.
+
+        (WebKit::PluginProxy::initialize):
+        Ask the plug-in process to create a plug-in.
+
+2010-09-27  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Anders Carlsson.
+
+        Add remaining event handlers to WKView.
+
+        Also fixes <rdar://problem/8467058>
+        Does not get decidePolicyForNavigationAction callback when middle clicking a link
+
+        - Adds otherButton and rightButton NSResponder event handlers to WKView.
+        - Renames WebPageProxy event handlers to use the handle prefix.
+        - Uses a macro to reduce duplicate code for WKView event handlers.
+        - Add view parameter to WebEventFactory::createWebKeyboardEvent on the mac
+          for uniformity.
+
+        * Shared/mac/WebEventFactory.h:
+        * Shared/mac/WebEventFactory.mm:
+        (WebKit::WebEventFactory::createWebKeyboardEvent):
+        * UIProcess/API/mac/WKView.mm:
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPagePrivate::keyPressEvent):
+        (QWKPagePrivate::keyReleaseEvent):
+        (QWKPagePrivate::mouseMoveEvent):
+        (QWKPagePrivate::mousePressEvent):
+        (QWKPagePrivate::mouseReleaseEvent):
+        (QWKPagePrivate::mouseDoubleClickEvent):
+        (QWKPagePrivate::wheelEvent):
+        (QWKPagePrivate::touchEvent):
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::handleMouseEvent):
+        (WebKit::WebPageProxy::handleWheelEvent):
+        (WebKit::WebPageProxy::handleKeyboardEvent):
+        (WebKit::WebPageProxy::handleTouchEvent):
+        * UIProcess/WebPageProxy.h:
+        * UIProcess/win/WebView.cpp:
+        (WebKit::WebView::onMouseEvent):
+        (WebKit::WebView::onWheelEvent):
+        (WebKit::WebView::onKeyEvent):
+
+2010-09-27  Ivan Krstić  <ike@apple.com>
+
+        Reviewed by Mark Rowe.
+
+        <rdar://problem/8348990> / <http://webkit.org/b/46633> Make it possible to disable sandboxing of
+        web process via runtime flag.
+
+        Enable sandboxing of the web process only if the DisableSandbox user default is not set for the
+        web process.
+
+        * WebProcess/mac/WebProcessMainMac.mm:
+        (WebKit::WebProcessMain):
+
+2010-09-27  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Add WebProcessConnection CreatePlugin message
+        https://bugs.webkit.org/show_bug.cgi?id=46668
+
+        * DerivedSources.make:
+        Add WebProcessConnection.
+
+        * Platform/CoreIPC/HandleMessage.h:
+        Add handleMessage overload for a sync message with two input parameters
+        and one output parameter.
+
+        (CoreIPC::handleMessage):
+        * Platform/CoreIPC/MessageID.h:
+        Add MessageClassWebProcessConnection.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::createPlugin):
+        Add stub.
+
+        * PluginProcess/WebProcessConnection.messages.in: Added.
+        * Scripts/webkit2/messages.py:
+        Include headers directly for types that we believe are nested structs.
+
+        * Scripts/webkit2/messages_unittest.py:
+        Update expected results.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add new files.
+
+2010-09-27  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Add support for autogenerating synchronous message handlers
+        https://bugs.webkit.org/show_bug.cgi?id=46654
+
+        * Scripts/webkit2/messages.py:
+        (reply_type): Renamed from reply_base_class.
+        (delayed_reply_type): Renamed from delayed_reply_base_class.
+        (message_to_struct_declaration): Add a Reply type typedef.
+        (async_case_statement): Rename from case_statement.
+        (generate_message_handler): Generate a sync message handler as well.
+
+        * Scripts/webkit2/messages_unittest.py:
+        Update expected results.
+
+2010-09-27  Andras Becsi  <abecsi@webkit.org>
+
+        Reviewed by Csaba Osztrogonác.
+
+        [Qt] Make generate-forwarding-headers.pl aware of moved headers
+        https://bugs.webkit.org/show_bug.cgi?id=46621
+
+        * generate-forwarding-headers.pl:
+
+2010-09-27  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Anders Carlsson.
+
+        The mouseDidMoveOverElement callback in the injected bundle should include modifier info
+        https://bugs.webkit.org/show_bug.cgi?id=46629
+
+        - Moves event related API enums to WKEvent.h which can be shared between
+          both the bundle and the main API.
+
+        * Shared/API/c/WKEvent.h: Added.
+        * Shared/API/c/WKSharedAPICast.h:
+        (WebKit::toRef):
+        * UIProcess/API/C/WKAPICast.h:
+        * UIProcess/API/C/WKPage.h:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * WebProcess/InjectedBundle/API/c/WKBundlePage.h:
+        * WebProcess/InjectedBundle/InjectedBundlePageUIClient.cpp:
+        (WebKit::InjectedBundlePageUIClient::mouseDidMoveOverElement):
+        * WebProcess/InjectedBundle/InjectedBundlePageUIClient.h:
+        * WebProcess/WebCoreSupport/WebChromeClient.cpp:
+        (WebKit::WebChromeClient::mouseDidMoveOverElement):
+        * win/WebKit2.vcproj:
+        * win/WebKit2Generated.make:
+
+2010-09-27  Adam Roben  <aroben@apple.com>
+
+        Give mouse wheel events the right coordinates on Windows
+
+        Fixes <http://webkit.org/b/46625> <rdar://problem/8481161> Placing
+        mouse cursor inside a scrollable area and scrolling the mouse wheel
+        generally doesn't scroll the area
+
+        Reviewed by Sam Weinig.
+
+        * Shared/win/WebEventFactory.cpp:
+        (WebKit::point): Renamed from positionForEvent. The old name implied
+        that all events used the same relative origin, which is untrue.
+        (WebKit::WebEventFactory::createWebMouseEvent): Changed to use point
+        and ::ClientToScreen explicitly rather than relying on
+        positionForEvent/globalPositionForEvent.
+        (WebKit::WebEventFactory::createWebWheelEvent): Changed to use point
+        and ::ScreenToClient. The old code was assuming that wheel event
+        points are relative to the client area, but they are in fact relative
+        to the screen.
+
+2010-09-27  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Adam Roben.
+
+        Opening links in a new window asserts while decoding decidePolicyForNewWindowAction.
+        <rdar://problem/8479445>
+        https://bugs.webkit.org/show_bug.cgi?id=46623
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::didReceiveMessage): Fix the order of decoding to
+        match the order of encoding. (Swapping url and mouseButton).
+
+2010-09-27  Adam Roben  <aroben@apple.com>
+
+        Stop leaking the web process's process handle on Windows
+
+        Fixes <http://webkit.org/b/46133> <rdar://problem/8455343>
+
+        Reviewed by Anders Carlsson.
+
+        * UIProcess/Launcher/ProcessLauncher.cpp:
+        (WebKit::ProcessLauncher::invalidate): Call platformInvalidate.
+
+        * UIProcess/Launcher/ProcessLauncher.h: Added platformInvalidate.
+
+        * UIProcess/Launcher/mac/ProcessLauncherMac.mm:
+        (WebKit::ProcessLauncher::platformInvalidate):
+        * UIProcess/Launcher/qt/ProcessLauncherQt.cpp:
+        (WebKit::ProcessLauncher::platformInvalidate):
+        Stubbed out.
+
+        * UIProcess/Launcher/win/ProcessLauncherWin.cpp:
+        (WebKit::ProcessLauncher::platformInvalidate): Close the process
+        handle like MSDN says we should.
+
+2010-09-27  Adam Roben  <aroben@apple.com>
+
+        Don't double-free CERT_CONTEXTs when copying PlatformCertificateInfos
+        on Windows
+
+        Fixes <http://webkit.org/b/46536> <rdar://problem/8477292> REGRESSION
+        (r68260): Crash in PlatformCertificateInfo::~PlatformCertificateInfo
+        when navigating away from Gmail
+
+        Reviewed by Sam Weinig.
+
+        * Shared/win/PlatformCertificateInfo.cpp:
+        (WebKit::PlatformCertificateInfo::PlatformCertificateInfo):
+        (WebKit::PlatformCertificateInfo::operator=):
+        * Shared/win/PlatformCertificateInfo.h:
+        Added a copy constructor and assigment operator to handle correctly
+        reffing/dereffing the CERT_CONTEXTs when copying a
+        PlatformCertificateInfo.
+
+2010-09-26  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Simon Fraser.
+
+        MiniBrowser crashes when opening main menu item
+        https://bugs.webkit.org/show_bug.cgi?id=46588
+
+        * UIProcess/API/mac/PageClientImpl.mm:
+        (WebKit::PageClientImpl::setEditCommandState): Don't allow default
+        String -> NSString conversion to take place, and use the increasingly
+        misnamed nsStringFromWebCoreString instead.
+
+2010-09-26  Sam Weinig  <sam@webkit.org>
+
+        Another windows build fix windows attempt.
+
+        * win/WebKit2Common.vsprops:
+
+2010-09-26  Sam Weinig  <sam@webkit.org>
+
+        Another windows build fix windows attempt.
+
+        * win/WebKit2Generated.make:
+
+2010-09-26  Sam Weinig  <sam@webkit.org>
+
+        Attempt to fix windows build.
+
+        * win/WebKit2Common.vsprops:
+
+2010-09-26  Sam Weinig  <sam@webkit.org>
+
+        Attempt to fix Qt build.
+
+        * WebKit2.pro:
+
+2010-09-26  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Anders Carlsson.
+
+        Move shared WebKit2 API (used by both bundle and main API) to WebKit2/Shared/API
+        https://bugs.webkit.org/show_bug.cgi?id=46587
+
+        - Moves shared types (WKArrayRef, WKDictionaryRef, etc) to Shared/API/c.
+        - Removes WKBundleBase.h and moves all opaque type declarations to WKBase.h (which
+          moves to Shared/API/c).
+        - Adds WKSharedAPICast.h which includes shared API casting logic and is included
+          by both WKAPICast.h and WKBundleAPICast.h now. Moved to using macros for API 
+          mappings to reduce verbosity.
+        - Move windows c API files from UIProcess/API/win to UIProcess/API/C/win.
+
+        * Shared/API: Added.
+        * Shared/API/c: Added.
+        * Shared/API/c/WKArray.cpp: Copied from UIProcess/API/C/WKArray.cpp.
+        * Shared/API/c/WKArray.h: Copied from UIProcess/API/C/WKArray.h.
+        * Shared/API/c/WKBase.h: Copied from UIProcess/API/C/WKBase.h.
+        * Shared/API/c/WKCertificateInfo.cpp: Copied from UIProcess/API/C/WKCertificateInfo.cpp.
+        * Shared/API/c/WKCertificateInfo.h: Copied from UIProcess/API/C/WKCertificateInfo.h.
+        * Shared/API/c/WKData.cpp: Copied from UIProcess/API/C/WKData.cpp.
+        * Shared/API/c/WKData.h: Copied from UIProcess/API/C/WKData.h.
+        * Shared/API/c/WKDictionary.cpp: Copied from UIProcess/API/C/WKDictionary.cpp.
+        * Shared/API/c/WKDictionary.h: Copied from UIProcess/API/C/WKDictionary.h.
+        * Shared/API/c/WKError.cpp: Copied from UIProcess/API/C/WKError.cpp.
+        * Shared/API/c/WKError.h: Copied from UIProcess/API/C/WKError.h.
+        * Shared/API/c/WKMutableArray.cpp: Copied from UIProcess/API/C/WKMutableArray.cpp.
+        * Shared/API/c/WKMutableArray.h: Copied from UIProcess/API/C/WKMutableArray.h.
+        * Shared/API/c/WKMutableDictionary.cpp: Copied from UIProcess/API/C/WKMutableDictionary.cpp.
+        * Shared/API/c/WKMutableDictionary.h: Copied from UIProcess/API/C/WKMutableDictionary.h.
+        * Shared/API/c/WKNumber.cpp: Copied from UIProcess/API/C/WKNumber.cpp.
+        * Shared/API/c/WKNumber.h: Copied from UIProcess/API/C/WKNumber.h.
+        * Shared/API/c/WKSerializedScriptValue.cpp: Copied from UIProcess/API/C/WKSerializedScriptValue.cpp.
+        * Shared/API/c/WKSerializedScriptValue.h: Copied from UIProcess/API/C/WKSerializedScriptValue.h.
+        * Shared/API/c/WKSharedAPICast.h: Copied from UIProcess/API/C/WKAPICast.h.
+        * Shared/API/c/WKString.cpp: Copied from UIProcess/API/C/WKString.cpp.
+        * Shared/API/c/WKString.h: Copied from UIProcess/API/C/WKString.h.
+        * Shared/API/c/WKType.cpp: Copied from UIProcess/API/C/WKType.cpp.
+        * Shared/API/c/WKType.h: Copied from UIProcess/API/C/WKType.h.
+        * Shared/API/c/WKURL.cpp: Copied from UIProcess/API/C/WKURL.cpp.
+        * Shared/API/c/WKURL.h: Copied from UIProcess/API/C/WKURL.h.
+        * Shared/API/c/WKURLRequest.cpp: Copied from UIProcess/API/C/WKURLRequest.cpp.
+        * Shared/API/c/WKURLRequest.h: Copied from UIProcess/API/C/WKURLRequest.h.
+        * Shared/API/c/WKURLResponse.cpp: Copied from UIProcess/API/C/WKURLResponse.cpp.
+        * Shared/API/c/WKURLResponse.h: Copied from UIProcess/API/C/WKURLResponse.h.
+        * Shared/API/c/cf: Copied from UIProcess/API/C/cf.
+        * Shared/API/c/mac: Copied from UIProcess/API/C/mac.
+        * Shared/API/c/win: Added.
+        * Shared/API/c/win/WKBaseWin.h: Copied from UIProcess/API/win/WKBaseWin.h.
+        * Shared/API/c/win/WKCertificateInfoWin.cpp: Copied from UIProcess/API/C/win/WKCertificateInfoWin.cpp.
+        * Shared/API/c/win/WKCertificateInfoWin.h: Copied from UIProcess/API/C/win/WKCertificateInfoWin.h.
+        * UIProcess/API/C/WKAPICast.h: Replaced.
+        * UIProcess/API/C/WKArray.cpp: Removed.
+        * UIProcess/API/C/WKArray.h: Removed.
+        * UIProcess/API/C/WKBase.h: Removed.
+        * UIProcess/API/C/WKCertificateInfo.cpp: Removed.
+        * UIProcess/API/C/WKCertificateInfo.h: Removed.
+        * UIProcess/API/C/WKData.cpp: Removed.
+        * UIProcess/API/C/WKData.h: Removed.
+        * UIProcess/API/C/WKDictionary.cpp: Removed.
+        * UIProcess/API/C/WKDictionary.h: Removed.
+        * UIProcess/API/C/WKError.cpp: Removed.
+        * UIProcess/API/C/WKError.h: Removed.
+        * UIProcess/API/C/WKMutableArray.cpp: Removed.
+        * UIProcess/API/C/WKMutableArray.h: Removed.
+        * UIProcess/API/C/WKMutableDictionary.cpp: Removed.
+        * UIProcess/API/C/WKMutableDictionary.h: Removed.
+        * UIProcess/API/C/WKNumber.cpp: Removed.
+        * UIProcess/API/C/WKNumber.h: Removed.
+        * UIProcess/API/C/WKSerializedScriptValue.cpp: Removed.
+        * UIProcess/API/C/WKSerializedScriptValue.h: Removed.
+        * UIProcess/API/C/WKString.cpp: Removed.
+        * UIProcess/API/C/WKString.h: Removed.
+        * UIProcess/API/C/WKType.cpp: Removed.
+        * UIProcess/API/C/WKType.h: Removed.
+        * UIProcess/API/C/WKURL.cpp: Removed.
+        * UIProcess/API/C/WKURL.h: Removed.
+        * UIProcess/API/C/WKURLRequest.cpp: Removed.
+        * UIProcess/API/C/WKURLRequest.h: Removed.
+        * UIProcess/API/C/WKURLResponse.cpp: Removed.
+        * UIProcess/API/C/WKURLResponse.h: Removed.
+        * UIProcess/API/C/cf: Removed.
+        * UIProcess/API/C/cf/WKStringCF.cpp: Removed.
+        * UIProcess/API/C/cf/WKStringCF.h: Removed.
+        * UIProcess/API/C/cf/WKURLCF.cpp: Removed.
+        * UIProcess/API/C/cf/WKURLCF.h: Removed.
+        * UIProcess/API/C/cf/WKURLRequestCF.cpp: Removed.
+        * UIProcess/API/C/cf/WKURLRequestCF.h: Removed.
+        * UIProcess/API/C/cf/WKURLResponseCF.cpp: Removed.
+        * UIProcess/API/C/cf/WKURLResponseCF.h: Removed.
+        * UIProcess/API/C/mac: Removed.
+        * UIProcess/API/C/mac/WKCertificateInfoMac.h: Removed.
+        * UIProcess/API/C/mac/WKCertificateInfoMac.mm: Removed.
+        * UIProcess/API/C/mac/WKURLRequestNS.h: Removed.
+        * UIProcess/API/C/mac/WKURLRequestNS.mm: Removed.
+        * UIProcess/API/C/mac/WKURLResponseNS.h: Removed.
+        * UIProcess/API/C/mac/WKURLResponseNS.mm: Removed.
+        * UIProcess/API/C/win/WKAPICastWin.h: Copied from UIProcess/API/win/WKAPICastWin.h.
+        * UIProcess/API/C/win/WKBaseWin.h: Copied from UIProcess/API/win/WKBaseWin.h.
+        * UIProcess/API/C/win/WKCertificateInfoWin.cpp: Removed.
+        * UIProcess/API/C/win/WKCertificateInfoWin.h: Removed.
+        * UIProcess/API/C/win/WKView.cpp: Copied from UIProcess/API/win/WKView.cpp.
+        * UIProcess/API/C/win/WKView.h: Copied from UIProcess/API/win/WKView.h.
+        * UIProcess/API/win: Removed.
+        * UIProcess/API/win/WKAPICastWin.h: Removed.
+        * UIProcess/API/win/WKBaseWin.h: Removed.
+        * UIProcess/API/win/WKView.cpp: Removed.
+        * UIProcess/API/win/WKView.h: Removed.
+        * WebKit2.pro:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * WebProcess/InjectedBundle/API/c/WKBundle.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleAPICast.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleBase.h: Removed.
+        * WebProcess/InjectedBundle/API/c/WKBundleFrame.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleFramePrivate.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleHitTestResult.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleInitialize.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleNodeHandle.h:
+        * WebProcess/InjectedBundle/API/c/WKBundlePage.h:
+        * WebProcess/InjectedBundle/API/c/WKBundlePagePrivate.h:
+        * WebProcess/InjectedBundle/API/c/WKBundlePrivate.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleRangeHandle.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleScriptWorld.h:
+        * win/WebKit2.vcproj:
+        * win/WebKit2Generated.make:
+
+2010-09-26  Anders Carlsson  <andersca@apple.com>
+
+        Fix non-Mac builds.
+
+        * Platform/SharedMemory.h:
+        * Platform/mac/SharedMemoryMac.cpp:
+        (WebKit::SharedMemory::Handle::isNull):
+
+2010-09-26  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add PluginProxy class
+        https://bugs.webkit.org/show_bug.cgi?id=46586
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add files.
+
+        * WebProcess/Plugins/PluginProxy.cpp: Added.
+        * WebProcess/Plugins/PluginProxy.h: Added.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::createPlugin):
+        Create a PluginProxy wrapper.
+
+2010-09-26  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Make it possible to encode null SharedMemory::Handle objects
+        https://bugs.webkit.org/show_bug.cgi?id=46585
+
+        * Platform/SharedMemory.h:
+        (WebKit::SharedMemory::Handle::isNull):
+        Add isNull.
+
+        * Platform/mac/SharedMemoryMac.cpp:
+        (WebKit::SharedMemory::Handle::encode):
+        Remove asserts.
+
+        (WebKit::SharedMemory::create):
+        Bail if we see a null handle. Also work around a kernel bug where
+        mach_vm_map fails if the given address to map is already mapped, even if
+        VM_FLAG_ANYWHERE is set.
+
+2010-09-26  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add BackingStore class
+        https://bugs.webkit.org/show_bug.cgi?id=46584
+
+        * Shared/BackingStore.cpp: Added.
+        (WebKit::BackingStore::create):
+        Create a backing store backed by fastMalloc memory.
+
+        (WebKit::BackingStore::createSharable):
+        Create a backing store backed by shared memory.
+
+        (WebKit::BackingStore::createHandle):
+        Create a handle that can be sent over the wire.
+
+        (WebKit::BackingStore::resize):
+        Resize the backing store memory.
+
+        (WebKit::BackingStore::data):
+        Return the backing store data.
+
+        * Shared/mac/BackingStoreMac.mm: Added.
+        (WebKit::BackingStore::createGraphicsContext):
+        Create a graphics context that will paint into the backing store.
+
+        (WebKit::BackingStore::paint):
+        Paint the backing store in a graphics context.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add files.
+
+2010-09-26  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Establish a connection between the plug-in process and the web process
+        https://bugs.webkit.org/show_bug.cgi?id=46583
+
+        * PluginProcess/PluginProcess.cpp:
+        (WebKit::PluginProcess::didReceiveMessage):
+        Call the auto-generated didReceivePluginProcessMessage.
+
+        * PluginProcess/PluginProcess.h:
+        Add didReceivePluginProcessMessage declaration.
+
+        * PluginProcess/PluginProcess.messages.in:
+        Add new "CreateWebProcessConnection" message.
+
+        * PluginProcess/WebProcessConnection.cpp:
+        (WebKit::WebProcessConnection::didReceiveMessage):
+        (WebKit::WebProcessConnection::didReceiveSyncMessage):
+        (WebKit::WebProcessConnection::didClose):
+        (WebKit::WebProcessConnection::didReceiveInvalidMessage):
+        Add stubbed out member functions.
+
+        * UIProcess/Plugins/PluginProcessManager.cpp:
+        (WebKit::PluginProcessManager::getPluginProcessConnection):
+        Ask the plug-in process proxy to create a connection.
+
+        * UIProcess/Plugins/PluginProcessProxy.cpp:
+        (WebKit::PluginProcessProxy::createWebProcessConnection):
+        Add the WebProcessProxy and the reply encoder to the queue of pending replies.
+        If the process is still launching, keep track of how many pending requests we have, otherwise
+        just send the request.
+
+        (WebKit::PluginProcessProxy::didReceiveMessage):
+        Call the auto-generated didReceivePluginProcessMessage.
+
+        (WebKit::PluginProcessProxy::didFinishLaunching):
+        Send all pending connection requests.
+
+        (WebKit::PluginProcessProxy::didCreateWebProcessConnection):
+        Get the first pending reply and send it with the mach port.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Actually compile PluginProcessMessageReceiver.
+
+        * WebProcess/Plugins/PluginProcessConnection.cpp:
+        (WebKit::PluginProcessConnection::PluginProcessConnection):
+        Create a CoreIPC connection.
+
+        (WebKit::PluginProcessConnection::didReceiveMessage):
+        (WebKit::PluginProcessConnection::didClose):
+        (WebKit::PluginProcessConnection::didReceiveInvalidMessage):
+        Add stubbed out member functions.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::createPlugin):
+        Ask the plug-in process connection manager for a connection.
+
+2010-09-26  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Generated message handlers should include argument coder headers for some types
+        https://bugs.webkit.org/show_bug.cgi?id=46582
+
+        * Scripts/webkit2/messages.py:
+        When determining which headers to use when generating a message handler, consider the
+        argument coder headers.
+
+        * Scripts/webkit2/messages_unittest.py:
+        Update test result.
+
+2010-09-24  Sam Weinig  <sam@webkit.org>
+
+        Fix release build.
+
+        * WebProcess/InjectedBundle/API/c/WKBundlePage.h:
+
+2010-09-24  Enrica Casucci  <enrica@apple.com>
+
+        One more build fix.
+
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPagePrivate::setEditCommandState):
+
+2010-09-24  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Darin Adler.
+
+        Implement WebKit2 callback equivalent to -[WebUIDelegate mouseDidMoveOverElement:modifierFlags:]
+        <rdar://problem/8359279>
+        https://bugs.webkit.org/show_bug.cgi?id=46546
+
+        - Adds new WKBundleHitTestResultRef object to represent a content under a cursor.
+        - Adds new Bundle and UI level mouseDidMoveOverElement UIClient callbacks, with
+          pass through userData to communicate context up to the UIProcess
+
+        * Shared/APIObject.h:
+        * Shared/CoreIPCSupport/WebPageProxyMessageKinds.h:
+        * UIProcess/API/C/WKPage.h:
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPage::QWKPage):
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::didReceiveMessage):
+        (WebKit::WebPageProxy::mouseDidMoveOverElement):
+        * UIProcess/WebPageProxy.h:
+        * UIProcess/WebUIClient.cpp:
+        (WebKit::WebUIClient::mouseDidMoveOverElement):
+        * UIProcess/WebUIClient.h:
+        * WebKit2.pro:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * WebProcess/InjectedBundle/API/c/WKBundleAPICast.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleBase.h:
+        * WebProcess/InjectedBundle/API/c/WKBundleHitTestResult.cpp: Added.
+        (WKBundleHitTestResultGetTypeID):
+        (WKBundleHitTestResultGetNodeHandle):
+        (WKBundleHitTestResultGetFrame):
+        (WKBundleHitTestResultCopyAbsoluteLinkURL):
+        * WebProcess/InjectedBundle/API/c/WKBundleHitTestResult.h: Added.
+        * WebProcess/InjectedBundle/API/c/WKBundlePage.h:
+        * WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp: Added.
+        (WebKit::InjectedBundleHitTestResult::create):
+        (WebKit::InjectedBundleHitTestResult::nodeHandle):
+        (WebKit::InjectedBundleHitTestResult::webFrame):
+        (WebKit::InjectedBundleHitTestResult::absoluteLinkURL):
+        * WebProcess/InjectedBundle/InjectedBundleHitTestResult.h: Added.
+        (WebKit::InjectedBundleHitTestResult::coreHitTestResult):
+        (WebKit::InjectedBundleHitTestResult::InjectedBundleHitTestResult):
+        (WebKit::InjectedBundleHitTestResult::type):
+        * WebProcess/InjectedBundle/InjectedBundlePageUIClient.cpp:
+        (WebKit::InjectedBundlePageUIClient::mouseDidMoveOverElement):
+        * WebProcess/InjectedBundle/InjectedBundlePageUIClient.h:
+        * WebProcess/WebCoreSupport/WebChromeClient.cpp:
+        (WebKit::WebChromeClient::mouseDidMoveOverElement):
+        * win/WebKit2.vcproj:
+
+2010-09-24  Enrica Casucci  <enrica@apple.com>
+
+        Build fix.
+
+        * UIProcess/API/qt/qwkpage_p.h:
+        * UIProcess/win/WebView.cpp:
+        (WebKit::WebView::setEditCommandState):
+        * UIProcess/win/WebView.h:
+
+2010-09-24  Enrica Casucci  <enrica@apple.com>
+
+        Reviewed by Darin Adler.
+
+        Maui: Pasteboard support (42317)
+        <rdar://problem/7660537>
+        https://bugs.webkit.org/show_bug.cgi?id=42317
+        
+        This is the final piece of the pasteboard support for WebKit2.
+        The menu validation has been hooked up for Mac. The validation is
+        performed asynchronously and the menu entries updated while the menu
+        is visible. I've created a generic mechanism to call editing commands
+        that will make it easy to add new commands we will support in the future.
+        The commands supported now are copy, cut, paste, pasteAsPlainText, delete
+        and selectAll.
+
+        * Shared/CoreIPCSupport/WebPageProxyMessageKinds.h: Added DidValidateMenuItem.
+        * UIProcess/API/mac/PageClientImpl.h: Added setEditCommandState.
+        * UIProcess/API/mac/PageClientImpl.mm: Added setEditCommandState implementation.
+        (WebKit::PageClientImpl::setEditCommandState): Added.
+        * UIProcess/API/mac/WKView.mm:
+        (WebCore::MenuItemInfo::MenuItemInfo):
+        (-[WKView initWithFrame:pageNamespaceRef:]):
+        (createSelectorExceptionMap): Added.
+        (commandNameForSelector): Added.
+        (-[WKView validateUserInterfaceItem:]): Added implementation.
+        (-[WKView _setUserInterfaceItemState:enabled:state:]): Added.
+        * UIProcess/API/mac/WKViewInternal.h:
+        * UIProcess/PageClient.h:
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::validateMenuItem):
+        (WebKit::WebPageProxy::executeEditCommand):
+        (WebKit::WebPageProxy::didReceiveMessage): Now processing also
+        DidValidateMenuItem.
+        * UIProcess/WebPageProxy.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::executeEditingCommand): Fixed.
+        (WebKit::WebPage::isEditingCommandEnabled): Fixed.
+        (WebKit::WebPage::validateMenuItem): Added.
+        (WebKit::WebPage::executeEditCommand): Added.
+        * WebProcess/WebPage/WebPage.h: Removed cut, copy, paste, selectAll.
+        Added validateMenuItem and executeEditCommand.
+        * WebProcess/WebPage/WebPage.messages.in: Added new messages.
+        * UIProcess/API/qt/qwkpage.cpp:
+        (WebKit::QWKPage::setEditCommandState): Added.
+        * UIProcess/API/qt/qwkpage_p.h: Added 
+        
+
+2010-09-24  Anders Carlsson  <andersca@apple.com>
+
+        Build fix.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Give windowed Netscape plugins their own window
+
+        The plugin window is a child of the WebView's window. The WebView's
+        window is in the UI process, and the plugin's window is in the web
+        process (though someday it will be in the plugin process), but Windows
+        mostly handles this just fine. Right now we move the plugin's window
+        in the web process, but we need to do it at paint time in the UI
+        process instead so that the plugin windows will stay in sync with the
+        web page's contents. There are also a whole bunch of plugin quirks
+        that WebKit1 supports that we don't support yet, but that's a task for
+        another day.
+
+        Fixes <http://webkit.org/b/44428> Get basic in-process windowed
+        plugins working in WebKit2 on Windows
+
+        Reviewed by Anders Carlsson.
+
+        * WebProcess/Plugins/Netscape/NetscapePlugin.cpp:
+        (WebKit::NetscapePlugin::destroy):
+        (WebKit::NetscapePlugin::geometryDidChange):
+        Call the new platform-specific functions.
+
+        * WebProcess/Plugins/Netscape/NetscapePlugin.h: Added
+        platformDestroy/platformGeometryDidChange, and an m_window member on
+        Windows to hold our window.
+
+        * WebProcess/Plugins/Netscape/mac/NetscapePluginMac.mm:
+        (WebKit::NetscapePlugin::platformDestroy):
+        (WebKit::NetscapePlugin::platformGeometryDidChange):
+        * WebProcess/Plugins/Netscape/qt/NetscapePluginQt.cpp:
+        (WebKit::NetscapePlugin::platformDestroy):
+        (WebKit::NetscapePlugin::platformGeometryDidChange):
+        Stubbed these out.
+
+        * WebProcess/Plugins/Netscape/win/NetscapePluginWin.cpp:
+        (WebKit::registerPluginView): Added. The code came from
+        WebCore's PluginViewWin.cpp, though I changed it to add one to
+        COLOR_WINDOW, since that's what MSDN says we should do.
+        (WebKit::NetscapePlugin::platformPostInitialize): If we're windowed,
+        create a window for the plugin and make it a child of the WebView's
+        window. If we're not windowed, just set m_window to 0.
+        (WebKit::NetscapePlugin::platformDestroy): Destroy our window if we
+        have one and it hasn't been destroyed already.
+        (WebKit::NetscapePlugin::platformGeometryDidChange): Update our
+        window's size and position.
+
+        * WebProcess/Plugins/PluginController.h:
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::PluginView::nativeParentWindow):
+        * WebProcess/Plugins/PluginView.h:
+        Added nativeParentWindow on Windows to return the WebView's window.
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Pass the WebView's HWND over to the web process
+
+        The HWND is packaged up in the WebPageCreationParameters and stored in
+        the WebPage. It will eventually be used by windowed plugins.
+
+        Fixes <http://webkit.org/b/46512> WebPage needs access to its
+        corresponding HWND from the UI process
+
+        Reviewed by Anders Carlsson.
+
+        * Shared/WebPageCreationParameters.cpp:
+        (WebKit::WebPageCreationParameters::encode):
+        (WebKit::WebPageCreationParameters::decode):
+        Encode and decode the HWND as a uint64_t.
+
+        * Shared/WebPageCreationParameters.h: Added a nativeWindow member to
+        store the HWND.
+
+        * UIProcess/PageClient.h: Added a nativeWindow function on Windows.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::creationParameters): Store the HWND from the
+        page client in the struct to be sent to the web process.
+
+        * UIProcess/win/WebView.cpp:
+        (WebKit::WebView::WebView): Moved the call to initializeWebPage after
+        we've created our window so that our window will be ready when
+        WebPageProxy asks for it to send it to the web process.
+        (WebKit::WebView::nativeWindow): Added. Just returns our window.
+
+        * UIProcess/win/WebView.h: Added nativeWindow.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::WebPage): Store the HWND in the new m_nativeWindow
+        member.
+
+        * WebProcess/WebPage/WebPage.h:
+        (WebKit::WebPage::nativeWindow): Added this simple getter.
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Add WebPageProxy::creationParameters
+
+        Fixes <http://webkit.org/b/46510> WebPageProxy has a bunch of
+        duplicated WebPageCreationParameters code
+
+        Reviewed by Anders Carlsson.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::initializeWebPage):
+        (WebKit::WebPageProxy::reinitializeWebPage):
+        (WebKit::WebPageProxy::didReceiveSyncMessage):
+        Use creationParameters.
+
+        (WebKit::WebPageProxy::creationParameters):
+        * UIProcess/WebPageProxy.h:
+        Added creationParameters.
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Make WebPage::create take a WebPageCreationParameter struct
+
+        It only makes sense, after all.
+
+        Fixes <http://webkit.org/b/46502>.
+
+        Reviewed by Anders Carlsson.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::create):
+        (WebKit::WebPage::WebPage):
+        * WebProcess/WebPage/WebPage.h:
+        Changed to take a WebPageCreationParameters struct.
+
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::createWebPage): Changed to pass a
+        WebPageCreationParameters struct.
+
+2010-09-24  Kenneth Rohde Christiansen  <kenneth.christiansen@openbossa.org>
+
+        Reviewed by Andreas Kling.
+
+        Expose all WebKit2 C API preferences via the Qt API.
+
+        Also rename a wrongly named C method (was using Web instead of WK).
+
+        * UIProcess/API/C/WKPreferences.cpp:
+        (WKPreferencesCopyStandardFontFamily):
+        * UIProcess/API/C/WKPreferences.h:
+        * UIProcess/API/qt/qwkpreferences.cpp:
+        (QWKPreferences::setFontFamily):
+        (QWKPreferences::fontFamily):
+        (QWKPreferences::testAttribute):
+        (QWKPreferences::setAttribute):
+        * UIProcess/API/qt/qwkpreferences.h:
+
+2010-09-24  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Fill in more of PluginProcess
+        https://bugs.webkit.org/show_bug.cgi?id=46534
+
+        * DerivedSources.make:
+        Add PluginProcessProxy.
+
+        * Platform/CoreIPC/MessageID.h:
+        Add a MessageClassPluginProcessProxy message class.
+
+        * PluginProcess/PluginProcess.cpp:
+        (WebKit::PluginProcess::PluginProcess):
+        Initialize the shutdown timer.
+
+        (WebKit::PluginProcess::initializeConnection):
+        Rename this to initializeConnection to avoid conflicts in the CoreIPC message handler.
+
+        (WebKit::PluginProcess::removeWebProcessConnection):
+        Remove the given web process connection from our vector.
+
+        (WebKit::PluginProcess::initialize):
+        Create the plug-in module.
+
+        (WebKit::PluginProcess::createWebProcessConnection):
+        Create a connection handle and send it to the UI process.
+
+        (WebKit::PluginProcess::shutdownTimerFired):
+        Quit.
+
+        * PluginProcess/mac/PluginProcessMainMac.mm:
+        (WebKit::PluginProcessMain):
+        Call initializeConnection.
+
+        * Scripts/webkit2/messages.py:
+        Add CoreIPC::MachPort as a special case.
+
+        * Scripts/webkit2/messages_unittest.py:
+        Add test case.
+
+        * UIProcess/Plugins/PluginProcessProxy.cpp:
+        (WebKit::PluginProcessProxy::didCreateWebProcessConnection):
+        Add empty function.
+
+        * UIProcess/Plugins/PluginProcessProxy.messages.in: Added.
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add PluginProcessProxy.messages.in.
+
+        * WebKit2Prefix.h:
+        Add an ENABLE_PLUGIN_PROCESS #define which is 0 for now.
+
+2010-09-24  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        messages_unittest.py should compare the generated results against expected results
+        https://bugs.webkit.org/show_bug.cgi?id=46490
+
+        * Scripts/webkit2/messages_unittest.py:
+
+2010-09-24  Kenneth Rohde Christiansen  <kenneth.christiansen@openbossa.org>
+
+        Reviewed by Antonio Gomes.
+
+        Make it possible to get the page preferences for Qt WebKit2 port.
+
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPagePrivate::QWKPagePrivate):
+        (QWKPage::preferences):
+        * UIProcess/API/qt/qwkpage.h:
+        * UIProcess/API/qt/qwkpage_p.h:
+        * UIProcess/API/qt/qwkpreferences.cpp:
+        (QWKPreferencesPrivate::createPreferences):
+        (QWKPreferencesPrivate::createSharedPreferences):
+        (QWKPreferences::sharedPreferences):
+        (QWKPreferences::QWKPreferences):
+        * UIProcess/API/qt/qwkpreferences.h:
+
+2010-09-24  Kenneth Rohde Christiansen  <kenneth.christiansen@openbossa.org>
+
+        Reviewed by Sam Weinig.
+
+        Add WebKit2 C API for setting/getting frame flattening and plugin settings.
+        http://webkit.org/b/46477
+
+        NOTE: The plugin setting was partly done but there was no C API.
+
+        * Shared/WebPreferencesStore.cpp:
+        (WebKit::WebPreferencesStore::WebPreferencesStore):
+        (WebKit::WebPreferencesStore::encode):
+        (WebKit::WebPreferencesStore::decode):
+        * Shared/WebPreferencesStore.h:
+        * UIProcess/API/C/WKPreferences.cpp:
+        (WKPreferencesSetFrameFlatteningEnabled):
+        (WKPreferencesGetFrameFlatteningEnabled):
+        (WKPreferencesSetPluginsEnabled):
+        (WKPreferencesGetPluginsEnabled):
+        * UIProcess/API/C/WKPreferences.h:
+        * UIProcess/WebPreferences.cpp:
+        (WebKit::WebPreferences::setFrameFlatteningEnabled):
+        (WebKit::WebPreferences::frameFlatteningEnabled):
+        (WebKit::WebPreferences::setPluginsEnabled):
+        (WebKit::WebPreferences::pluginsEnabled):
+        * UIProcess/WebPreferences.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::WebPage):
+        (WebKit::WebPage::preferencesDidChange):
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Add WebPageCreationParameters
+
+        This struct is used in any messages that end up creating a WebPage.
+        Using a struct instead of individual parameters will make it easier to
+        add platform-specific data, such as an HWND on Windows.
+
+        Fixes <http://webkit.org/b/46470> Pass parameters for creating a
+        WebPage in a single struct
+
+        Reviewed by Anders Carlsson.
+
+        * Shared/WebPageCreationParameters.cpp: Added.
+        (WebKit::WebPageCreationParameters::encode):
+        (WebKit::WebPageCreationParameters::decode):
+        Simple encode/decode functions.
+
+        * Shared/WebPageCreationParameters.h: Added.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::initializeWebPage):
+        (WebKit::WebPageProxy::reinitializeWebPage):
+        (WebKit::WebPageProxy::didReceiveSyncMessage):
+        * WebProcess/WebCoreSupport/WebChromeClient.cpp:
+        (WebKit::WebChromeClient::createWindow):
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::createWebPage):
+        (WebKit::WebProcess::didReceiveMessage):
+        * WebProcess/WebProcess.h:
+        Changed to use WebPageCreationParameters instead of passing the
+        values individually.
+
+        * WebKit2.pro:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * win/WebKit2.vcproj:
+        Added WebPageCreationParameters.
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Stop pretending that we know how to encode a DrawingArea and just
+        encode the DrawingAreaInfo directly
+
+        DrawingAreaBase and friends were trying to hide the fact that they
+        were just encoding/decoding a DrawingAreaInfo behind the scenes, but
+        everyone knew what was going on and it was getting embarassing.
+
+        Fixes <http://webkit.org/b/46469> Code to encode/decode a
+        DrawingAreaInfo is confusing
+
+        Reviewed by Anders Carlsson.
+
+        * Shared/DrawingAreaBase.cpp: Removed.
+        * Shared/DrawingAreaBase.h: Removed encode/decode.
+        * UIProcess/ChunkedUpdateDrawingAreaProxy.h: Removed encode override.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::initializeWebPage):
+        (WebKit::WebPageProxy::reinitializeWebPage):
+        (WebKit::WebPageProxy::didReceiveSyncMessage):
+        Changed to encode the DrawingAreaInfo directly.
+
+        * WebKit2.pro:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * win/WebKit2.vcproj:
+        Removed DrawingAreaBase.cpp.
+
+2010-09-24  Adam Roben  <aroben@apple.com>
+
+        Expose a whole DrawingAreaInfo instead of its constituent parts from
+        DrawingAreaBase
+
+        This is just a step toward cleaning up how drawing areas are
+        encoded/ecoded.
+
+        Fixes <http://webkit.org/b/46468> DrawingAreaInfo should be used in
+        more places
+
+        Reviewed by Anders Carlsson.
+
+        * Shared/DrawingAreaBase.cpp:
+        (WebKit::DrawingAreaBase::encode): Changed to use info().
+
+        * Shared/DrawingAreaBase.h:
+        (WebKit::DrawingAreaBase::info): Added. Replaces type() and id().
+        (WebKit::DrawingAreaBase::DrawingAreaBase): Changed to store a
+        DrawingAreaInfo instead of storing its constituent parts.
+
+        * UIProcess/API/mac/WKView.mm:
+        * UIProcess/ChunkedUpdateDrawingAreaProxy.cpp:
+        * UIProcess/LayerBackedDrawingAreaProxy.cpp:
+        * WebProcess/WebPage/ChunkedUpdateDrawingArea.cpp:
+        * WebProcess/WebPage/LayerBackedDrawingArea.cpp:
+        * WebProcess/WebPage/WebPage.cpp:
+        Updated to use info().
+
+2010-09-24  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add WebProcessConnection class
+        https://bugs.webkit.org/show_bug.cgi?id=46478
+
+        * PluginProcess/WebProcessConnection.cpp: Added.
+        * PluginProcess/WebProcessConnection.h: Added.
+        Add stubbed out WebProcessConnection class.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add files.
+
+2010-09-24  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add PluginProcess class
+        https://bugs.webkit.org/show_bug.cgi?id=46476
+
+        * PluginProcess/PluginProcess.cpp: Added.
+        * PluginProcess/PluginProcess.h: Added.
+        Add stubbed out PluginProcess class.
+
+        * PluginProcess/mac/PluginProcessMainMac.mm:
+        (WebKit::PluginProcessMain):
+        Initialize the plug-in process.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add files.
+
+        * WebProcess/Plugins/PluginProcessConnection.h:
+        Add a comment about which connection this is.
+
+2010-09-24  Sam Weinig  <sam@webkit.org>
+
+        Fix windows build.
+
+        * Shared/win/PlatformCertificateInfo.cpp:
+        (WebKit::PlatformCertificateInfo::PlatformCertificateInfo):
+
+2010-09-23  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Adam Roben.
+
+        Add Windows implementation of PlatformCertificateInfo
+        Part of <rdar://problem/8350189>
+        https://bugs.webkit.org/show_bug.cgi?id=46450
+
+        * Shared/win/PlatformCertificateInfo.cpp: Added.
+        (WebKit::PlatformCertificateInfo::PlatformCertificateInfo):
+        (WebKit::PlatformCertificateInfo::~PlatformCertificateInfo):
+        (WebKit::PlatformCertificateInfo::encode):
+        (WebKit::PlatformCertificateInfo::decode):
+        (WebKit::organizationNameForCertificate):
+        * Shared/win/PlatformCertificateInfo.h:
+        (WebKit::PlatformCertificateInfo::certificateContext):
+        * UIProcess/API/C/win/WKCertificateInfoWin.cpp: Added.
+        (WKCertificateInfoGetCertificateContext):
+        * UIProcess/API/C/win/WKCertificateInfoWin.h: Added.
+        * win/WebKit2.vcproj:
+        * win/WebKit2Generated.make:
+
+2010-09-23  Kenneth Rohde Christiansen  <kenneth.christiansen@openbossa.org>
+
+        Reviewed by Sam Weinig.
+
+        Add WebKit2 C API for setting the font families.
+        https://bugs.webkit.org/show_bug.cgi?id=46408
+
+        * UIProcess/API/C/WKPreferences.cpp:
+        (WKPreferencesSetStandardFontFamily):
+        (WebPreferencesCopyStandardFontFamily):
+        (WKPreferencesSetFixedFontFamily):
+        (WKPreferencesCopyFixedFontFamily):
+        (WKPreferencesSetSerifFontFamily):
+        (WKPreferencesCopySerifFontFamily):
+        (WKPreferencesSetSansSerifFontFamily):
+        (WKPreferencesCopySansSerifFontFamily):
+        (WKPreferencesSetCursiveFontFamily):
+        (WKPreferencesCopyCursiveFontFamily):
+        (WKPreferencesSetFantasyFontFamily):
+        (WKPreferencesCopyFantasyFontFamily):
+        * UIProcess/API/C/WKPreferences.h:
+        * UIProcess/WebPreferences.cpp:
+        (WebKit::WebPreferences::setStandardFontFamily):
+        (WebKit::WebPreferences::standardFontFamily):
+        (WebKit::WebPreferences::setFixedFontFamily):
+        (WebKit::WebPreferences::fixedFontFamily):
+        (WebKit::WebPreferences::setSerifFontFamily):
+        (WebKit::WebPreferences::serifFontFamily):
+        (WebKit::WebPreferences::setSansSerifFontFamily):
+        (WebKit::WebPreferences::sansSerifFontFamily):
+        (WebKit::WebPreferences::setCursiveFontFamily):
+        (WebKit::WebPreferences::cursiveFontFamily):
+        (WebKit::WebPreferences::setFantasyFontFamily):
+        (WebKit::WebPreferences::fantasyFontFamily):
+        * UIProcess/WebPreferences.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::preferencesDidChange):
+
+2010-09-23  Csaba Osztrogonác  <ossy@webkit.org>
+
+        Unreviewed buildfix after r68220 on WebKit2.
+
+        WebKit2 API: Need way to know when a frame is removed from the hierarchy
+        https://bugs.webkit.org/show_bug.cgi?id=46432
+
+        [Qt] qt_wk_didRemoveFrameFromHierarchy needs to be implemented
+
+        * UIProcess/API/qt/ClientImpl.cpp:
+        (qt_wk_didRemoveFrameFromHierarchy):
+        * UIProcess/API/qt/ClientImpl.h:
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPage::QWKPage):
+
+2010-09-23  Sam Weinig  <sam@webkit.org>
+
+        Reviewed by Anders Carlsson.
+
+        WebKit2 API: Need way to know when a frame is removed from the hierarchy
+        <rdar://problem/8414062>
+        https://bugs.webkit.org/show_bug.cgi?id=46432
+
+        * Shared/CoreIPCSupport/WebPageProxyMessageKinds.h:
+        * UIProcess/API/C/WKPage.h:
+        * UIProcess/WebLoaderClient.cpp:
+        (WebKit::WebLoaderClient::didRemoveFrameFromHierarchy):
+        * UIProcess/WebLoaderClient.h:
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::didReceiveMessage):
+        (WebKit::WebPageProxy::didRemoveFrameFromHierarchy):
+        * UIProcess/WebPageProxy.h:
+        * WebProcess/InjectedBundle/API/c/WKBundlePage.h:
+        * WebProcess/InjectedBundle/InjectedBundlePageLoaderClient.cpp:
+        (WebKit::InjectedBundlePageLoaderClient::didRemoveFrameFromHierarchy):
+        * WebProcess/InjectedBundle/InjectedBundlePageLoaderClient.h:
+        * WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp:
+        (WebKit::WebFrameLoaderClient::detachedFromParent2):
+        (WebKit::WebFrameLoaderClient::didTransferChildFrameToNewDocument):
+
+2010-09-23  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add PluginProcessConnection and PluginProcessConnectionManager
+        https://bugs.webkit.org/show_bug.cgi?id=46425
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add files.
+
+        * WebProcess/Plugins/PluginProcessConnection.cpp:
+        Add empty file for now.
+        
+        * WebProcess/Plugins/PluginProcessConnection.h:
+        Add header.
+
+        * WebProcess/Plugins/PluginProcessConnectionManager.cpp: Added.
+        (WebKit::PluginProcessConnectionManager::getPluginProcessConnection):
+        Check for an existing plug-in process connection. If we don't have one, ask the 
+        UI process to create one.
+        
+        (WebKit::PluginProcessConnectionManager::removePluginProcessConnection):
+        Remove the connection from our global vector.
+
+2010-09-23  Adam Roben  <aroben@apple.com>
+
+        Remove the DrawingAreaProxy parameter to
+        WebPagProxy::initializeWebPage
+
+        Callers are now required to set the drawing area via
+        WebPageProxy::setDrawingArea before calling initializeWebPage. This
+        will allow us to delay calling initializeWebPage on Windows until
+        after we've created the WebView's HWND, which in turn will allow us to
+        send the HWND over to the web process when the page is created. (The
+        drawing area must be set before creating the HWND so that its size can
+        be updated, etc., as the window is created.)
+
+        Fixes <http://webkit.org/b/46409> DrawingAreaProxy parameter to
+        initializeWebPage is unnecessary, and causes problems on Windows
+
+        Reviewed by Anders Carlsson.
+
+        * UIProcess/API/mac/WKView.mm:
+        (-[WKView initWithFrame:pageNamespaceRef:]):
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPagePrivate::init):
+        * UIProcess/win/WebView.cpp:
+        (WebKit::WebView::WebView):
+        Added explicit calls to setDrawingArea.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::initializeWebPage):
+        * UIProcess/WebPageProxy.h:
+        Removed the DrawingAreaProxy parameter and a stray puts(), and added
+        an assertion.
+
+2010-09-23  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Darin Adler.
+
+        Implement handlers for the GetPluginProcessConnection message
+        https://bugs.webkit.org/show_bug.cgi?id=46415
+
+        * Shared/CoreIPCSupport/WebProcessProxyMessageKinds.h:
+        Add GetPluginProcessConnection message kind
+
+        * UIProcess/Plugins/PluginProcessManager.cpp:
+        (WebKit::PluginProcessManager::PluginProcessManager):
+        Add missing constructor.
+
+        * UIProcess/WebProcessProxy.cpp:
+        (WebKit::WebProcessProxy::getPluginProcessConnection):
+        Ask the plug-in process manager for a connection.
+        
+        (WebKit::WebProcessProxy::didReceiveSyncMessage):
+        Call getPluginProcessConnection.
+
+        * UIProcess/WebProcessProxy.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::createPlugin):
+        Send the GetPluginProcessConnection message.
+
+2010-09-23  Matthew Delaney  <mdelaney@apple.com>
+
+        Reviewed by Simon Fraser.
+
+        Reduce minimum DOMTimer interval
+        https://bugs.webkit.org/show_bug.cgi?id=45362
+
+        * WebProcess/WebPage/WebPage.cpp:
+        Updating set interval call to use Settings' static version.
+
+2010-09-23  Adam Roben  <aroben@apple.com>
+
+        Try to fix the Windows build
+
+        * win/WebKit2Common.vsprops: Add WebKit2/PluginProcess to the include
+        path.
+
+2010-09-23  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add PluginProcessMain files
+        https://bugs.webkit.org/show_bug.cgi?id=46379
+
+        * PluginProcess/PluginProcessMain.h: Added.
+        * PluginProcess/mac/PluginProcessMainMac.mm: Added.
+        
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add PluginProcessMain files. Remove PluginProcess.messages.in from the target so it
+        won't be installed in the WebKit2.framework bundle.
+
+        * WebProcess/WebKitMain.cpp:
+        (WebKitMain):
+        Call PluginProcessMain if the process type is ProcessLauncher::PluginProcess.
+
+2010-09-23  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Add PluginProcessProxy class
+        https://bugs.webkit.org/show_bug.cgi?id=46377
+
+        * DerivedSources.make:
+        Add PluginProcess.
+
+        * Platform/CoreIPC/Connection.h:
+        (CoreIPC::Connection::send):
+        Add send overload that takes a message.
+
+        * Platform/CoreIPC/MessageID.h:
+        Add MessageClassPluginProcess message kind.
+
+        * PluginProcess/PluginProcess.messages.in: Added.
+        Add PluginProcess messages.
+
+        * UIProcess/Plugins/PluginInfoStore.cpp:
+        (WebKit::PluginInfoStore::infoForPluginWithPath):
+        * UIProcess/Plugins/PluginInfoStore.h:
+        New function that returns the plug-in info for a plug-in with the given path.
+
+        * UIProcess/Plugins/PluginProcessManager.cpp:
+        (WebKit::PluginProcessManager::getPluginProcessConnection):
+        Look for an existing plug-in process proxy.
+
+        * UIProcess/Plugins/PluginProcessProxy.cpp: Added.
+        (WebKit::PluginProcessProxy::create):
+        Launch the process.
+
+        (WebKit::PluginProcessProxy::didReceiveMessage):
+        (WebKit::PluginProcessProxy::didReceiveInvalidMessage):
+        Add stubbed out functions.
+
+        (WebKit::PluginProcessProxy::didClose):
+        Delete the plug-in process proxy.
+        
+        (WebKit::PluginProcessProxy::didFinishLaunching):
+        Open a connection to the plug-in process proxy.
+
+        * UIProcess/Plugins/PluginProcessProxy.h: Added.
+        (WebKit::PluginProcessProxy::pluginInfo):
+        Return the plug-in info.
+
+        * UIProcess/WebProcessProxy.h:
+        (WebKit::WebProcessProxy::context):
+        Add a context getter.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Add new files.
+
+2010-09-23  Jessie Berlin  <jberlin@apple.com>
+
+        Reviewed by Sam Weinig.
+
+        Expose the BundlePage on the BundleFrame in the API.
+        https://bugs.webkit.org/show_bug.cgi?id=46366
+
+        * WebProcess/InjectedBundle/API/c/WKBundleFrame.cpp:
+        (WKBundleFrameGetPage):
+        * WebProcess/InjectedBundle/API/c/WKBundleFrame.h:
+
+2010-09-23  Kenneth Rohde Christiansen  <kenneth.christiansen@openbossa.org>
+
+        Reviewed by Andreas Kling.
+
+        Add a preference class for Qt for WebKit2.
+
+        * UIProcess/API/qt/qwkpreferences.cpp: Added.
+        (QWKPreferences::globalPreferences):
+        (QWKPreferences::QWKPreferences):
+        (QWKPreferences::~QWKPreferences):
+        (QWKPreferences::testAttribute):
+        (QWKPreferences::setAttribute):
+        * UIProcess/API/qt/qwkpreferences.h: Added.
+        * WebKit2.pro:
+
+2010-09-23  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        It should be possible to conditionally define an entire group of messages
+        https://bugs.webkit.org/show_bug.cgi?id=46368
+
+        * Scripts/webkit2/messages.py:
+        Check for a condition when parsing the "messages -> " string and set it as the
+        message receiver condition.
+
+        * Scripts/webkit2/messages_unittest.py:
+        Add test.
+
+2010-09-23  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Message autogeneration script should parse sync message syntax
+        https://bugs.webkit.org/show_bug.cgi?id=46359
+
+        * Scripts/webkit2/messages.py:
+        (MessageReceiver.parse): Expand the regular expression to handle sync messages.
+        (function_parameter_type): Use a const reference for all parameters except the known builtins.
+        (base_class): Returns the base class for a sync message reply struct.
+        (delayed_base_class): Returns the base class for a delayed sync message reply struct.
+        
+        * Scripts/webkit2/messages_unittest.py:
+        Add unit tests for various sync messages.
+
+2010-09-22  Andras Becsi  <abecsi@webkit.org>
+
+        Unreviewed build fix after r68079.
+
+        [Qt] Also generate WebPage's message-receiving code and message types
+        for the Qt port of WebKit2.
+
+        * DerivedSources.pro:
+        * WebKit2.pro:
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Stub out a PluginProcessManager class
+        https://bugs.webkit.org/show_bug.cgi?id=46305
+
+        * UIProcess/Plugins/PluginProcessManager.cpp: Added.
+        (WebKit::PluginProcessManager::shared):
+        (WebKit::PluginProcessManager::getPluginProcessConnection):
+        (WebKit::PluginProcessManager::removePluginProcessProxy):
+        * UIProcess/Plugins/PluginProcessManager.h: Added.
+        * WebKit2.xcodeproj/project.pbxproj:
+
+2010-09-22  Kenneth Rohde Christiansen  <kenneth@webkit.org>
+
+        Reviewed by Antonio Gomes.
+
+        Add a ViewportConfiguration class for the Qt WebKit2 API, which
+        currently calculated a fallback viewport configuration.
+
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPage::ViewportConfiguration::ViewportConfiguration):
+        (QWKPage::ViewportConfiguration::~ViewportConfiguration):
+        (QWKPage::ViewportConfiguration::operator=):
+        (QWKPage::viewportConfigurationForSize):
+        * UIProcess/API/qt/qwkpage.h:
+        * UIProcess/API/qt/qwkpage_p.h:
+        (QtViewportConfigurationPrivate::QtViewportConfigurationPrivate):
+
+2010-09-22  Adam Roben  <aroben@apple.com>
+
+        Windows build fix
+
+        * WebProcess/WebKitMain.cpp:
+        (WebKitMain): Fix typo
+
+2010-09-22  Adam Roben  <aroben@apple.com>
+
+        Autogenerate WebPage's message-receiving code and message types
+
+        This patch encompasses several changes that allow message types and
+        receiving code to be generated by a script, and add some type-safety
+        as a bonus. Messages are now represented by structs instead of an ID +
+        ArgumentCoder. The struct contains the arguments and the ID together,
+        and has a constructor that enforces the use of correct types.
+        Correspondingly, a new overload of WebProcessProxy::send that takes a
+        message struct (instead of a message ID and separate arguments) has
+        been added. Eventually all callers should use this overload and the
+        old one can be removed.
+
+        This patch only touches WebPage's messages. We should transition other
+        message receivers over to this new system eventually.
+
+        Fixes <http://webkit.org/b/43636> <rdar://problem/8282462> Add a
+        type-safe IPC mechanism to WebKit2
+
+        Reviewed by Anders Carlsson.
+
+        * DerivedSources.make: Added. Calls generate-message-receiver.py and
+        generate-messages-header.py for each message receiver it knows about
+        (just WebPage for now).
+
+        * Platform/CoreIPC/Arguments.h: Added First/Second/ThirdArgumentType
+        typedefs for use in handleMessage.
+
+        * Platform/CoreIPC/HandleMessage.h: Added.
+        (CoreIPC::handleMessage): This overloaded function template decodes
+        arguments and passes them along to the specified function.
+
+        * Scripts/generate-message-receiver.py: Added.
+        * Scripts/generate-messages-header.py: Added.
+        These scripts just wrap functionality in messages.py.
+
+        * Scripts/webkit2/__init__.py: Added. This just exists so that Python
+        will treat this directory as a package.
+
+        * Scripts/webkit2/messages.py: Added. Contains the code to parse
+        messages files and generate .cpp/.h files from them.
+        (MessageReceiver.__init__): This class represents a single receiver of
+        messages.
+        (MessageReceiver.iterparameters): Returns a generator that can be used
+        to iterate over all the parameters of all the messages of this
+        receiver.
+        (MessageReceiver.parse): Reads a messages file from a file-like object
+        and parses it into a MessageReceiver object.
+        (Message.__init__): This class represents a single message.
+        (Message.id): Returns the ID name for this message.
+        (Parameter.__init__): This class represents a single parameter for a
+        message.
+        (messages_header_filename): Returns the name of the header that
+        defines the messages for a given receiver.
+        (surround_in_condition): Surrounds the given string in #if/#endif if
+        there is an associated condition.
+        (messages_to_kind_enum): Returns a string that defines the Kind enum
+        for these messages.
+        (function_parameter_type): Returns the type that should be used when
+        passing a value of the given type as a parameter to a function.
+        (base_class): Returns the base class for a message struct.
+        (message_to_struct_declaration): Returns a string that declares the
+        struct for this message.
+        (forward_declarations_for_namespace): Returns a string that contains
+        forward-declarations for a set of types in a given namespace.
+        (forward_declarations): Returns a string that contains all the
+        forward-declarations needed in order to declare all the message
+        structs for this receiver.
+        (generate_header_file): Returns a string containing the messages
+        header file for this receiver.
+        (handler_function): Returns the name of the function that handles a
+        given message for a given receiver.
+        (case_statement): Returns a string containing a case statement for
+        handling the given message.
+        (header_for_type): Returns the header needed to define a given type,
+        enclosed in quotes or angle brackets as needed.
+        (generate_message_handler): Returns a string containing the contents
+        of a .cpp file that defines a didReceive*Message function.
+
+        * Scripts/webkit2/messages_unittest.py: Added. Contains tests for
+        messages.py.
+
+        * Shared/CoreIPCSupport/WebPageMessageKinds.h: Removed. This has been
+        replaced by a generated WebPageMessages.h header.
+
+        * UIProcess/WebEditCommandProxy.cpp:
+        * UIProcess/WebPageProxy.cpp:
+        Updated to use the new message structs and WebProcessProxy::send
+        overload.
+
+        * UIProcess/WebProcessProxy.h:
+        (WebKit::WebProcessProxy::send): Added this new overload that takes a
+        message struct.
+
+        * WebKit2.xcodeproj/project.pbxproj: Added a Derived Sources shell
+        script target that invokes DerivedSources.make. Added "Derived
+        Sources" and "Scripts" groups that contain the various new files.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::didReceivePolicyDecision):
+        (WebKit::WebPage::getSourceForFrame):
+        Changed these functions to take the raw IPC types and do the necessary
+        translation themselves. This keeps the generated code from need to
+        know how to perform the translation.
+
+        (WebKit::WebPage::didReceiveMessage): Replaced handling of WebPage
+        messages with a call to didReceiveWebPageMessage, whose implementation
+        is generated by the scripts.
+
+        * WebProcess/WebPage/WebPage.h: Added didReceiveWebPageMessage.
+
+        * WebProcess/WebPage/WebPage.messages.in: Added. This file declares
+        all of the messages that WebPage receives, roughly grouped by
+        functionality.
+
+        * win/WebKit2.vcproj: Added "Derived Sources" and "Scripts" filters
+        that contain the various new files. Let VS resort some other files.
+
+        * win/WebKit2Common.vsprops: Added
+        $(WebKitOutputDir)\obj\$(ProjectName)\DerivedSources to the include
+        path so that the generated messages header can be found.
+
+        * win/WebKit2.make: Copy the generated source files to $(DSTROOT).
+
+        * win/WebKit2Generated.make: Added a call to build-generated-files.sh.
+
+        * win/WebKit2Generated.vcproj: Added build-generated-files.sh.
+
+        * win/build-generated-files.sh: Added. Invokes DerivedSources.make.
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Darin Adler.
+
+        Enhance ProcessLauncher to be able to launch plug-in processes
+        https://bugs.webkit.org/show_bug.cgi?id=46295
+
+        * UIProcess/Launcher/ProcessLauncher.cpp:
+        (WebKit::ProcessLauncher::ProcessLauncher):
+        Make the ProcessLauncher constructor take a LaunchOptions struct.
+
+        (WebKit::ProcessLauncher::processTypeAsString):
+        Given a process type, return its string representation.
+
+        (WebKit::ProcessLauncher::getProcessTypeFromString):
+        And vice versa.
+
+        * UIProcess/Launcher/mac/ProcessLauncherMac.mm:
+        (WebKit::ProcessLauncher::launchProcess):
+        Rename "mode" to "type" and pass the type as a string based on the LaunchOptions struct.
+        Also, set the launch architecture from the LaunchOptions struct.
+
+        * UIProcess/Launcher/win/ProcessLauncherWin.cpp:
+        (WebKit::ProcessLauncher::launchProcess):
+        Rename "mode" to "type."
+
+        * UIProcess/WebProcessProxy.cpp:
+        (WebKit::WebProcessProxy::connect):
+        Initialize a LaunchOptions struct.
+
+        * WebProcess/WebKitMain.cpp:
+        (WebKitMain):
+        Factor code that can be shared between the mac and windows WebKitMain code out into a
+        WebKitMain overload that takes a CommandLine.
+
+        * WebProcess/WebProcessMain.h:
+        * WebProcess/mac/WebProcessMainMac.mm:
+        (WebKit::WebProcessMain):
+        * WebProcess/win/WebProcessMainWin.cpp:
+        (WebKit::WebProcessMain):
+        Change WebProcessMain to take a const CommandLine reference instead of a pointer.
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Rename GetPluginHostConnection to GetPluginPath
+        https://bugs.webkit.org/show_bug.cgi?id=46292
+
+        Rename GetPluginHostConnection to GetPluginPath since this message will always get the
+        plug-in path. We'll add another message to actually get the connection.
+
+        * Shared/CoreIPCSupport/WebProcessProxyMessageKinds.h:
+        * UIProcess/WebProcessProxy.cpp:
+        (WebKit::WebProcessProxy::getPluginPath):
+        (WebKit::WebProcessProxy::didReceiveMessage):
+        (WebKit::WebProcessProxy::didReceiveSyncMessage):
+        * UIProcess/WebProcessProxy.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::createPlugin):
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Move plug-in creation to WebPage::createPlugin
+        https://bugs.webkit.org/show_bug.cgi?id=46289
+
+        * WebProcess/WebCoreSupport/WebFrameLoaderClient.cpp:
+        (WebKit::WebFrameLoaderClient::createPlugin):
+        Call WebPage::createPlugin.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::createPlugin):
+        Create the plug-in.
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Darin Adler.
+
+        Random plug-in cleanups
+        https://bugs.webkit.org/show_bug.cgi?id=46279
+
+        * WebProcess/Plugins/Plugin.cpp:
+        (WebKit::Plugin::Parameters::encode):
+        (WebKit::Plugin::Parameters::decode):
+        Add CoreIPC coding support for the Plugin::Parameters struct.
+
+        * WebProcess/Plugins/PluginController.h:
+        Add pluginProcessCrashed pure virtual member function.
+
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::PluginView::handleEvent):
+        handleEvent can be called when m_plugin is null.
+
+        (WebKit::PluginView::pluginProcessCrashed):
+        Ask the renderer to show the crashed plug-in indicator.
+        
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by John Sullivan.
+
+        Don't listen for some window notifications on all windows
+        https://bugs.webkit.org/show_bug.cgi?id=46277
+
+        Only listen for NSWindowDidBecomeKeyNotification and NSWindowDidResignKeyNotification notifications
+        on all windows; this matches old WebKit and fixes a crash where we would send notifications to views whose
+        underlying pages were invalid.
+
+        * UIProcess/API/mac/WKView.mm:
+        (-[WKView addWindowObserversForWindow:]):
+        (-[WKView removeWindowObservers]):
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Crash when running plug-in layout tests
+        https://bugs.webkit.org/show_bug.cgi?id=46269
+
+        Store the web page directly in the PluginView class, instead of getting it from the frame
+        of the plug-in element; this fixes two crashes, one where the plug-in element had been deallocated
+        before the plug-in view, and another where the plug-in element's document did not have a frame.
+
+        This also makes things more robust since we're asserting in the WebPage destructor that no plug-ins have
+        an outstanding reference to it.
+        
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::webPage):
+        (WebKit::PluginView::PluginView):
+        (WebKit::PluginView::~PluginView):
+        (WebKit::PluginView::initializePlugin):
+        * WebProcess/Plugins/PluginView.h:
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Change a bunch of Vector<char> to Vector<uint8_t> to better indicate that we're
+        dealing with raw bytes.
+
+        * WebProcess/Plugins/Netscape/NetscapeBrowserFuncs.cpp:
+        (WebKit::parsePostBuffer):
+        (WebKit::NPN_GetURL):
+        (WebKit::NPN_PostURL):
+        (WebKit::NPN_GetURLNotify):
+        (WebKit::NPN_PostURLNotify):
+        * WebProcess/Plugins/Netscape/NetscapePlugin.cpp:
+        (WebKit::NetscapePlugin::loadURL):
+        (WebKit::NetscapePlugin::initialize):
+        * WebProcess/Plugins/Netscape/NetscapePlugin.h:
+        * WebProcess/Plugins/Netscape/NetscapePluginStream.cpp:
+        (WebKit::NetscapePluginStream::deliverData):
+        (WebKit::NetscapePluginStream::deliverDataToPlugin):
+        * WebProcess/Plugins/Netscape/NetscapePluginStream.h:
+        * WebProcess/Plugins/PluginController.h:
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::PluginView::loadURL):
+        * WebProcess/Plugins/PluginView.h:
+
+2010-09-22  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Assertion fails in [WKView _updateWindowFrame] when closing a WebKit2 window
+        https://bugs.webkit.org/show_bug.cgi?id=46264
+        <rdar://problem/8463534>
+
+        * UIProcess/API/mac/WKView.mm:
+        (-[WKView viewDidMoveToWindow]):
+        Only update window visibility and frame when we're moving to a window.
+
+2010-09-22  Balazs Kelemen  <kb@inf.u-szeged.hu>
+
+        Reviewed by Kenneth Rohde Christiansen.
+
+        [Qt] PluginStrategy implementation is broken
+        https://bugs.webkit.org/show_bug.cgi?id=46078
+
+        * UIProcess/API/qt/qwkpage.cpp:
+        (QWKPagePrivate::QWKPagePrivate):
+        Initialize the WebPlatformStrategies at the UI side as well because
+        we are using the LocalizationStrategy in the UI process.
+        Added a FIXME since this should be fixed in the future.
+
+2010-09-22  Balazs Kelemen  <kb@inf.u-szeged.hu>
+
+        Reviewed by Kenneth Rohde Christiansen.
+
+        PluginStrategy should satisfy the needs of Qt
+        https://bugs.webkit.org/show_bug.cgi?id=45857
+        No new functionality so no new tests.
+
+        * WebProcess/WebCoreSupport/WebPlatformStrategies.cpp:
+        (WebKit::WebPlatformStrategies::getPluginInfo):
+        * WebProcess/WebCoreSupport/WebPlatformStrategies.h:
+
+2010-09-21  Steve Falkenburg  <sfalken@apple.com>
+
+        Rubber stamped by Simon Fraser.
+
+        Add DirectX SDK include path.
+
+        * win/WebKit2DirectX.vsprops:
+
+2010-09-21  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Dan Bernstein.
+
+        Forward window focus changes to the plug-in
+        https://bugs.webkit.org/show_bug.cgi?id=46227
+
+        * WebProcess/Plugins/Netscape/mac/NetscapePluginMac.mm:
+        (WebKit::NetscapePlugin::windowFocusChanged):
+        Send the NPCocoaEventWindowFocusChanged event.
+
+        (WebKit::NetscapePlugin::windowFrameChanged):
+        (WebKit::NetscapePlugin::windowVisibilityChanged):
+        Add stubs.
+
+        * WebProcess/Plugins/Plugin.h:
+        Add windowFocusChanged, windowFrameChanged and windowVisibilityChanged.
+
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::PluginView::webPage):
+        Make webPage a member function instead.
+
+        (WebKit::PluginView::setWindowIsFocused):
+        Call the plug-in member function.
+
+        (WebKit::PluginView::initializePlugin):
+        When the plug-in has been initialized, update its window frame, window visibility 
+        and window focus states.
+
+        (WebKit::PluginView::setParent):
+        Move viewGeometryDidChange to initializePlugin.
+        
+        * WebProcess/Plugins/PluginView.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::setActive):
+        Tell all plug-in views about the new window focus state.
+
+        (WebKit::WebPage::windowIsFocused):
+        Return whether the window is focused or not.
+
+        * WebProcess/WebPage/WebPage.h:
+        (WebKit::WebPage::windowIsVisible):
+        (WebKit::WebPage::windowFrame):
+        Add getters.
+
+2010-09-21  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by John Sullivan.
+
+        Handle booleans in injected bundle messages
+        https://bugs.webkit.org/show_bug.cgi?id=46213
+
+        * Shared/UserMessageCoders.h:
+        (WebKit::UserMessageEncoder::baseEncode):
+        (WebKit::UserMessageDecoder::baseDecode):
+
+2010-09-21  Brian Weinstein  <bweinstein@apple.com>
+
+        Reviewed by Adam Roben.
+
+        WebKit2 should look for WebKit2WebProcess.exe next to WebKit.dll
+        https://bugs.webkit.org/show_bug.cgi?id=46209
+        <rdar://problem/8445639>
+        
+        Find WebKit2WebProcess.exe by getting the full path to WebKit.dll, and then
+        removing the last path component and replacing it with WebKit2WebProcess.exe.
+
+        * UIProcess/Launcher/win/ProcessLauncherWin.cpp:
+        (WebKit::ProcessLauncher::launchProcess):
+
+2010-09-21  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Adam Roben.
+
+        Send window visibility and window frame change sizes to the plug-in
+        https://bugs.webkit.org/show_bug.cgi?id=46202
+
+        * Shared/CoreIPCSupport/WebPageMessageKinds.h:
+        * UIProcess/API/mac/WKView.mm:
+        (-[WKView _updateWindowVisibility]):
+        Call WebPageProxy::setWindowIsVisible.
+
+        (-[WKView addWindowObserversForWindow:]):
+        Add additional observers.
+
+        (-[WKView removeWindowObservers]):
+        Remove observers.
+
+        (-[WKView _updateWindowFrame]):
+        Call WebPageProxy::setWindowFrame.
+
+        (-[WKView viewDidMoveToWindow]):
+        Update the window visibility and the web frame.
+
+        (-[WKView _windowDidMiniaturize:]):
+        (-[WKView _windowDidDeminiaturize:]):
+        Update the window visibility.
+
+        (-[WKView _windowFrameDidChange:]):
+        Update the window frame.
+
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::setWindowIsVisible):
+        (WebKit::WebPageProxy::setWindowFrame):
+        Send messages along to the web process.
+
+        * WebProcess/Plugins/PluginView.cpp:
+        (WebKit::PluginView::PluginView):
+        Register the plug-in view.
+
+        (WebKit::PluginView::~PluginView):
+        Unregister the plug-in view.
+
+        (WebKit::PluginView::setWindowIsVisible):
+        (WebKit::PluginView::setWindowFrame):
+        Add empty stubs.
+
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::WebPage):
+        Initialize m_windowIsVisible.
+
+        (WebKit::WebPage::~WebPage):
+        Assert that all plug-in views have been removed.
+
+        (WebKit::WebPage::setWindowIsVisible):
+        Notify all plug-ins about the window visibility change.
+        
+        (WebKit::WebPage::setWindowFrame):
+        Notify all plug-ins about the window frame change.
+        
+        (WebKit::WebPage::didReceiveMessage):
+        Handle setWindowIsVisible and setWindowFrame.
+
+2010-09-21  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Mark Rowe.
+
+        * Configurations/WebKit2.xcconfig:
+        Add a note about keeping the path in MainMac.cpp in sync with the install path.
+
+        * mac/MainMac.cpp:
+        (main):
+        Use the correct framework path.
+
+2010-09-21  Anders Carlsson  <andersca@apple.com>
+
+        Fix build.
+
+        * mac/MainMac.cpp:
+        (closeUnusedFileDescriptors):
+        Move this out into a separate function.
+
+        (main):
+        Don't use the soft linking macros, they were bringing in WTFReportAssertionFailure.
+
+2010-09-20  Anders Carlsson  <andersca@apple.com>
+
+        Reviewed by Dan Bernstein.
+
+        Zombie WebProcesses are left around
+        https://bugs.webkit.org/show_bug.cgi?id=46148
+        <rdar://problem/8455898>
+
+        * UIProcess/Launcher/mac/ProcessLauncherMac.mm:
+        (WebKit::setupTerminationNotificationHandler):
+        Register a dispatch handler that calls waitpid when the child process exits. This prevents zombies from
+        staying around after the child process has quit.
+
+        (WebKit::ProcessLauncher::launchProcess):
+        Pass POSIX_SPAWN_START_SUSPENDED to posix_spawn to avoid race conditions when setting up the termination
+        notification handler. When the handler is set up we send the SIGCONT signal to the child process.
+        
+        * mac/MainMac.cpp:
+        (main):
+        Loop through all file descriptors except for stdin, stdout and stderr and close them.
+
+        * WebKit2.xcodeproj/project.pbxproj:
+        Soft-link the Web process with WebKit2. We do this so we can ensure that we won't accidentally close any
+        file descriptors opened by initialization code that would have been called before main().
+
+2010-09-21  Andras Becsi  <abecsi@inf.u-szeged.hu>
+
+        Reviewed by Csaba Osztrogonác.
+
+        [Qt] QtWebProcess should clean up shared memory map files on close
+        https://bugs.webkit.org/show_bug.cgi?id=45984
+
+        Relocate MappedMemory struct code to it's own header and implement
+        a singleton pool class (MappedMemoryPool) which tracks shared memory
+        to be able to clean up map files from disk if RunLoop stops.
+
+        * Shared/qt/MappedMemory.h: Added.
+        (WebKit::MappedMemory::markUsed):
+        (WebKit::MappedMemory::markFree):
+        (WebKit::MappedMemory::isFree):
+        * Shared/qt/MappedMemoryPool.cpp: Added.
+        (WebKit::MappedMemoryPool::MappedMemoryPool):
+        (WebKit::MappedMemoryPool::instance):
+        (WebKit::MappedMemoryPool::size):
+        (WebKit::MappedMemoryPool::at):
+        (WebKit::MappedMemoryPool::append):
+        (WebKit::MappedMemoryPool::cleanUp):
+        * Shared/qt/UpdateChunk.cpp:
+        (WebKit::mapMemory):
+        (WebKit::mapFile):
+        * Shared/qt/UpdateChunk.h:
+        * WebKit2.pro:
+
 2010-09-20  Philippe Normand  <pnormand@igalia.com>
 
         Reviewed by Eric Carlson.

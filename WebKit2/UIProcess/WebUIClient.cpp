@@ -25,6 +25,7 @@
 
 #include "WebUIClient.h"
 
+#include "NativeWebKeyboardEvent.h"
 #include "WKAPICast.h"
 #include "WebPageProxy.h"
 #include <WebCore/IntSize.h>
@@ -111,12 +112,28 @@ void WebUIClient::setStatusText(WebPageProxy* page, const String& text)
     m_pageUIClient.setStatusText(toRef(page), toRef(text.impl()), m_pageUIClient.clientInfo);
 }
 
+void WebUIClient::mouseDidMoveOverElement(WebPageProxy* page, WebEvent::Modifiers modifiers, APIObject* userData)
+{
+    if (!m_pageUIClient.mouseDidMoveOverElement)
+        return;
+
+    m_pageUIClient.mouseDidMoveOverElement(toRef(page), toRef(modifiers), toRef(userData), m_pageUIClient.clientInfo);
+}
+
+
 void WebUIClient::contentsSizeChanged(WebPageProxy* page, const IntSize& size, WebFrameProxy* frame)
 {
     if (!m_pageUIClient.contentsSizeChanged)
         return;
 
     m_pageUIClient.contentsSizeChanged(toRef(page), size.width(), size.height(), toRef(frame), m_pageUIClient.clientInfo);
+}
+
+void WebUIClient::didNotHandleKeyEvent(WebPageProxy* page, const NativeWebKeyboardEvent& event)
+{
+    if (!m_pageUIClient.didNotHandleKeyEvent)
+        return;
+    m_pageUIClient.didNotHandleKeyEvent(toRef(page), event.nativeEvent(), m_pageUIClient.clientInfo);
 }
 
 } // namespace WebKit

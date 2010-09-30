@@ -123,6 +123,9 @@ public:
     bool allowExternalPages() const { return m_allowExternalPages; }
     void setAllowExternalPages(bool allowExternalPages) { m_allowExternalPages = allowExternalPages; }
 
+    void setAcceleratedCompositingEnabled(bool enabled) { m_acceleratedCompositingEnabled = enabled; }
+    void setAccelerated2dCanvasEnabled(bool enabled) { m_accelerated2dCanvasEnabled = enabled; }
+
 #if defined(OS_WIN)
     // Access to the finished event.  Used by the static WatchDog thread.
     HANDLE finishedEvent() { return m_finishedEvent; }
@@ -176,6 +179,8 @@ private:
     TestParams m_params;
     int m_timeout; // timeout value in millisecond
     bool m_allowExternalPages;
+    bool m_acceleratedCompositingEnabled;
+    bool m_accelerated2dCanvasEnabled;
     WebPreferences m_prefs;
 
     // List of all windows in this process.

@@ -27,6 +27,7 @@
 
 #include "ChunkedUpdateDrawingAreaProxy.h"
 #include "RunLoop.h"
+#include "NativeWebKeyboardEvent.h"
 #include "WebEditCommandProxy.h"
 #include "WebEventFactory.h"
 #include "WebPageNamespace.h"
@@ -185,11 +186,13 @@ WebView::WebView(RECT rect, WebPageNamespace* pageNamespace, HWND hostWindow)
 
     m_page = pageNamespace->createWebPage();
     m_page->setPageClient(this);
-    m_page->initializeWebPage(IntRect(rect).size(), ChunkedUpdateDrawingAreaProxy::create(this));
+    m_page->setDrawingArea(ChunkedUpdateDrawingAreaProxy::create(this));
 
     m_window = ::CreateWindowEx(0, kWebKit2WebViewWindowClassName, 0, WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
         rect.top, rect.left, rect.right - rect.left, rect.bottom - rect.top, m_hostWindow ? m_hostWindow : HWND_MESSAGE, 0, instanceHandle(), this);
     ASSERT(::IsWindow(m_window));
+
+    m_page->initializeWebPage(IntRect(rect).size());
 
     ::ShowWindow(m_window, SW_SHOW);
 
@@ -298,7 +301,7 @@ LRESULT WebView::onMouseEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     }
 
     WebMouseEvent mouseEvent = WebEventFactory::createWebMouseEvent(hWnd, message, wParam, lParam);
-    m_page->mouseEvent(mouseEvent);
+    m_page->handleMouseEvent(mouseEvent);
 
     handled = true;
     return 0;
@@ -323,7 +326,7 @@ LRESULT WebView::onWheelEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     */
 
     WebWheelEvent wheelEvent = WebEventFactory::createWebWheelEvent(hWnd, message, wParam, lParam);
-    m_page->wheelEvent(wheelEvent);
+    m_page->handleWheelEvent(wheelEvent);
 
     handled = true;
     return 0;
@@ -331,8 +334,7 @@ LRESULT WebView::onWheelEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 LRESULT WebView::onKeyEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, bool& handled)
 {
-    WebKeyboardEvent keyboardEvent = WebEventFactory::createWebKeyboardEvent(hWnd, message, wParam, lParam);
-    m_page->keyEvent(keyboardEvent);
+    m_page->handleKeyboardEvent(NativeWebKeyboardEvent(hWnd, message, wParam, lParam));
 
     handled = true;
     return 0;
@@ -578,6 +580,10 @@ void WebView::clearAllEditCommands()
 {
 }
 
+void WebView::setEditCommandState(const WTF::String&, bool, int)
+{
+}
+
 #if USE(ACCELERATED_COMPOSITING)
 void WebView::pageDidEnterAcceleratedCompositing()
 {
@@ -587,6 +593,11 @@ void WebView::pageDidLeaveAcceleratedCompositing()
 {
 }
 #endif // USE(ACCELERATED_COMPOSITING)
+
+HWND WebView::nativeWindow()
+{
+    return m_window;
+}
 
 // WebCore::WindowMessageListener
 

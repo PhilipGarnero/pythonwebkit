@@ -106,6 +106,7 @@ INCLUDEPATH = \
     Platform \
     Platform/CoreIPC \
     Shared \
+    Shared/API/c \
     Shared/CoreIPCSupport \
     Shared/qt \
     UIProcess \
@@ -129,13 +130,20 @@ INCLUDEPATH = \
 
 INCLUDEPATH += \
     $$OUTPUT_DIR/include \
-    $$OUTPUT_DIR/WebCore/generated
+    $$OUTPUT_DIR/WebCore/generated \
+    $$OUTPUT_DIR/WebKit2/generated
 
 
 PREFIX_HEADER = $$PWD/../WebKit2/WebKit2Prefix.h
 QMAKE_CXXFLAGS += "-include $$PREFIX_HEADER"
 
 DEFINES += BUILDING_QT__
+
+WEBKIT2_GENERATED_HEADERS = \
+    $$OUTPUT_DIR/WebKit2/generated/WebPageMessages.h
+
+WEBKIT2_GENERATED_SOURCES = \
+    $$OUTPUT_DIR/WebKit2/generated/WebPageMessageReceiver.cpp
 
 HEADERS += \
     Platform/CoreIPC/ArgumentDecoder.h \
@@ -144,6 +152,8 @@ HEADERS += \
     Platform/CoreIPC/Attachment.h \
     Platform/CoreIPC/Connection.h \
     Platform/CoreIPC/CoreIPCMessageKinds.h \
+    Platform/CoreIPC/DataReference.h \
+    Platform/CoreIPC/HandleMessage.h \
     Platform/CoreIPC/MessageID.h \
     Platform/Module.h \
     Platform/PlatformProcessIdentifier.h \
@@ -151,9 +161,18 @@ HEADERS += \
     Platform/SharedMemory.h \
     Platform/WorkItem.h \
     Platform/WorkQueue.h \
+    Shared/API/c/WKBase.h \
+    Shared/API/c/WKCertificateInfo.h \
+    Shared/API/c/WKNumber.h \
+    Shared/API/c/WKSerializedScriptValue.h \
+    Shared/API/c/WKSharedAPICast.h \
+    Shared/API/c/WKString.h \
+    Shared/API/c/WKType.h \
+    Shared/API/c/WKURL.h \
+    Shared/API/c/WKURLRequest.h \
+    Shared/API/c/WKURLResponse.h \
     Shared/CoreIPCSupport/DrawingAreaMessageKinds.h \
     Shared/CoreIPCSupport/DrawingAreaProxyMessageKinds.h \
-    Shared/CoreIPCSupport/WebPageMessageKinds.h \
     Shared/CoreIPCSupport/WebPageProxyMessageKinds.h \
     Shared/CoreIPCSupport/WebProcessMessageKinds.h \
     Shared/DrawingAreaBase.h \
@@ -161,45 +180,42 @@ HEADERS += \
     Shared/ImmutableDictionary.h \
     Shared/MutableArray.h \
     Shared/MutableDictionary.h \
+    Shared/NativeWebKeyboardEvent.h \
     Shared/NotImplemented.h \
+    Shared/qt/MappedMemory.h \
     Shared/qt/PlatformCertificateInfo.h \
+    Shared/qt/UpdateChunk.h \
     Shared/qt/WebEventFactoryQt.h \
     Shared/UserMessageCoders.h \
     Shared/VisitedLinkTable.h \
     Shared/WebCertificateInfo.h \
-    Shared/WebEventConversion.h \
     Shared/WebEvent.h \
-    Shared/WebNumber.h \
+    Shared/WebEventConversion.h \
     Shared/WebNavigationDataStore.h \
+    Shared/WebNumber.h \
+    Shared/WebPageCreationParameters.h \
     Shared/WebPreferencesStore.h \
     Shared/WebURLRequest.h \
     Shared/WebURLResponse.h \
-    UIProcess/API/cpp/WKRetainPtr.h \
-    UIProcess/API/cpp/qt/WKStringQt.h \
-    UIProcess/API/cpp/qt/WKURLQt.h \
     UIProcess/API/C/WebKit2.h \
     UIProcess/API/C/WKAPICast.h \
-    UIProcess/API/C/WKBase.h \
-    UIProcess/API/C/WKCertificateInfo.h \
     UIProcess/API/C/WKContext.h \
     UIProcess/API/C/WKContextPrivate.h \
     UIProcess/API/C/WKFrame.h \
     UIProcess/API/C/WKFramePolicyListener.h \
+    UIProcess/API/C/WKNativeEvent.h \
     UIProcess/API/C/WKNavigationData.h \
-    UIProcess/API/C/WKNumber.h \
     UIProcess/API/C/WKPage.h \
     UIProcess/API/C/WKPageNamespace.h \
     UIProcess/API/C/WKPagePrivate.h \
     UIProcess/API/C/WKPreferences.h \
-    UIProcess/API/C/WKString.h \
-    UIProcess/API/C/WKType.h \
-    UIProcess/API/C/WKURL.h \
-    UIProcess/API/C/WKURLRequest.h \
-    UIProcess/API/C/WKURLResponse.h \
-    UIProcess/API/C/WKSerializedScriptValue.h \
+    UIProcess/API/cpp/qt/WKStringQt.h \
+    UIProcess/API/cpp/qt/WKURLQt.h \
+    UIProcess/API/cpp/WKRetainPtr.h \
     UIProcess/API/qt/qgraphicswkview.h \
     UIProcess/API/qt/qwkpage.h \
     UIProcess/API/qt/qwkpage_p.h \
+    UIProcess/API/qt/qwkpreferences.h \
     UIProcess/ChunkedUpdateDrawingAreaProxy.h \
     UIProcess/DrawingAreaProxy.h \
     UIProcess/GenericCallback.h \
@@ -230,11 +246,12 @@ HEADERS += \
     UIProcess/WebProcessManager.h \
     UIProcess/WebProcessProxy.h \
     UIProcess/WebUIClient.h \
-    WebProcess/InjectedBundle/API/c/WKBundleBase.h \
     WebProcess/InjectedBundle/API/c/WKBundlePage.h \
+    WebProcess/InjectedBundle/API/c/WKBundleHitTestResult.h \
     WebProcess/InjectedBundle/DOM/InjectedBundleNodeHandle.h \
     WebProcess/InjectedBundle/DOM/InjectedBundleRangeHandle.h \
     WebProcess/InjectedBundle/InjectedBundle.h \
+    WebProcess/InjectedBundle/InjectedBundleHitTestResult.h \
     WebProcess/InjectedBundle/InjectedBundlePageFormClient.h \
     WebProcess/InjectedBundle/InjectedBundlePageUIClient.h \
     WebProcess/InjectedBundle/InjectedBundleScriptWorld.h \
@@ -268,12 +285,14 @@ HEADERS += \
     WebProcess/WebPage/WebFrame.h \
     WebProcess/WebPage/WebPage.h \
     WebProcess/WebProcess.h \
+    $$WEBKIT2_GENERATED_HEADERS
 
 SOURCES += \
     Platform/CoreIPC/ArgumentDecoder.cpp \
     Platform/CoreIPC/ArgumentEncoder.cpp \
     Platform/CoreIPC/Attachment.cpp \
     Platform/CoreIPC/Connection.cpp \
+    Platform/CoreIPC/DataReference.cpp \
     Platform/CoreIPC/qt/ConnectionQt.cpp \
     Platform/Module.cpp \
     Platform/RunLoop.cpp \
@@ -282,39 +301,42 @@ SOURCES += \
     Platform/qt/RunLoopQt.cpp \
     Platform/qt/SharedMemoryQt.cpp \
     Platform/qt/WorkQueueQt.cpp \
-    Shared/DrawingAreaBase.cpp \
+    Shared/API/c/WKCertificateInfo.cpp \
+    Shared/API/c/WKNumber.cpp \
+    Shared/API/c/WKSerializedScriptValue.cpp \
+    Shared/API/c/WKString.cpp \
+    Shared/API/c/WKType.cpp \
+    Shared/API/c/WKURL.cpp \
+    Shared/API/c/WKURLRequest.cpp \
+    Shared/API/c/WKURLResponse.cpp \
     Shared/ImmutableArray.cpp \
     Shared/ImmutableDictionary.cpp \
     Shared/MutableArray.cpp \
     Shared/MutableDictionary.cpp \
+    Shared/qt/MappedMemoryPool.cpp \
+    Shared/qt/NativeWebKeyboardEventQt.cpp \
+    Shared/qt/UpdateChunk.cpp \
+    Shared/qt/WebCoreArgumentCodersQt.cpp \
+    Shared/qt/WebEventFactoryQt.cpp \
+    Shared/qt/WebURLRequestQt.cpp \
+    Shared/qt/WebURLResponseQt.cpp \
     Shared/VisitedLinkTable.cpp \
     Shared/WebEventConversion.cpp \
+    Shared/WebPageCreationParameters.cpp \
     Shared/WebPreferencesStore.cpp \
     Shared/WebURLRequest.cpp \
     Shared/WebURLResponse.cpp \
-    Shared/qt/UpdateChunk.cpp \
-    Shared/qt/WebEventFactoryQt.cpp \
-    Shared/qt/WebCoreArgumentCodersQt.cpp \
-    Shared/qt/WebURLRequestQt.cpp \
-    Shared/qt/WebURLResponseQt.cpp \
-    UIProcess/API/C/WKCertificateInfo.cpp \
     UIProcess/API/C/WKContext.cpp \
     UIProcess/API/C/WKFrame.cpp \
     UIProcess/API/C/WKFramePolicyListener.cpp \
     UIProcess/API/C/WKNavigationData.cpp \
-    UIProcess/API/C/WKNumber.cpp \
     UIProcess/API/C/WKPage.cpp \
     UIProcess/API/C/WKPageNamespace.cpp \
     UIProcess/API/C/WKPreferences.cpp \
-    UIProcess/API/C/WKSerializedScriptValue.cpp \
-    UIProcess/API/C/WKString.cpp \
-    UIProcess/API/C/WKType.cpp \
-    UIProcess/API/C/WKURL.cpp \
-    UIProcess/API/C/WKURLRequest.cpp \
-    UIProcess/API/C/WKURLResponse.cpp \
     UIProcess/API/qt/ClientImpl.cpp \
     UIProcess/API/qt/qgraphicswkview.cpp \
     UIProcess/API/qt/qwkpage.cpp \
+    UIProcess/API/qt/qwkpreferences.cpp \
     UIProcess/API/cpp/qt/WKStringQt.cpp \
     UIProcess/API/cpp/qt/WKURLQt.cpp \
     UIProcess/ChunkedUpdateDrawingAreaProxy.cpp \
@@ -347,9 +369,11 @@ SOURCES += \
     UIProcess/WebProcessManager.cpp \
     UIProcess/WebProcessProxy.cpp \
     UIProcess/WebUIClient.cpp \
+    WebProcess/InjectedBundle/API/c/WKBundleHitTestResult.cpp \
     WebProcess/InjectedBundle/DOM/InjectedBundleNodeHandle.cpp \
     WebProcess/InjectedBundle/DOM/InjectedBundleRangeHandle.cpp \
     WebProcess/InjectedBundle/InjectedBundle.cpp \
+    WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp \
     WebProcess/InjectedBundle/InjectedBundlePageEditorClient.cpp \
     WebProcess/InjectedBundle/InjectedBundlePageFormClient.cpp \
     WebProcess/InjectedBundle/InjectedBundlePageUIClient.cpp \
@@ -392,3 +416,4 @@ SOURCES += \
     UIProcess/qt/ChunkedUpdateDrawingAreaProxyQt.cpp \
     UIProcess/qt/WebContextQt.cpp \
     WebProcess/qt/WebProcessMainQt.cpp \
+    $$WEBKIT2_GENERATED_SOURCES

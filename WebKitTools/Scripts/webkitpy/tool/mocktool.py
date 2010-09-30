@@ -317,7 +317,7 @@ class MockBugzilla(Mock):
             flag_name, flag_value, attachment_id, comment_text, additional_comment_text))
 
     def post_comment_to_bug(self, bug_id, comment_text, cc=None):
-        log("MOCK bug comment: bug_id=%s, cc=%s\n--- Begin comment ---\%s\n--- End comment ---\n" % (
+        log("MOCK bug comment: bug_id=%s, cc=%s\n--- Begin comment ---\n%s\n--- End comment ---\n" % (
             bug_id, cc, comment_text))
 
     def add_patch_to_bug(self,
@@ -348,6 +348,26 @@ class MockBuilder(object):
     def force_build(self, username, comments):
         log("MOCK: force_build: name=%s, username=%s, comments=%s" % (
             self._name, username, comments))
+
+
+class MockFailureMap(object):
+    def __init__(self, buildbot):
+        self._buildbot = buildbot
+
+    def is_empty(self):
+        return False
+
+    def filter_out_old_failures(self, is_old_revision):
+        pass
+
+    def failing_revisions(self):
+        return [29837]
+
+    def builders_failing_for(self, revision):
+        return [self._buildbot.builder_with_name("Builder1")]
+
+    def tests_failing_for(self, revision):
+        return ["mock-test-1"]
 
 
 class MockBuildBot(object):
@@ -394,10 +414,8 @@ class MockBuildBot(object):
     def light_tree_on_fire(self):
         self._mock_builder2_status["is_green"] = False
 
-    def revisions_causing_failures(self):
-        return {
-            "29837": [self.builder_with_name("Builder1")],
-        }
+    def failure_map(self):
+        return MockFailureMap(self)
 
 
 class MockSCM(Mock):
@@ -439,6 +457,9 @@ class MockCheckout(object):
     _committer_list = CommitterList()
 
     def commit_info_for_revision(self, svn_revision):
+        # The real Checkout would probably throw an exception, but this is the only way tests have to get None back at the moment.
+        if not svn_revision:
+            return None
         return CommitInfo(svn_revision, "eric@webkit.org", {
             "bug_id": 42,
             "author_name": "Adam Barth",
@@ -483,8 +504,8 @@ class MockUser(object):
     def page(self, message):
         pass
 
-    def confirm(self, message=None):
-        return True
+    def confirm(self, message=None, default='y'):
+        return default == 'y'
 
     def can_open_url(self):
         return True
@@ -507,8 +528,9 @@ class MockIRC(object):
 
 class MockStatusServer(object):
 
-    def __init__(self, work_items=None):
+    def __init__(self, bot_id=None, work_items=None):
         self.host = "example.com"
+        self.bot_id = bot_id
         self._work_items = work_items or []
 
     def patch_status(self, queue_name, patch_id):
@@ -622,3 +644,19 @@ class MockTool():
 
     def path(self):
         return "echo"
+
+
+class MockBrowser(object):
+    params = {}
+
+    def open(self, url):
+        pass
+
+    def select_form(self, name):
+        pass
+
+    def __setitem__(self, key, value):
+        self.params[key] = value
+
+    def submit(self):
+        return Mock(file)

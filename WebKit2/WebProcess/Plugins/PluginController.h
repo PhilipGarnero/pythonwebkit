@@ -44,8 +44,8 @@ public:
     // Tells the controller that the plug-in wants the given rect to be repainted. The rect is in the plug-in's coordinate system.
     virtual void invalidate(const WebCore::IntRect&) = 0;
 
-    // Returns the user agent string for the given URL.
-    virtual String userAgent(const WebCore::KURL&) = 0;
+    // Returns the user agent string.
+    virtual String userAgent() = 0;
 
     // Loads the given URL and associates it with the request ID.
     // 
@@ -55,7 +55,7 @@ public:
     //
     // If the URL is a JavaScript URL, the JavaScript code will be evaluated and the result sent back using Plugin::didEvaluateJavaScript.
     virtual void loadURL(uint64_t requestID, const String& method, const String& urlString, const String& target, 
-                         const WebCore::HTTPHeaderMap& headerFields, const Vector<char>& httpBody, bool allowPopups) = 0;
+                         const WebCore::HTTPHeaderMap& headerFields, const Vector<uint8_t>& httpBody, bool allowPopups) = 0;
 
     /// Cancels the load of a stream that was requested by loadURL.
     virtual void cancelStreamLoad(uint64_t streamID) = 0;
@@ -78,6 +78,14 @@ public:
 #if USE(ACCELERATED_COMPOSITING)
     // Return whether accelerated compositing is enabled.
     virtual bool isAcceleratedCompositingEnabled() = 0;
+#endif
+
+    // Tells the controller that the plug-in process has crashed.
+    virtual void pluginProcessCrashed() = 0;
+    
+#if PLATFORM(WIN)
+    // The window to use as the parent of the plugin's window.
+    virtual HWND nativeParentWindow() = 0;
 #endif
 
 protected:

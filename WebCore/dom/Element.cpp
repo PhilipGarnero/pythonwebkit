@@ -33,6 +33,7 @@
 #include "CSSStyleSelector.h"
 #include "ClientRect.h"
 #include "ClientRectList.h"
+#include "DOMTokenList.h"
 #include "DatasetDOMStringMap.h"
 #include "Document.h"
 #include "DocumentFragment.h"
@@ -43,7 +44,7 @@
 #include "FrameView.h"
 #include "HTMLElement.h"
 #include "HTMLNames.h"
-#include "InspectorController.h"
+#include "InspectorInstrumentation.h"
 #include "NodeList.h"
 #include "NodeRenderStyle.h"
 #include "Page.h"
@@ -557,7 +558,7 @@ void Element::setAttribute(const AtomicString& name, const AtomicString& value, 
 
 #if ENABLE(INSPECTOR)
     if (!isSynchronizingStyleAttribute())
-        InspectorController::willModifyDOMAttr(this);
+        InspectorInstrumentation::willModifyDOMAttr(document(), this);
 #endif
 
     const AtomicString& localName = shouldIgnoreAttributeCase(this) ? name.lower() : name;
@@ -578,13 +579,16 @@ void Element::setAttribute(const AtomicString& name, const AtomicString& value, 
     else if (!old && !value.isNull())
         m_attributeMap->addAttribute(createAttribute(QualifiedName(nullAtom, localName, nullAtom), value));
     else if (old && !value.isNull()) {
-        old->setValue(value);
+        if (Attr* attrNode = old->attr())
+            attrNode->setValue(value);
+        else
+            old->setValue(value);
         attributeChanged(old);
     }
 
 #if ENABLE(INSPECTOR)
     if (!isSynchronizingStyleAttribute())
-        InspectorController::didModifyDOMAttr(this);
+        InspectorInstrumentation::didModifyDOMAttr(document(), this);
 #endif
 }
 
@@ -592,7 +596,7 @@ void Element::setAttribute(const QualifiedName& name, const AtomicString& value,
 {
 #if ENABLE(INSPECTOR)
     if (!isSynchronizingStyleAttribute())
-        InspectorController::willModifyDOMAttr(this);
+        InspectorInstrumentation::willModifyDOMAttr(document(), this);
 #endif
 
     document()->incDOMTreeVersion();
@@ -608,13 +612,16 @@ void Element::setAttribute(const QualifiedName& name, const AtomicString& value,
     else if (!old && !value.isNull())
         m_attributeMap->addAttribute(createAttribute(name, value));
     else if (old) {
-        old->setValue(value);
+        if (Attr* attrNode = old->attr())
+            attrNode->setValue(value);
+        else
+            old->setValue(value);
         attributeChanged(old);
     }
 
 #if ENABLE(INSPECTOR)
     if (!isSynchronizingStyleAttribute())
-        InspectorController::didModifyDOMAttr(this);
+        InspectorInstrumentation::didModifyDOMAttr(document(), this);
 #endif
 }
 
@@ -651,6 +658,8 @@ void Element::updateAfterAttributeChanged(Attribute* attr)
         document()->axObjectCache()->selectedChildrenChanged(renderer());
     else if (attrName == aria_expandedAttr)
         document()->axObjectCache()->handleAriaExpandedChange(renderer());
+    else if (attrName == aria_hiddenAttr)
+        document()->axObjectCache()->childrenChanged(renderer());
 }
     
 void Element::recalcStyleIfNeededAfterAttributeChanged(Attribute* attr)
@@ -1248,7 +1257,7 @@ void Element::setAttributeNS(const AtomicString& namespaceURI, const AtomicStrin
 
 void Element::removeAttribute(const String& name, ExceptionCode& ec)
 {
-    InspectorController::willModifyDOMAttr(this);
+    InspectorInstrumentation::willModifyDOMAttr(document(), this);
 
     String localName = shouldIgnoreAttributeCase(this) ? name.lower() : name;
 
@@ -1258,7 +1267,7 @@ void Element::removeAttribute(const String& name, ExceptionCode& ec)
             ec = 0;
     }
     
-    InspectorController::didModifyDOMAttr(this);
+    InspectorInstrumentation::didModifyDOMAttr(document(), this);
 }
 
 void Element::removeAttributeNS(const String& namespaceURI, const String& localName, ExceptionCode& ec)
@@ -1563,6 +1572,21 @@ bool Element::webkitMatchesSelector(const String& selector, ExceptionCode& ec)
     }
 
     return false;
+}
+
+DOMTokenList* Element::classList()
+{
+    ElementRareData* data = ensureRareData();
+    if (!data->m_classList)
+        data->m_classList = DOMTokenList::create(this);
+    return data->m_classList.get();
+}
+
+DOMTokenList* Element::optionalClassList() const
+{
+    if (!hasRareData())
+        return 0;
+    return rareData()->m_classList.get();
 }
 
 DOMStringMap* Element::dataset()

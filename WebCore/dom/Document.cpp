@@ -129,7 +129,6 @@
 #include "TreeWalker.h"
 #include "UIEvent.h"
 #include "UserContentURLPattern.h"
-#include "ViewportArguments.h"
 #include "WebKitAnimationEvent.h"
 #include "WebKitTransitionEvent.h"
 #include "WheelEvent.h"
@@ -1049,7 +1048,7 @@ KURL Document::baseURI() const
 // * making it receive a rect as parameter, i.e. nodesFromRect(x, y, w, h);
 // * making it receive the expading size of each direction separately,
 //   i.e. nodesFromRect(x, y, topSize, rightSize, bottomSize, leftSize);
-PassRefPtr<NodeList> Document::nodesFromRect(int centerX, int centerY, unsigned hPadding, unsigned vPadding, bool ignoreClipping) const
+PassRefPtr<NodeList> Document::nodesFromRect(int centerX, int centerY, unsigned topPadding, unsigned rightPadding, unsigned bottomPadding, unsigned leftPadding, bool ignoreClipping) const
 {
     // FIXME: Share code between this, elementFromPoint and caretRangeFromPoint.
     if (!renderer())
@@ -1063,26 +1062,25 @@ PassRefPtr<NodeList> Document::nodesFromRect(int centerX, int centerY, unsigned 
 
     float zoomFactor = frame->pageZoomFactor();
     IntPoint point = roundedIntPoint(FloatPoint(centerX * zoomFactor + view()->scrollX(), centerY * zoomFactor + view()->scrollY()));
-    IntSize padding(hPadding, vPadding);
 
     int type = HitTestRequest::ReadOnly | HitTestRequest::Active;
 
     // When ignoreClipping is false, this method returns null for coordinates outside of the viewport.
     if (ignoreClipping)
         type |= HitTestRequest::IgnoreClipping;
-    else if (!frameView->visibleContentRect().intersects(IntRect(point, padding)))
+    else if (!frameView->visibleContentRect().intersects(HitTestResult::rectFromPoint(point, topPadding, rightPadding, bottomPadding, leftPadding)))
         return 0;
 
     HitTestRequest request(type);
 
     // Passing a zero padding will trigger a rect hit test, however for the purposes of nodesFromRect,
     // we special handle this case in order to return a valid NodeList.
-    if (padding.isZero()) {
+    if (!topPadding && !rightPadding && !bottomPadding && !leftPadding) {
         HitTestResult result(point);
         return handleZeroPadding(request, result);
     }
 
-    HitTestResult result(point, padding);
+    HitTestResult result(point, topPadding, rightPadding, bottomPadding, leftPadding);
     renderView()->layer()->hitTest(request, result);
 
     return StaticHashSetNodeList::adopt(result.rectBasedTestResult());
@@ -1208,8 +1206,10 @@ void Document::removeElementById(const AtomicString& elementId, Element* element
 
     if (m_elementsById.get(elementId.impl()) == element)
         m_elementsById.remove(elementId.impl());
-    else
+    else {
+        ASSERT(m_inRemovedLastRefFunction || m_duplicateIds.contains(elementId.impl()));
         m_duplicateIds.remove(elementId.impl());
+    }
 }
 
 Element* Document::getElementByAccessKey(const String& key) const
@@ -1782,6 +1782,18 @@ void Document::clearAXObjectCache()
         doc->clearAXObjectCache();
 }
 
+bool Document::axObjectCacheExists() const
+{
+    if (m_axObjectCache)
+        return true;
+    
+    Document* doc = topDocument();
+    if (doc != this)
+        return doc->axObjectCacheExists();
+    
+    return false;
+}
+    
 AXObjectCache* Document::axObjectCache() const
 {
     // The only document that actually has a AXObjectCache is the top-level
@@ -2051,7 +2063,7 @@ void Document::implicitClose()
             view()->layout();
     }
 
-#if PLATFORM(MAC)
+#if PLATFORM(MAC) || PLATFORM(CHROMIUM)
     if (f && renderObject && this == topDocument() && AXObjectCache::accessibilityEnabled()) {
         // The AX cache may have been cleared at this point, but we need to make sure it contains an
         // AX object to send the notification to. getOrCreate will make sure that an valid AX object
@@ -2306,7 +2318,7 @@ const Vector<RefPtr<CSSStyleSheet> >* Document::pageGroupUserSheets() const
             if (!UserContentURLPattern::matchesPatterns(url(), sheet->whitelist(), sheet->blacklist()))
                 continue;
             RefPtr<CSSStyleSheet> parsedSheet = CSSStyleSheet::createInline(const_cast<Document*>(this), sheet->url());
-            parsedSheet->setIsUserStyleSheet(sheet->level() == UserStyleSheet::UserLevel);
+            parsedSheet->setIsUserStyleSheet(sheet->level() == UserStyleUserLevel);
             parsedSheet->parseString(sheet->source(), !inQuirksMode());
             if (!m_pageGroupUserSheets)
                 m_pageGroupUserSheets.set(new Vector<RefPtr<CSSStyleSheet> >);
@@ -2588,16 +2600,14 @@ void Document::processViewport(const String& features)
 {
     ASSERT(!features.isNull());
 
+    m_viewportArguments = ViewportArguments();
+    processArguments(features, (void*)&m_viewportArguments, &setViewportFeature);
+
     Frame* frame = this->frame();
-    if (!frame)
+    if (!frame || !frame->page())
         return;
 
-    if (frame->page()) {
-        ViewportArguments arguments;
-        processArguments(features, (void*)&arguments, &setViewportFeature);
-
-        frame->page()->chrome()->client()->didReceiveViewportArguments(frame, arguments);
-    }
+    frame->page()->chrome()->client()->didReceiveViewportArguments(frame, m_viewportArguments);
 }
 
 MouseEventWithHitTestResults Document::prepareMouseEvent(const HitTestRequest& request, const IntPoint& documentPoint, const PlatformMouseEvent& event)
@@ -3165,7 +3175,7 @@ bool Document::setFocusedNode(PassRefPtr<Node> newFocusedNode)
         }
     }
 
-#if ((PLATFORM(MAC) || PLATFORM(WIN)) && !PLATFORM(CHROMIUM)) || PLATFORM(GTK)
+#if PLATFORM(MAC) || PLATFORM(WIN) || PLATFORM(GTK) || PLATFORM(CHROMIUM)
     if (!focusChangeBlocked && m_focusedNode && AXObjectCache::accessibilityEnabled()) {
         RenderObject* oldFocusedRenderer = 0;
         RenderObject* newFocusedRenderer = 0;
@@ -3212,6 +3222,8 @@ void Document::attachNodeIterator(NodeIterator* ni)
 
 void Document::detachNodeIterator(NodeIterator* ni)
 {
+    // The node iterator can be detached without having been attached if its root node didn't have a document
+    // when the iterator was created, but has it now.
     m_nodeIterators.remove(ni);
 }
 
@@ -3811,6 +3823,10 @@ void Document::setInPageCache(bool flag)
         ASSERT(m_renderArena);
         setRenderer(m_savedRenderer);
         m_savedRenderer = 0;
+
+        if (frame() && frame()->page())
+            frame()->page()->chrome()->client()->didReceiveViewportArguments(frame(), m_viewportArguments);
+
         if (childNeedsStyleRecalc())
             scheduleStyleRecalc();
     }
@@ -3908,7 +3924,7 @@ bool Document::queryCommandIndeterm(const String& commandName)
 
 bool Document::queryCommandState(const String& commandName)
 {
-    return command(this, commandName).state() != FalseTriState;
+    return command(this, commandName).state() == TrueTriState;
 }
 
 bool Document::queryCommandSupported(const String& commandName)
@@ -4023,6 +4039,11 @@ SVGDocumentExtensions* Document::accessSVGExtensions()
     if (!m_svgExtensions)
         m_svgExtensions = adoptPtr(new SVGDocumentExtensions(this));
     return m_svgExtensions.get();
+}
+
+bool Document::hasSVGRootNode() const
+{
+    return documentElement() && documentElement()->hasTagName(SVGNames::svgTag);
 }
 #endif
 
@@ -4267,37 +4288,9 @@ void FormElementKey::deref() const
         type()->deref();
 }
 
-unsigned FormElementKeyHash::hash(const FormElementKey& k)
+unsigned FormElementKeyHash::hash(const FormElementKey& key)
 {
-    ASSERT(sizeof(k) % (sizeof(uint16_t) * 2) == 0);
-
-    unsigned l = sizeof(k) / (sizeof(uint16_t) * 2);
-    const uint16_t* s = reinterpret_cast<const uint16_t*>(&k);
-    uint32_t hash = WTF::stringHashingStartValue;
-
-    // Main loop
-    for (; l > 0; l--) {
-        hash += s[0];
-        uint32_t tmp = (s[1] << 11) ^ hash;
-        hash = (hash << 16) ^ tmp;
-        s += 2;
-        hash += hash >> 11;
-    }
-        
-    // Force "avalanching" of final 127 bits
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 2;
-    hash += hash >> 15;
-    hash ^= hash << 10;
-
-    // this avoids ever returning a hash code of 0, since that is used to
-    // signal "hash not computed yet", using a value that is likely to be
-    // effectively the same as 0 when the low bits are masked
-    if (!hash)
-        hash = 0x80000000;
-
-    return hash;
+    return WTF::StringHasher::createBlobHash<sizeof(FormElementKey)>(&key);
 }
 
 void Document::setIconURL(const String& iconURL, const String& type)

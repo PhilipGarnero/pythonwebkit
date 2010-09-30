@@ -45,6 +45,7 @@ public:
 
     WEBKIT_API static WebAccessibilityCache* create();
     WEBKIT_API static void enableAccessibility();
+    WEBKIT_API static bool accessibilityEnabled();
 
     virtual void initialize(WebView* view) = 0;
     virtual bool isInitialized() const = 0;
@@ -52,6 +53,7 @@ public:
     virtual WebAccessibilityObject getObjectById(int) = 0;
     virtual bool isValidId(int) const = 0;
     virtual int addOrGetId(const WebAccessibilityObject& object) = 0;
+    virtual bool isCached(const WebAccessibilityObject&) = 0;
 
     virtual void remove(int) = 0;
     virtual void clear() = 0;

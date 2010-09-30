@@ -1,3 +1,4 @@
+This test has incorrect results but reflects what's happening as we bring block-flow online.
 Block #1:
 Margins: 1px 2px 3px 4px
 Padding: 4px 3px 2px 1px

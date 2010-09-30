@@ -60,7 +60,7 @@ public:
     void invalidate(const NPRect*);
     const char* userAgent();
     void loadURL(const String& method, const String& urlString, const String& target, const WebCore::HTTPHeaderMap& headerFields,
-                 const Vector<char>& httpBody, bool sendNotification, void* notificationData);
+                 const Vector<uint8_t>& httpBody, bool sendNotification, void* notificationData);
     NPError destroyStream(NPStream*, NPReason);
     void setIsWindowed(bool windowed) { m_isWindowed = windowed; }
     void setStatusbarText(const String&);
@@ -99,6 +99,8 @@ private:
     bool allowPopups() const;
 
     bool platformPostInitialize();
+    void platformDestroy();
+    void platformGeometryDidChange();
     void platformPaint(WebCore::GraphicsContext*, const WebCore::IntRect& dirtyRect);
 
     bool platformHandleMouseEvent(const WebMouseEvent&);
@@ -134,6 +136,13 @@ private:
     virtual bool handleMouseEnterEvent(const WebMouseEvent&);
     virtual bool handleMouseLeaveEvent(const WebMouseEvent&);
     virtual void setFocus(bool);
+
+#if PLATFORM(MAC)
+    virtual void windowFocusChanged(bool);
+    virtual void windowFrameChanged(const WebCore::IntRect&);
+    virtual void windowVisibilityChanged(bool);
+#endif
+
     virtual NPObject* pluginScriptableNPObject();
 
     virtual PluginController* controller();
@@ -166,6 +175,8 @@ private:
     NPDrawingModel m_drawingModel;
     NPEventModel m_eventModel;
     RetainPtr<PlatformLayer> m_pluginLayer;
+#elif PLATFORM(WIN)
+    HWND m_window;
 #endif
 };
 

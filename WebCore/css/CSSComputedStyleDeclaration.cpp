@@ -123,6 +123,7 @@ static const int computedProperties[] = {
     CSSPropertyPosition,
     CSSPropertyResize,
     CSSPropertyRight,
+    CSSPropertySpeak,
     CSSPropertyTableLayout,
     CSSPropertyTextAlign,
     CSSPropertyTextDecoration,
@@ -192,8 +193,8 @@ static const int computedProperties[] = {
     CSSPropertyWebkitHighlight,
     CSSPropertyWebkitLineBreak,
     CSSPropertyWebkitLineClamp,
-    CSSPropertyWebkitMarginBottomCollapse,
-    CSSPropertyWebkitMarginTopCollapse,
+    CSSPropertyWebkitMarginBeforeCollapse,
+    CSSPropertyWebkitMarginAfterCollapse,
     CSSPropertyWebkitMarqueeDirection,
     CSSPropertyWebkitMarqueeIncrement,
     CSSPropertyWebkitMarqueeRepetition,
@@ -1363,9 +1364,11 @@ PassRefPtr<CSSValue> CSSComputedStyleDeclaration::getPropertyCSSValue(int proper
             // Not a real style property -- used by the editing engine -- so has no computed value.
             break;
         case CSSPropertyWebkitMarginBottomCollapse:
-            return CSSPrimitiveValue::create(style->marginBottomCollapse());
+        case CSSPropertyWebkitMarginAfterCollapse:
+            return CSSPrimitiveValue::create(style->marginAfterCollapse());
         case CSSPropertyWebkitMarginTopCollapse:
-            return CSSPrimitiveValue::create(style->marginTopCollapse());
+        case CSSPropertyWebkitMarginBeforeCollapse:
+            return CSSPrimitiveValue::create(style->marginBeforeCollapse());
         case CSSPropertyWebkitPerspective:
             if (!style->hasPerspective())
                 return CSSPrimitiveValue::createIdentifier(CSSValueNone);
@@ -1409,6 +1412,8 @@ PassRefPtr<CSSValue> CSSComputedStyleDeclaration::getPropertyCSSValue(int proper
             rect->setLeft(zoomAdjustedPixelValue(style->clip().left().value(), style.get()));
             return CSSPrimitiveValue::create(rect.release());
         }
+        case CSSPropertySpeak:
+            return CSSPrimitiveValue::create(style->speak());
         case CSSPropertyWebkitTransform:
             return computedTransform(renderer, style.get());
         case CSSPropertyWebkitTransformOrigin: {
@@ -1569,10 +1574,47 @@ PassRefPtr<CSSValue> CSSComputedStyleDeclaration::getPropertyCSSValue(int proper
         case CSSPropertyWebkitVariableDeclarationBlock:
             break;
 #if ENABLE(SVG)
-        // FIXME: This default case ruins the point of using an enum for
-        // properties -- it prevents us from getting a warning when we
-        // forget to list a property above.
-        default:
+        case CSSPropertyClipPath:
+        case CSSPropertyClipRule:
+        case CSSPropertyMask:
+        case CSSPropertyEnableBackground:
+        case CSSPropertyFilter:
+        case CSSPropertyFloodColor:
+        case CSSPropertyFloodOpacity:
+        case CSSPropertyLightingColor:
+        case CSSPropertyStopColor:
+        case CSSPropertyStopOpacity:
+        case CSSPropertyColorInterpolation:
+        case CSSPropertyColorInterpolationFilters:
+        case CSSPropertyColorProfile:
+        case CSSPropertyColorRendering:
+        case CSSPropertyFill:
+        case CSSPropertyFillOpacity:
+        case CSSPropertyFillRule:
+        case CSSPropertyImageRendering:
+        case CSSPropertyMarker:
+        case CSSPropertyMarkerEnd:
+        case CSSPropertyMarkerMid:
+        case CSSPropertyMarkerStart:
+        case CSSPropertyShapeRendering:
+        case CSSPropertyStroke:
+        case CSSPropertyStrokeDasharray:
+        case CSSPropertyStrokeDashoffset:
+        case CSSPropertyStrokeLinecap:
+        case CSSPropertyStrokeLinejoin:
+        case CSSPropertyStrokeMiterlimit:
+        case CSSPropertyStrokeOpacity:
+        case CSSPropertyStrokeWidth:
+        case CSSPropertyAlignmentBaseline:
+        case CSSPropertyBaselineShift:
+        case CSSPropertyDominantBaseline:
+        case CSSPropertyGlyphOrientationHorizontal:
+        case CSSPropertyGlyphOrientationVertical:
+        case CSSPropertyKerning:
+        case CSSPropertyTextAnchor:
+        case CSSPropertyVectorEffect:
+        case CSSPropertyWritingMode:
+        case CSSPropertyWebkitSvgShadow:
             return getSVGPropertyCSSValue(propertyID, DoNotUpdateLayout);
 #endif
     }

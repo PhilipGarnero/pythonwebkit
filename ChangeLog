@@ -1,3 +1,189 @@
+2010-09-30  Kevin Ollivier  <kevino@theolliviers.com>
+
+        [wx] Fix typo in build script.
+
+        * wscript:
+
+2010-09-29  Simon Hausmann  <simon.hausmann@nokia.com>
+
+        Reviewed by Csaba Osztrogonác.
+
+        [Qt] Fix the build on non-x86 platforms with gcc
+
+        Don't disable -Werror on arm, that doesn't work when QT_ARCH is
+        for example armv6. Instead change the condition as the comment says,
+        enable -Werror on x86/gcc where we know it passes. On other platforms
+        gcc produces difference warnings, and when they're fixed we can add
+        them to the whitelist of -Werror-supported architectures.
+
+        * WebKit.pri:
+
+2010-09-28  Philippe Normand  <pnormand@igalia.com>
+
+        Reviewed by Martin Robinson.
+
+        check USE(GSTREAMER) instead of ENABLE(VIDEO) in gstreamer/ files
+        https://bugs.webkit.org/show_bug.cgi?id=46717
+
+        Define WTF_USE_GSTREAMER if configure found the gstreamer
+        development files and add the macro in the gcc command-line if needed.
+
+        * GNUmakefile.am:
+        * configure.ac:
+
+2010-09-28  Kevin Ollivier  <kevino@theolliviers.com>
+
+        [wx] Build fix, build sources that used to be built as part of other sources.
+
+        * wscript:
+
+2010-09-28  Kevin Ollivier  <kevino@theolliviers.com>
+
+        [wx] One more build fix for Win.
+
+        * wscript:
+
+2010-09-28  Kevin Ollivier  <kevino@theolliviers.com>
+
+        [wx] Build fix, ignore Qt-specific (for now?) source in platform/graphics.
+
+        * wscript:
+
+2010-09-28  Andras Becsi  <abecsi@webkit.org>
+
+        Reviewed by Csaba Osztrogonác.
+
+        Undefined reference errors when linking due to gperf and inlining.
+        webkit.org/b/29244
+
+        EFL CMake changes by Leandro Pereira <leandro@profusion.mobi>
+
+        Refactor gperf code generation and usage to fix the debug build with gcc>4.4.
+        Hitherto gperf generated C code, these files were included in multiple C++ files across WebCore
+        to access the functionality provided. This resulted in debug build failure with newer gcc versions
+        because of a behaviour change of gcc, which disables C style inlining in debug mode.
+        The make-hash-tools.pl script lets gperf generate C++ code for all gperf files now, which are compiled
+        in their own compilation unit.
+        The functionality provided by the generated code is wrapped behind HashTools.h, so there is no need
+        for multiple inclusions of generated C files to access these functions.
+
+        * cmake/WebKitMacros.cmake:
+
+2010-09-27  Philippe Normand  <pnormand@igalia.com>
+
+        Reviewed by Martin Robinson.
+
+        [GTK] use ENABLE(GLIB_SUPPORT)
+        https://bugs.webkit.org/show_bug.cgi?id=46630
+
+        Enabling GLIB_SUPPORT on all ports that use GLib to simplify
+        checks.
+
+        * GNUmakefile.am: Enabled the GLIB_SUPPORT define.
+
+2010-09-24  Romain Pokrzywka  <romain@kdab.com>
+
+        Reviewed by Simon Hausmann.
+
+        [Qt] Fix the Wince build.
+
+        * WebKit.pri: Apply msvc flags to wince, too.
+
+2010-09-23  Lucas De Marchi  <lucas.demarchi@profusion.mobi>
+
+        Reviewed by Antonio Gomes.
+
+        [EFL] Enable warnings during build by default
+        https://bugs.webkit.org/show_bug.cgi?id=46351
+
+        Change default build to enable several warnings like other ports do.
+        We need to pay special attention to "-Wall" in order to produce better
+        code, so highlight this keyword, too.
+
+        * cmake/WebKitHelpers.cmake:
+
+2010-09-22  Lucas De Marchi  <lucas.demarchi@profusion.mobi>
+
+        Reviewed by Antonio Gomes.
+
+        [EFL] Fix build with GCC 4.4.x
+        https://bugs.webkit.org/show_bug.cgi?id=40826
+
+        Change the -fstrict-aliasing flag to -fno-strict-aliasing as other
+        ports like GTK and QT are using in their build systems. It was failing
+        to execute when compiled with GCC 4.4.x in Release mode.
+
+        Refactor the flags in order to be more readable.
+
+        * cmake/WebKitHelpers.cmake:
+
+2010-09-22  No'am Rosenthal  <noam.rosenthal@nokia.com>
+
+        Reviewed by Kenneth Rohde Christiansen.
+
+        [Qt] Move the accelerated compositing build flag to the right place
+        https://bugs.webkit.org/show_bug.cgi?id=43882
+
+        * WebKit.pri: Removed the redundant version check.
+
+2010-09-21  Fridrich Strba  <fridrich.strba@bluewin.ch>
+
+        Reviewed by Martin Robinson.
+
+        Fix linking issues of the GTK+ port on Windows
+        https://bugs.webkit.org/show_bug.cgi?id=45844
+
+        * GNUmakefile.am: link on Windows with ole32.dll, winmm.dll and shlwapi.dll
+        * configure.ac: link on Windows with ole32.dll, winmm.dll and shlwapi.dll
+        and export correctly all needed symbols from the libwebkitgtk DLL.
+
+2010-09-21  Xan Lopez  <xlopez@igalia.com>
+
+        Reviewed by Martin Robinson.
+
+        [GTK] Generate correct WebKit gir file with g-i 0.9.5
+        https://bugs.webkit.org/show_bug.cgi?id=46173
+
+        Generate a correct gir file for WebKit with the
+        gobject-introspection 0.9.5 scanner.
+
+        * GNUmakefile.am:
+
+2010-09-21  Xan Lopez  <xlopez@igalia.com>
+
+        Reviewed by Gustavo Noronha.
+
+        Update for 1.3.4 release.
+
+        * configure.ac:
+
+2010-09-21  Xan Lopez  <xlopez@igalia.com>
+
+        Reviewed by Martin Robinson.
+
+        [GTK] Configure flag for Opcode stats
+        https://bugs.webkit.org/show_bug.cgi?id=46081
+
+        Opcode stats won't work with JIT enabled, so bail out if both are
+        enabled at the same time.
+
+        * configure.ac:
+
+2010-09-21  Xan Lopez  <xlopez@igalia.com>
+
+        Reviewed by Martin Robinson.
+
+        [GTK] Fix --disable-jit
+        https://bugs.webkit.org/show_bug.cgi?id=46080
+
+        Manually define ENABLE_JIT to 0 when we want the feature disabled.
+
+        If the value is undefined Platform.h will enable it again
+        automatically in some platforms, which is probably not what the
+        user wanted if he passed --disable-jit.
+
+        * configure.ac:
+
 2010-09-18  Kevin Ollivier  <kevino@theolliviers.com>
 
         [wx] Build fix, fix use of wrong case in name.
