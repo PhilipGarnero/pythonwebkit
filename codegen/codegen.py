@@ -441,52 +441,23 @@ class Wrapper:
         return template % substdict, flags
 
     def write_constructor(self):
-        initfunc = '0'
-        constructor = self.parser.find_constructor(self.objinfo,self.overrides)
-        if not constructor:
-            return self.write_default_constructor()
+        
+        pyinit_tmpl = \
+"""
+static int
+%(classname)s_init(%(classname)s *self, PyObject *args, PyObject *kwds)
+{
+    if (Py%(base)s_Type.tp_init((PyObject *)self, args, kwds) < 0)
+        return -1;
+    return 0;
+}
+"""
 
-        funcname = constructor.c_name
-        try:
-            if self.overrides.is_overriden(funcname):
-                data = self.overrides.override(funcname)
-                self.write_function(funcname, data)
-                self.objinfo.has_new_constructor_api = (
-                    self.objinfo.typecode in
-                    self.overrides.newstyle_constructors)
-            else:
-                # ok, a hack to determine if we should use
-                # new-style constructores :P
-                property_based = getattr(self,
-                                         'write_property_based_constructor',
-                                         None)
-                if property_based:
-                    if (len(constructor.params) == 0 or
-                        isinstance(constructor.params[0],
-                                   definitions.Property)):
-                        # write_property_based_constructor is only
-                        # implemented in GObjectWrapper
-                        return self.write_property_based_constructor(
-                            constructor)
-                    else:
-                        sys.stderr.write(
-                            "Warning: generating old-style constructor for:" +
-                            constructor.c_name + '\n')
-
-                # write constructor from template ...
-                code = self.write_function_wrapper(constructor,
-                    self.constructor_tmpl,
-                    handle_return=0, is_method=0, kwargs_needed=1,
-                    substdict=self.get_initial_constructor_substdict(
-                    constructor))[0]
-                self.fp.write(code)
-            initfunc = '_wrap_' + funcname
-        except argtypes.ArgTypeError, ex:
-            sys.stderr.write('Could not write constructor for %s: %s\n'
-                             % (self.objinfo.c_name, str(ex)))
-
-            initfunc = self.write_noconstructor()
-        return initfunc
+        classname = self.objinfo.name
+        base = self.objinfo.parent
+        code = pyinit_tmpl % dict(classname=classname, base=base)
+        self.fp.write(code)
+        return classname + "_init"
 
     def write_noconstructor(self):
         # this is a hack ...
@@ -1029,7 +1000,7 @@ class GObjectWrapper(Wrapper):
                                             '_TYPE_', '_', 1)
 
     def get_initial_class_substdict(self):
-        return { 'tp_basicsize'      : 'PyIntObject',
+        return { 'tp_basicsize'      : 'DOMObject',
                  'tp_weaklistoffset' : '0', #'offsetof(PyIntObject, weakreflist)',
                  'tp_dictoffset'     : '0'} #'offsetof(PyIntObject, inst_dict)' }
 
@@ -1070,7 +1041,7 @@ class GObjectWrapper(Wrapper):
         self.objinfo.has_new_constructor_api = True
         out = self.fp
         print >> out, "static int"
-        print >> out, '_wrap_%s(PyIntObject *self, PyObject *args,' \
+        print >> out, '_wrap_%s(PyDOMObject *self, PyObject *args,' \
               ' PyObject *kwargs)\n{' % constructor.c_name
         if constructor.params:
             s = "    GType obj_type = pyg_type_from_object((PyObject *) self);"
@@ -1406,9 +1377,9 @@ class GPointerWrapper(GBoxedWrapper):
 class SourceWriter:
 
     wrapcore_tmpl = (
-        'WebCore::%(classname)s *core%(classname)s(PyIntObject* request)\n'
+        'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
         '{\n'
-        '    long coreptr = PyInt_AS_LONG(request);\n'
+        '    long coreptr = ((DOMObject*)request)->ptr;\n'
         '    return static_cast<WebCore::%(classname)s*>((void*)coreptr);\n'
         '}\n\n'
         )
@@ -1416,9 +1387,9 @@ class SourceWriter:
     wrapnode_tmpl = (
         'PyObject* pywrap%(classname)s(WebCore::%(classname)s* coreObject)\n'
         '{\n'
-        '    long coreptr = (long)(static_cast<void*>(coreObject));\n'
+        '    void *coreptr = (static_cast<void*>(coreObject));\n'
         '    coreObject->ref();\n'
-        '    return PyInt_FromLong(coreptr);\n'
+        '    return PyDOMObject_new(coreptr);\n'
         '}\n\n'
         )
 
@@ -1454,8 +1425,8 @@ PyObject* toPython(WebCore::%(classname)s* obj)
         self.include_types = self.get_class_include_types()
         self.write_imports()
         self.write_type_declarations()
-        self.write_class_wrappers()
         self.write_body()
+        self.write_class_wrappers()
         self.write_classes()
 
         wrapper = Wrapper(self.parser, None, self.overrides, self.fp)

@@ -1,0 +1,121 @@
+/* -*- Mode: C; c-basic-offset: 4 -*- */
+/*
+ Copyright (C) 2006, Red Hat, Inc.
+ Copyright (C) 2007, One Laptop Per Child
+ Copyright (C) 2009, Jan Michael Alonzo <jmalonzo@gmail.com>
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+%%
+headers
+#include <Python.h>
+%%
+body
+typedef struct {
+    PyObject_HEAD
+    void * ptr;
+} DOMObject;
+
+static int
+DOMObject_init(DOMObject *self, PyObject *args, PyObject *kwds)
+{
+    if (PyList_Type.tp_init((PyObject *)self, args, kwds) < 0)
+        return -1;
+    self->ptr = NULL;
+    return 0;
+}
+
+static PyObject *
+DOMObject_setptr(DOMObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "ptr", NULL };
+    long ptr;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"l!:shoddy.DOMObject.setptr",
+                                     kwlist, &source))
+        return NULL;
+
+    self->ptr = (void*)ptr;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyMethodDef DOMObject2_methods[] = {
+    {"setptr", (PyCFunction)DOMObject2_set, METH_VARARGS|METH_KEYWORDS,
+     PyDoc_STR("set pointer")},
+    {NULL,	NULL},
+};
+
+
+static PyTypeObject PyDOMObjectType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                       /* ob_size */
+    "_pywebkit.DOMObject",   /* tp_name */
+    sizeof(DOMObject),       /* tp_basicsize */
+    0,                       /* tp_itemsize */
+    0,                       /* tp_dealloc */
+    0,                       /* tp_print */
+    0,                       /* tp_getattr */
+    0,                       /* tp_setattr */
+    0,                       /* tp_compare */
+    0,                       /* tp_repr */
+    0,                       /* tp_as_number */
+    0,                       /* tp_as_sequence */
+    0,                       /* tp_as_mapping */
+    0,                       /* tp_hash */
+    0,                       /* tp_call */
+    0,                       /* tp_str */
+    0,                       /* tp_getattro */
+    0,                       /* tp_setattro */
+    0,                       /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT |
+      Py_TPFLAGS_BASETYPE,   /* tp_flags */
+    0,                       /* tp_doc */
+    0,                       /* tp_traverse */
+    0,                       /* tp_clear */
+    0,                       /* tp_richcompare */
+    0,                       /* tp_weaklistoffset */
+    0,                       /* tp_iter */
+    0,                       /* tp_iternext */
+    DOMObject_methods,          /* tp_methods */
+    0,                       /* tp_members */
+    0,                       /* tp_getset */
+    0,                       /* tp_base */
+    0,                       /* tp_dict */
+    0,                       /* tp_descr_get */
+    0,                       /* tp_descr_set */
+    0,                       /* tp_dictoffset */
+    (initproc)DOMObject_init,   /* tp_init */
+    0,                       /* tp_alloc */
+    0,                       /* tp_new */
+};
+
+static void initdomobject(PyObject *m)
+{
+    if (PyType_Ready(&PyDOMObjectType) < 0)
+        return;
+
+    Py_INCREF(&PyDOMObjectType);
+    PyModule_AddObject(m, "DOMObject", (PyObject *) &PyDOMObjectType);
+}
+
+static PyObject* PyDOMObject_new(void *ptr)
+{
+    register DOMObject *v = PyObject_NEW(DOMObject, PyDOMObject_type);
+    v->ptr = ptr;
+    return (PyObject *) v;
+}
+

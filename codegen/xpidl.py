@@ -1283,7 +1283,7 @@ class IDLDefsParser(defsparser.DefsParser):
                 if obj.base:
                     args.append( ("parent", obj.base[0]) )
                 else:
-                    args.append( ("parent", "Int") )
+                    args.append( ("parent", "DOMObject") )
                 self.define_object(obj.name, *args)
             for m in obj.members:
                 if isinstance(m, CDATA):
@@ -1337,9 +1337,9 @@ class IDLDefsParser(defsparser.DefsParser):
 
 if __name__ == '__main__':
     p = IDLDefsParser(None)
-    o = override.Overrides()
+    o = override.Overrides(sys.argv[1])
     cwd = os.path.abspath(os.getcwd())
-    for f in sys.argv[1:]:
+    for f in sys.argv[2:]:
         print "Parsing %s" % f
         (pth, fn) = os.path.split(f)
         (fn, ext) = os.path.splitext(fn)

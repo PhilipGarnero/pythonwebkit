@@ -42,11 +42,13 @@ endif # HTML_FLAGS
 DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
 
 DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py \
-    codegen/argtypes.py \
+    codegen/argtypes.py $(srcdir)/codegen/_pywebkit.override \
     $(srcdir)/codegen/idl_files.txt \
     $(shell cat $(srcdir)/codegen/idl_files.txt)
 	mkdir -p $(GENSOURCES)/python
-	$(PYTHON) codegen/xpidl.py $(shell cat $(srcdir)/codegen/idl_files.txt)
+	$(PYTHON) codegen/xpidl.py \
+                $(srcdir)/codegen/_pywebkit.override \
+                $(shell cat $(srcdir)/codegen/idl_files.txt)
 
 webcore_cppflags += \
 	-I$(srcdir)/WebCore \
