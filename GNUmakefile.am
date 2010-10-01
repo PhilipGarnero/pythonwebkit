@@ -286,7 +286,7 @@ _pywebkit_cppflags += \
 _pywebkit_la_LDFLAGS = \
 	$(shell python-config --libs) \
 	-module -avoid-version \
-	$(version_script) 
+	-export-symbols-regex init_pywebkit 
 
 _pywebkit_la_SOURCES = \
 	$(_pywebkit_sources) \
