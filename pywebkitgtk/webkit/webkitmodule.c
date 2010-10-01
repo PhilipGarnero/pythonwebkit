@@ -27,9 +27,12 @@
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
-extern PyMethodDef pywebkit_functions[];
+/*extern PyMethodDef pywebkit_functions[];*/
+
+extern const PyMethodDef pywebkit_functions[];
 
 void pywebkit_register_classes (PyObject *d);
+void registerwebkit(PyObject *d);
 
 DL_EXPORT(void)
 initwebkit(void)
@@ -50,9 +53,12 @@ initwebkit(void)
     m = Py_InitModule ("webkit", pywebkit_functions);
     d = PyModule_GetDict (m);
     pywebkit_register_classes (d);
+    registerwebkit(d);
 
     if (PyErr_Occurred ()) {
         PyErr_Print();
         Py_FatalError ("can't initialise module webkit.gjs");
     }
 }
+
+
