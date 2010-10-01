@@ -551,8 +551,7 @@ class ObjectArg(ArgType):
                                   '        g_object_unref(ret);\n'
                                   '    return py_ret;')
         else:
-            info.codeafter.append('    /* wrap handles NULL checking */\n' +
-                                  '    return pywrap%s(ret.get());' % typename) 
+            info.codeafter.append('    return toPython(ret.get());') 
 
 class BoxedArg(ArgType):
     # haven't done support for default args.  Is it needed?

@@ -74,18 +74,29 @@ static DOMObjectMap& domObjects()
 PyObject* PythonObjectCache::getDOMObject(void* objectHandle)
 {
     PyObject* ret = domObjects().get(objectHandle);
+    if (ret)
+    {
+        /* when getting a python DOM object: if it exists, always always
+           the ref count will need to be increased.
+         */
+        Py_INCREF(ret);
+    }
     return ret;
 }
 
 PyObject* PythonObjectCache::putDOMObject(void* objectHandle, PyObject* pywrapper)
 {
+    /* put is only used on new items.  therefore we do not do a
+       Py_INCREF because new PyObjects always get created with an
+       initial refcount of 1
+     */
     domObjects().set(objectHandle, pywrapper);
     return pywrapper;
 }
 
 void PythonObjectCache::forgetDOMObject(void* objectHandle)
 {
-    domObjects().take(objectHandle);
+    PyObject* ret = domObjects().take(objectHandle);
 }
 
 static PyObject* createWrapper(Node* node);
