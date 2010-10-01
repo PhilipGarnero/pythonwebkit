@@ -982,6 +982,39 @@ WebKit/gtk/org.webkitgtk-${WEBKITGTK_API_VERSION}.gschema.xml:WebKit/gtk/org.web
 ,[WEBKITGTK_API_VERSION=$WEBKITGTK_API_VERSION,WEBKITGTK_PC_NAME=$WEBKITGTK_PC_NAME]
 )
 
+# pywebkitgtk
+
+PKG_CHECK_MODULES(PYWEBKITGTKDEPS,
+                  [libxslt
+                  gthread-2.0
+                  pygtk-2.0])
+
+AC_SUBST(PYWEBKITGTKDEPS_CFLAGS)
+AC_SUBST(PYWEBKITGTKDEPS_LIBS)
+AC_SUBST(PYWEBKITGTKDEPS_CPPFLAGS)
+
+dnl python code gen
+AC_PATH_PROGS(PYGOBJECT_CODEGEN, pygobject-codegen-2.0 pygtk-codegen-2.0, no)
+if test "x$PYGOBJECT_CODEGEN" = xno; then
+   AC_MSG_ERROR(could not find pygobject-codegen-2.0 script)
+fi
+
+dnl check for pygtk defsdir
+AC_MSG_CHECKING(for pygtk defs)
+PYGTK_DEFSDIR=`$PKG_CONFIG --variable=defsdir pygtk-2.0`
+AC_SUBST(PYGTK_DEFSDIR)
+AC_MSG_RESULT($PYGTK_DEFSDIR)
+
+dnl check for pygtk codegen dir
+AC_MSG_CHECKING(for pygtk codegendir)
+PYGTK_CODEGENDIR=`$PKG_CONFIG --variable=codegendir pygtk-2.0`
+AC_SUBST(PYGTK_CODEGENDIR)
+AC_MSG_RESULT($PYGTK_CODEGENDIR)
+
+AC_CONFIG_FILES([
+pywebkitgtk/pywebkitgtk-1.0.pc:pywebkitgtk/pywebkitgtk.pc.in
+])
+
 AC_OUTPUT
 
 echo "

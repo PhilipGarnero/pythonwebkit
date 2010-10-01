@@ -255,13 +255,16 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIBA
 
 # _pywebkit - forced to link in to absolutely identical code as
 # libwebkitgtk due to key functions (webcore) not being exported.
-pkgpyexecdir = $(pyexecdir)
+#pkgpyexecdir = $(pyexecdir)
+pkgpythondir = $(pyexecdir)/webkit
+pkgpyexecdir = $(pyexecdir)/webkit
+
 pkgpyexec_LTLIBRARIES = _pywebkit.la
 
 _pywebkit_built_sources :=
 _pywebkit_sources :=
 _pywebkit_h_api :=
-_pywebkit_cppflags := -pthread -fno-strict-aliasing -DNDEBUG -fwrapv -g -O2 -Wall -fPIC
+_pywebkit_cppflags := -pthread -fno-strict-aliasing -DNDEBUG -fwrapv -O2 -Wall -fPIC
 _pywebkit_ladir = $(prefix)/include/webkit-@WEBKITGTK_API_VERSION@/python
 _pywebkit_la_HEADERS = \
         $(_pywebkit_h_api) 
@@ -279,7 +282,7 @@ _pywebkit_cppflags += \
 _pywebkit_la_LDFLAGS = \
 	$(shell python-config --libs) \
 	-module -avoid-version \
-	-export-symbols-regex init_pywebkit 
+	$(version_script) 
 
 _pywebkit_la_SOURCES = \
 	$(_pywebkit_sources) \
@@ -662,6 +665,7 @@ dist_resources_DATA = \
 # Include module makefiles
 include JavaScriptCore/GNUmakefile.am
 include WebCore/GNUmakefile.am
+include pywebkitgtk/GNUmakefile.am
 include WebCore/bindings/gobject/GNUmakefile.am
 include WebKitTools/GNUmakefile.am
 include WebKit/gtk/po/GNUmakefile.am
