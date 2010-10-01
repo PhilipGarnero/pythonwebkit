@@ -966,9 +966,9 @@ _wrap__get_symbol(PyObject *self, PyObject *args)
         # write the PyMethodDef structure
         functions.append('    { NULL, NULL, 0, NULL }\n')
 
-        self.fp.write('const PyMethodDef ' + prefix + '_functions[] = {\n')
-        self.fp.write(string.join(functions, ''))
-        self.fp.write('};\n\n')
+        #self.fp.write('const PyMethodDef ' + prefix + '_functions[] = {\n')
+        #self.fp.write(string.join(functions, ''))
+        #self.fp.write('};\n\n')
 
 class GObjectWrapper(Wrapper):
     constructor_tmpl = (
@@ -1448,6 +1448,32 @@ PyObject* toPython(WebCore::%(classname)s* obj)
         self.fp.write('extern "C" {\n\n')
         self.write_extension_init()
         self.write_registers()
+        self.fp.write("""
+extern PyMethodDef pywebkit_functions[];
+
+void pywebkit_register_classes (PyObject *d);
+extern void pywebkit_gtk_init();
+
+PyMODINIT_FUNC
+initpywebkit(void)
+{
+    PyObject *m, *d;
+
+    typedeclpywebkit();
+    pywebkit_gtk_init();
+
+    /* webkit module */
+    m = Py_InitModule ("pywebkit", pywebkit_functions);
+    d = PyModule_GetDict (m);
+    pywebkit_register_classes (d);
+    registerpywebkit(m);
+
+    if (PyErr_Occurred ()) {
+        PyErr_Print();
+        Py_FatalError ("can't initialise module pywebkit.so");
+    }
+}
+""")
         self.fp.write('}; // extern "C"\n')
         argtypes.py_ssize_t_clean = False
 

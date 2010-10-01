@@ -24,21 +24,8 @@
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
-extern PyMethodDef pywebkit_functions[];
-
-/*extern const PyMethodDef pywebkit_functions[];*/
-
-void pywebkit_register_classes (PyObject *d);
-extern void registerpywebkit(PyObject *d);
-extern void typedeclpywebkit(void);
-
-DL_EXPORT(void)
-initpywebkit(void)
+void pywebkit_gtk_init()
 {
-    PyObject *m, *d;
-
-    typedeclpywebkit();
-
     if (!pygobject_init(-1, -1, -1)) {
         PyErr_Print();
         Py_FatalError ("can't initialise module gobject");
@@ -48,17 +35,5 @@ initpywebkit(void)
 
     if (!g_thread_supported())
         g_thread_init (NULL);
-
-    /* webkit module */
-    m = Py_InitModule ("pywebkit", pywebkit_functions);
-    d = PyModule_GetDict (m);
-    pywebkit_register_classes (d);
-    registerpywebkit(m);
-
-    if (PyErr_Occurred ()) {
-        PyErr_Print();
-        Py_FatalError ("can't initialise module pywebkit.so");
-    }
 }
-
 
