@@ -47,7 +47,7 @@ init_pywebkit(void)
         g_thread_init (NULL);
 
     /* webkit module */
-    m = Py_InitModule ("webkit", pywebkit_functions);
+    m = Py_InitModule ("_pywebkit", pywebkit_functions);
     d = PyModule_GetDict (m);
     pywebkit_register_classes (d);
     registerwebkit(d);
