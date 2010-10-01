@@ -18,9 +18,6 @@
  * Boston, MA 02111-1307, USA.
  */
 #include <Python.h>
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <glib.h>
 /* include this first, before NO_IMPORT_PYGOBJECT is defined */
@@ -34,7 +31,7 @@ extern const PyMethodDef pywebkit_functions[];
 void pywebkit_register_classes (PyObject *d);
 extern void registerwebkit(PyObject *d);
 
-PyMODINIT_FUNC
+DL_EXPORT(void)
 init_pywebkit(void)
 {
     PyObject *m, *d;
