@@ -32,7 +32,7 @@
 extern const PyMethodDef pywebkit_functions[];
 
 void pywebkit_register_classes (PyObject *d);
-void registerwebkit(PyObject *d);
+extern void registerwebkit(PyObject *d);
 
 DL_EXPORT(void)
 initwebkit(void)
