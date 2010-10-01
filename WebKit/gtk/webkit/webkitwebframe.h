@@ -99,6 +99,15 @@ webkit_web_frame_new                (WebKitWebView        *web_view);
 WEBKIT_API WebKitWebView *
 webkit_web_frame_get_web_view       (WebKitWebFrame       *frame);
 
+WEBKIT_API gpointer
+webkit_web_frame_get_xml_http_request       (WebKitWebFrame       *frame);
+
+WEBKIT_API gpointer
+webkit_web_frame_get_dom_window       (WebKitWebFrame       *frame);
+
+WEBKIT_API gpointer
+webkit_web_frame_get_dom_document       (WebKitWebFrame       *frame);
+
 WEBKIT_API G_CONST_RETURN gchar *
 webkit_web_frame_get_name           (WebKitWebFrame       *frame);
 

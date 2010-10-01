@@ -244,6 +244,26 @@
 
 ;; from webkit/webkitwebframe.h
 
+
+(define-method get_xml_http_request
+  (of-object "WebKitWebFrame")
+  (c-name "webkit_web_frame_get_xml_http_request")
+  (return-type "gpointer")
+)
+
+(define-method get_dom_window
+  (of-object "WebKitWebFrame")
+  (c-name "webkit_web_frame_get_dom_window")
+  (return-type "gpointer")
+)
+
+(define-method get_webkit_document
+  (of-object "WebKitWebFrame")
+  (c-name "webkit_web_frame_get_dom_document")
+  (return-type "gpointer")
+)
+
+
 (define-method load_uri
   (of-object "WebKitWebFrame")
   (c-name "webkit_web_frame_load_uri")

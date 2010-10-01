@@ -42,14 +42,20 @@ DOMObject_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
-/*
 static int
-DOMObject_init(PyDOMObject *self, PyObject *args, PyObject *kwds)
+DOMObject_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    self->ptr = NULL;
+    static char *kwlist[] = { "ptr", NULL };
+    long ptr = 0;
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|l", kwlist,
+                                      &ptr))
+    {
+        ptr = 0;
+    }
+    ((PyDOMObject*)self)->ptr = (void*)ptr;
     return 0;
 }
-*/
 
 static PyObject *
 DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
@@ -111,7 +117,7 @@ static PyTypeObject PyDOMObject_Type = {
     0,                       /* tp_descr_get */
     0,                       /* tp_descr_set */
     0,                       /* tp_dictoffset */
-    0,                       /* tp_init */
+    DOMObject_init,          /* tp_init */
     0,                       /* tp_alloc */
     DOMObject_new,           /* tp_new */
 };

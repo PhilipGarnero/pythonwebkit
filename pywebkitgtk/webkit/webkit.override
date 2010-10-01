@@ -28,6 +28,12 @@ headers
 #include <pygobject.h>
 #include <webkit/webkit.h>
 
+#include "config.h"
+
+PyObject* toPythonFromDocumentPtr(gpointer);
+PyObject* toPythonFromDOMWindowPtr(gpointer);
+PyObject* toPythonFromXMLHttpRequestPtr(gpointer);
+
 %%
 body
 static PyObject *
@@ -296,4 +302,34 @@ _wrap_webkit_web_data_source_get_data(PyGObject *self)
     return Py_BuildValue("s#", data->str, data->len);
 }
 
+
+%%
+override webkit_web_frame_get_dom_document noargs
+static PyObject *
+_wrap_webkit_web_frame_get_dom_document(PyGObject *self)
+{
+    gpointer ptr;
+    ptr = webkit_web_frame_get_dom_document(WEBKIT_WEB_FRAME(self->obj));
+    return toPythonFromDocumentPtr(ptr);
+}
+
+%%
+override webkit_web_frame_get_xml_http_request noargs
+static PyObject *
+_wrap_webkit_web_frame_get_xml_http_request(PyGObject *self)
+{
+    gpointer ptr;
+    ptr = webkit_web_frame_get_xml_http_request(WEBKIT_WEB_FRAME(self->obj));
+    return toPythonFromXMLHttpRequestPtr(ptr);
+}
+
+%%
+override webkit_web_frame_get_dom_window noargs
+static PyObject *
+_wrap_webkit_web_frame_get_dom_window(PyGObject *self)
+{
+    gpointer ptr;
+    ptr = webkit_web_frame_get_dom_window(WEBKIT_WEB_FRAME(self->obj));
+    return toPythonFromDOMWindowPtr(ptr);
+}
 

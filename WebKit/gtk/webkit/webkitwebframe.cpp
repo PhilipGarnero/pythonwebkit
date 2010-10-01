@@ -35,6 +35,8 @@
 #include "AccessibilityObjectWrapperAtk.h"
 #include "AnimationController.h"
 #include "AXObjectCache.h"
+#include "DOMWindow.h"
+#include "Document.h"
 #include "DocumentLoader.h"
 #include "DocumentLoaderGtk.h"
 #include "FrameLoader.h"
@@ -59,6 +61,8 @@
 #if ENABLE(SVG)
 #include "SVGSMILElement.h"
 #endif
+#include "TextDocument.h"
+#include "XMLHttpRequest.h"
 
 #include <atk/atk.h>
 #include <JavaScriptCore/APICast.h>
@@ -457,6 +461,60 @@ WebKitWebView* webkit_web_frame_get_web_view(WebKitWebFrame* frame)
 
     WebKitWebFramePrivate* priv = frame->priv;
     return priv->webView;
+}
+
+/**
+ * webkit_web_frame_get_xml_http_request:
+ * @frame: a #WebKitWebFrame
+ *
+ * returns a Webkit wrapper around an XMLHttpRequest
+ *
+ * Return value: an XMLHttpRequest typecast to a gpointer
+ */
+gpointer webkit_web_frame_get_xml_http_request(WebKitWebFrame* frame)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_FRAME(frame), NULL);
+
+    Frame* coreFrame = core(frame);
+    ASSERT(coreFrame);
+    return static_cast<gpointer>(XMLHttpRequest::create(coreFrame->document()).get());
+}
+
+/**
+ * webkit_web_frame_get_dom_window:
+ * @frame: a #WebKitWebFrame
+ *
+ * returns a Webkit wrapper around a DOMWindow
+ *
+ * Return value: a DOMWindow typecast to a gpointer
+ */
+gpointer webkit_web_frame_get_dom_window(WebKitWebFrame* frame)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_FRAME(frame), NULL);
+
+    //WebKitWebFramePrivate* priv = frame->priv;
+
+    Frame* coreFrame = core(frame);
+    ASSERT(coreFrame);
+    PassRefPtr<DOMWindow> win = coreFrame->domWindow();
+    return static_cast<gpointer>(win.get());
+}
+
+/**
+ * webkit_web_frame_get_dom_document:
+ * @frame: a #WebKitWebFrame
+ *
+ * returns a Webkit wrapper around a Document 
+ *
+ * Return value: a Document typecast to a gpointer
+ */
+gpointer webkit_web_frame_get_dom_document(WebKitWebFrame* frame)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_FRAME(frame), NULL);
+
+    Frame* coreFrame = core(frame);
+    ASSERT(coreFrame);
+    return static_cast<gpointer>(coreFrame->document());
 }
 
 /**
