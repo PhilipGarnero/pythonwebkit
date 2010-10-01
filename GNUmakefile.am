@@ -268,6 +268,7 @@ _pywebkit_built_nosources :=
 _pywebkit_sources :=
 _pywebkit_h_api :=
 _pywebkit_cppflags := -pthread -fno-strict-aliasing -DNDEBUG -fwrapv -O2 -Wall -fPIC
+_pywebkit_cflags := 
 _pywebkit_ladir = $(prefix)/include/webkit-@WEBKITGTK_API_VERSION@/python
 _pywebkit_la_HEADERS = \
         $(_pywebkit_h_api) 
@@ -306,7 +307,8 @@ _pywebkit_la_CXXFLAGS = \
     $(global_cxxflags)
 
 _pywebkit_la_CFLAGS = \
-    $(global_cflags)
+    $(global_cflags) \
+	$(PYWEBKITGTKDEPS_CFLAGS)
 
 _pywebkit_la_CPPFLAGS = \
 	-DBUILDING_WEBKIT \
@@ -372,6 +374,7 @@ _pywebkit_la_LIBADD = \
 	$(PNG_LIBS) \
 	$(SQLITE3_LIBS) \
 	$(UNICODE_LIBS) \
+	$(PYWEBKITGTKDEPS_LIBS) \
 	$(XT_LIBS)
 
 #

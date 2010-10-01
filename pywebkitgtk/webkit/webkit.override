@@ -55,7 +55,7 @@ _helper_wrap_gobject_glist (GList *list)
     return py_list;
 }
 
-extern PyMethodDef pywebkit_functions[];
+extern const PyMethodDef pywebkit_functions[];
 
 void pywebkit_register_classes (PyObject *d);
 void register_pywebkit(PyObject *d);
