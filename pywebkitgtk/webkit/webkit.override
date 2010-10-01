@@ -54,7 +54,7 @@ _helper_wrap_gobject_glist (GList *list)
     return py_list;
 }
 %%
-modulename _pywebkit
+modulename pywebkit
 %%
 import gtk.Container as PyGtkContainer_Type
 import gobject.GObject as PyGObject_Type

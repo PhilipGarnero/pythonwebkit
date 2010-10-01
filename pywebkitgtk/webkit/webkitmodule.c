@@ -29,12 +29,15 @@ extern PyMethodDef pywebkit_functions[];
 /*extern const PyMethodDef pywebkit_functions[];*/
 
 void pywebkit_register_classes (PyObject *d);
-extern void register_pywebkit(PyObject *d);
+extern void registerpywebkit(PyObject *d);
+extern void typedeclpywebkit(void);
 
 DL_EXPORT(void)
-init_pywebkit(void)
+initpywebkit(void)
 {
     PyObject *m, *d;
+
+    typedeclpywebkit();
 
     if (!pygobject_init(-1, -1, -1)) {
         PyErr_Print();
@@ -47,14 +50,14 @@ init_pywebkit(void)
         g_thread_init (NULL);
 
     /* webkit module */
-    m = Py_InitModule ("_pywebkit", pywebkit_functions);
+    m = Py_InitModule ("pywebkit", pywebkit_functions);
     d = PyModule_GetDict (m);
     pywebkit_register_classes (d);
-    register_pywebkit(d);
+    registerpywebkit(m);
 
     if (PyErr_Occurred ()) {
         PyErr_Print();
-        Py_FatalError ("can't initialise module webkit.gjs");
+        Py_FatalError ("can't initialise module pywebkit.so");
     }
 }
 
