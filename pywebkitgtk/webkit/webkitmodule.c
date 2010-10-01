@@ -29,7 +29,7 @@ extern PyMethodDef pywebkit_functions[];
 /*extern const PyMethodDef pywebkit_functions[];*/
 
 void pywebkit_register_classes (PyObject *d);
-extern void registerwebkit(PyObject *d);
+extern void register_pywebkit(PyObject *d);
 
 DL_EXPORT(void)
 init_pywebkit(void)
@@ -50,7 +50,7 @@ init_pywebkit(void)
     m = Py_InitModule ("_pywebkit", pywebkit_functions);
     d = PyModule_GetDict (m);
     pywebkit_register_classes (d);
-    registerwebkit(d);
+    register_pywebkit(d);
 
     if (PyErr_Occurred ()) {
         PyErr_Print();
