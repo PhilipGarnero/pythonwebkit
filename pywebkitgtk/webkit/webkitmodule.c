@@ -35,7 +35,7 @@ void pywebkit_register_classes (PyObject *d);
 extern void registerwebkit(PyObject *d);
 
 DL_EXPORT(void)
-initwebkit(void)
+init_pywebkit(void)
 {
     PyObject *m, *d;
 
