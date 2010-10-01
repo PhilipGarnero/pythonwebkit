@@ -76,7 +76,7 @@ static PyMethodDef DOMObject_methods[] = {
 static PyTypeObject PyDOMObject_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                       /* ob_size */
-    "_pywebkit.DOMObject",   /* tp_name */
+    "webkit.DOMObject",   /* tp_name */
     sizeof(PyDOMObject),       /* tp_basicsize */
     0,                       /* tp_itemsize */
     0,                       /* tp_dealloc */

@@ -1271,12 +1271,12 @@ def typeMap(ptype):
     return "%s*" % ptype
 
 class IDLDefsParser(defsparser.DefsParser):
-    def startParsing(self, input, filename=None):
+    def startParsing(self, input, modulename, filename=None):
         p = IDLParser()
         x = p.parse(input, filename=self.filename)
         for obj in x.productions:
             if isinstance(obj, Interface):
-                args = [ ("in-module", "_pywebkit"),
+                args = [ ("in-module", modulename),
                          ("gtype-id", "core"+obj.name), # XXX
                          ("c-name", obj.nativename) # XXX
                        ]
@@ -1336,6 +1336,7 @@ class IDLDefsParser(defsparser.DefsParser):
         #self.write_defs()
 
 if __name__ == '__main__':
+    modname = "webkit"
     p = IDLDefsParser(None)
     o = override.Overrides(sys.argv[1])
     cwd = os.path.abspath(os.getcwd())
@@ -1358,10 +1359,10 @@ if __name__ == '__main__':
                            )
         stdout_value, stderr_value = proc.communicate('')
 
-        p.startParsing(stdout_value, filename=f)
+        p.startParsing(stdout_value, modname, filename=f)
         codegen.register_types(p)
     fo = codegen.FileOutput(open("DerivedSources/python/PyWebkit.cpp", "w"))
-    sw = codegen.SourceWriter(p, o, "_pywebkit", fo)
+    sw = codegen.SourceWriter(p, o, modname, fo)
     sw.write()
     fo.close()
 

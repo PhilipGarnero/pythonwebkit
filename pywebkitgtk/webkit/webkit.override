@@ -22,14 +22,13 @@
 %%
 headers
 #include <Python.h>
+#include <glib.h>
 #define NO_IMPORT_PYGOBJECT
 #define NO_IMPORT_PYGTK
 #include <pygtk/pygtk.h>
 #include <pygobject.h>
 #include <webkit/webkit.h>
-#include <JavaScriptCore/JSContextRef.h>
 
-#include "javascriptcore/javascriptcore_types.h"
 %%
 body
 static PyObject *
@@ -55,6 +54,39 @@ _helper_wrap_gobject_glist (GList *list)
 
     return py_list;
 }
+
+extern PyMethodDef pywebkit_functions[];
+
+void pywebkit_register_classes (PyObject *d);
+void register_pywebkit(PyObject *d);
+
+DL_EXPORT(void)
+initwebkit(void)
+{
+    PyObject *m, *d;
+
+    if (!pygobject_init(-1, -1, -1)) {
+        PyErr_Print();
+        Py_FatalError ("can't initialise module gobject");
+    }
+
+    init_pygtk();
+
+    if (!g_thread_supported())
+        g_thread_init (NULL);
+
+    /* webkit module */
+    m = Py_InitModule ("webkit", pywebkit_functions);
+    d = PyModule_GetDict (m);
+    pywebkit_register_classes (d);
+    register_pywebkit(d);
+
+    if (PyErr_Occurred ()) {
+        PyErr_Print();
+        Py_FatalError ("can't initialise module webkit.gjs");
+    }
+}
+
 %%
 modulename webkit
 %%
@@ -79,17 +111,6 @@ ignore
   webkit_security_origin_get_type
   webkit_web_database_get_type
   webkit_web_resource_new
-%%
-override webkit_web_frame_get_global_context noargs
-static PyObject *
-_wrap_webkit_web_frame_get_global_context (PyGObject *self)
-{
-    JSGlobalContextRef ref;
-
-    ref = webkit_web_frame_get_global_context (WEBKIT_WEB_FRAME (self->obj));
-
-    return wrap_JSGlobalContextRef (ref);
-}
 %%
 override webkit_web_back_forward_list_get_back_list_with_limit
 static PyObject *

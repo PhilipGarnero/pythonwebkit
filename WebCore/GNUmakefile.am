@@ -42,13 +42,50 @@ endif # HTML_FLAGS
 DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
 
 DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py \
-    codegen/argtypes.py $(srcdir)/codegen/_pywebkit.override \
-    $(srcdir)/codegen/idl_files.txt \
-    $(shell cat $(srcdir)/codegen/idl_files.txt)
+				codegen/argtypes.py $(srcdir)/codegen/_pywebkit.override \
+				$(srcdir)/codegen/idl_files.txt \
+				$(shell cat $(srcdir)/codegen/idl_files.txt)
 	mkdir -p $(GENSOURCES)/python
 	$(PYTHON) codegen/xpidl.py \
                 $(srcdir)/codegen/_pywebkit.override \
                 $(shell cat $(srcdir)/codegen/idl_files.txt)
+
+DerivedSources/python/webkit.c: DerivedSources/python/webkit.defs.c
+	mkdir -p $(GENSOURCES)/python
+	($(PYGOBJECT_CODEGEN) \
+            --register $(PYGTK_DEFSDIR)/gdk-types.defs \
+            --register $(PYGTK_DEFSDIR)/gtk-types.defs \
+			--override pywebkitgtk/webkit/webkit.override \
+			--prefix py$(*F) $(*D)/$(*F).defs) 2>&1 > \
+			         $(*D)/gen-$(*F).c | tee $(*D)/$(*F).errors \
+    && cp $(*D)/gen-$(*F).c $(*D)/$(*F).c \
+    && rm -f $(*D)/gen-$(*F).c
+
+
+pywebkit_defs := 
+pywebkit_defs += $(pysrcdir)/webkit/webkit-base-types.defs
+pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1-types.defs
+pywebkit_defs += $(pysrcdir)/webkit/webkit-1.0.2.defs
+pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1.defs
+
+_pywebkit_built_sources += \
+	DerivedSources/python/webkit.defs.c \
+	DerivedSources/python/webkit.c
+
+_pywebkit_built_nosources += $(pywebkit_defs)
+
+DerivedSources/python/webkit.c: $(pywebkit_defs) \
+    DerivedSources/python/webkit.defs \
+    DerivedSources/python/webkit.defs.c \
+	$(pysrcdir)/webkit/webkit.override;
+
+CREATEDEFS = $(PYTHON) $(PYGTK_CODEGENDIR)/createdefs.py
+
+DerivedSources/python/webkit.defs: $(pywebkit_defs)
+	mkdir -p $(GENSOURCES)/python
+	$(CREATEDEFS) $@ $(pywebkit_defs)
+
+# WebKit/Gtk definitions
 
 webcore_cppflags += \
 	-I$(srcdir)/WebCore \

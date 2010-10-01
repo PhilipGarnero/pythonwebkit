@@ -402,12 +402,6 @@
    )
 )
 
-(define-method get_global_context
-  (of-object "WebKitWebFrame")
-  (c-name "webkit_web_frame_get_global_context")
-  (return-type "JSGlobalContextRef")
-)
-
 ;; From <webkit/webkitknetworkrequest.h>
 
 (define-function webkit_network_request_new

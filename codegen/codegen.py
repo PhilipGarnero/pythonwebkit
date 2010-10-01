@@ -1680,18 +1680,13 @@ typedef intobjargproc ssizeobjargproc;
 
     def write_extension_init(self):
         self.fp.write('/* initialise stuff extension classes */\n')
-        self.fp.write('PyMODINIT_FUNC\n')
-        self.fp.write('init%s(void)\n' % self.prefix)
+        self.fp.write('void register%s(PyObject *m)\n' % self.prefix)
         self.fp.write('{\n')
-        self.fp.write('    PyObject *m;\n')
         self.fp.write('    if (PyType_Ready(&PyDOMObject_Type) < 0) return;\n')
         self.fp.write('\n')
         self.write_object_imports()
         for obj, bases in self.get_classes():
             self.write_class_base_link(obj, bases)
-        self.fp.write('    m = Py_InitModule3("%s", NULL, "%s module");\n' % \
-                (self.prefix, self.prefix))
-        self.fp.write("    if (m == NULL) return;\n")
 
         self.fp.write(self.overrides.get_init() + '\n')
         self.fp.resetline()

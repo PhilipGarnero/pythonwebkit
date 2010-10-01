@@ -1,9 +1,11 @@
 
 pysrcdir = @srcdir@/pywebkitgtk
+pybuilddir = @builddir@/pywebkitgtk
 #VPATH = @pysrcdir@
 
 webkit_defs :=
 webkit_sources :=
+webkit_built_sources :=
 webkit_py_sources :=
 nodist_webkit_sources :=
 webkit_cflags :=
@@ -28,20 +30,13 @@ webkit_la_CPPFLAGS = $(PYTHON_INCLUDES) $(PYWEBKITGTKDEPS_CPPFLAGS) $(WEBKIT_CPP
 webkit_la_CFLAGS = $(PYWEBKITGTKDEPS_CFLAGS) $(WEBKIT_CFLAGS)
 webkit_la_LDFLAGS = $(pycommon_ldflags) -export-symbols-regex initwebkit
 webkit_la_LIBADD = $(PYWEBKITGTKDEPS_LIBS) _pywebkit.la
-webkit_la_SOURCES = $(webkit_sources)
 
 # Python sources
 webkit_py_sources += \
 	$(pysrcdir)/webkit/__init__.py
 pkgpython_DATA = $(webkit_py_sources)
 
-# Build components
-webkit_sources += \
-	$(pysrcdir)/webkit/webkitmodule.c \
-	$(pysrcdir)/javascriptcore/javascriptcore_types.c \
-	$(pysrcdir)/javascriptcore/javascriptcore_types.h
-
-nodist_webkit_sources += $(pysrcdir)/webkit/webkit.c
+nodist_webkit_sources += $(pybuilddir)/webkit/webkit.c
 
 # WebKit/Gtk definitions
 webkit_defs += $(pysrcdir)/webkit/webkit-base-types.defs
@@ -49,20 +44,22 @@ webkit_defs += $(pysrcdir)/webkit/webkit-1.1-types.defs
 webkit_defs += $(pysrcdir)/webkit/webkit-1.0.2.defs
 webkit_defs += $(pysrcdir)/webkit/webkit-1.1.defs
 
-webkit_built_sources := \
-	$(pysrcdir)/webkit/webkit.defs \
-	$(pysrcdir)/webkit/webkit.defs.c
+webkit_built_sources += \
+	$(pybuilddir)/webkit/webkit.defs \
+	$(pybuilddir)/webkit/webkit.defs.c
 
-$(pysrcdir)/webkit/webkit.c: $(webkit_built_sources) \
+webkit_built_nosources := $(webkit_defs)
+
+$(pybuilddir)/webkit/webkit.c: $(webkit_built_sources) \
     $(pysrcdir)/webkit/webkit.override;
 
-$(pysrcdir)/webkit/webkit.defs: $(webkit_defs)
+$(pybuilddir)/webkit/webkit.defs: $(webkit_defs)
 	$(CREATEDEFS) $@ $(webkit_defs)
 
 # FIXME: this is causing a build issue in ArchLinux. Figure out why
 # disable for now since line is not really critical.
 # 	&& ! grep -q -v "^\*\*\*INFO\*\*\*" $(*D)/$(*F).errors
-%.defs.c:
+$(pybuilddir)/webkit/webkit.defs.c: $(pybuilddir)/webkit/webkit.defs 
 	($(PYGOBJECT_CODEGEN) \
             --register $(PYGTK_DEFSDIR)/gdk-types.defs \
             --register $(PYGTK_DEFSDIR)/gtk-types.defs \
@@ -73,6 +70,10 @@ $(pysrcdir)/webkit/webkit.defs: $(webkit_defs)
 
 nodist_webkit_la_SOURCES = $(nodist_webkit_sources) $(webkit_built_sources)
 
+nodist_EXTRA_webkit_la_SOURCES = $(webkit_built_nosources)
+
+webkit_la_SOURCES = $(webkit_sources)
+
 #dist-hook: ChangeLog
 
 #ChangeLog: 
@@ -81,18 +82,17 @@ nodist_webkit_la_SOURCES = $(nodist_webkit_sources) $(webkit_built_sources)
 #uninstall-hook:
 #	-rmdir $(webkitdir)
 
-PYCLEANFILES = \
+CLEANFILES += \
 	config.lt \
-	demos/inspector.pyc \
-	$(pysrcdir)/webkit/gen-webkit.c \
-	$(builddir)/webkit/webkit.c \
-	$(pysrcdir)/webkit/webkit.defs \
+	$(pybuilddir)/webkit/gen-webkit.c \
+	$(pybuilddir)/webkit/webkit.c \
+	$(pybuilddir)/webkit/webkit.defs \
 	$(pysrcdir)/webkit/webkit-types.defs \
-	$(builddir)/webkit/webkit.errors \
+	$(pybuilddir)/webkit/webkit.errors \
 	$(pysrcdir)/Makefile.in \
 	$(pysrcdir)/pywebkitgtk-1.0.pc
 
-PYEXTRA_DIST = \
+EXTRA_DIST += \
 	$(pysrcdir)/AUTHORS \
 	$(pysrcdir)/COPYING \
 	$(pysrcdir)/INSTALL \
