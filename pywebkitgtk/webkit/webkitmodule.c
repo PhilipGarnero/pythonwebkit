@@ -24,14 +24,14 @@
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
-/*extern PyMethodDef pywebkit_functions[];*/
+extern PyMethodDef pywebkit_functions[];
 
-extern const PyMethodDef pywebkit_functions[];
+/*extern const PyMethodDef pywebkit_functions[];*/
 
 void pywebkit_register_classes (PyObject *d);
 extern void registerwebkit(PyObject *d);
 
-PyMODINIT_FUNC
+DL_EXPORT(void)
 init_pywebkit(void)
 {
     PyObject *m, *d;

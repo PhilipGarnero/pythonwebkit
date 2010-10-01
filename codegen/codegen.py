@@ -1445,8 +1445,10 @@ PyObject* toPython(WebCore::%(classname)s* obj)
 
         if not self.overrides.dynamicnamespace:
             self.write_enums()
+        self.fp.write('extern "C" {\n\n')
         self.write_extension_init()
         self.write_registers()
+        self.fp.write('}; // extern "C"\n')
         argtypes.py_ssize_t_clean = False
 
     def write_headers(self, py_ssize_t_clean):
@@ -1680,8 +1682,7 @@ typedef intobjargproc ssizeobjargproc;
 
     def write_extension_init(self):
         self.fp.write('/* initialise stuff extension classes */\n')
-        self.fp.write('DL_EXPORT(void)\n')
-        self.fp.write('register%s(PyObject *m)\n' % self.prefix)
+        self.fp.write('void register%s(PyObject *m)\n' % self.prefix)
         self.fp.write('{\n')
         self.fp.write('    if (PyType_Ready(&PyDOMObject_Type) < 0) return;\n')
         self.fp.write('\n')

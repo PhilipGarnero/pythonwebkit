@@ -1336,7 +1336,7 @@ class IDLDefsParser(defsparser.DefsParser):
         #self.write_defs()
 
 if __name__ == '__main__':
-    modname = "webkit"
+    modname = "_pywebkit"
     p = IDLDefsParser(None)
     o = override.Overrides(sys.argv[1])
     cwd = os.path.abspath(os.getcwd())
