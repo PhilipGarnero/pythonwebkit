@@ -1400,7 +1400,7 @@ class SourceWriter:
         '{\n'
         '    void *coreptr = (static_cast<void*>(coreObject));\n'
         '    coreObject->ref();\n'
-        '    return PyDOMObject_new(coreptr);\n'
+        '    return PyDOMObject_new(PtrPyDOM%(classname)s_Type, coreptr);\n'
         '}\n\n'
         )
 
