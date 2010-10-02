@@ -171,10 +171,11 @@ class Wrapper:
     dealloc_tmpl = (
         'void dealloc_%(classname)s(PyObject *self)\n'
         '{\n'
-        '    WebCore::%(classname)s* cobj = core%(classname)s((PyDOMObject*)self);\n'
+        '    PyDOMObject *obj = (PyDOMObject*)self;\n'
+        '    WebCore::%(classname)s* cobj = core%(classname)s(obj);\n'
         '    WebKit::PythonObjectCache::forgetDOMObject(cobj);\n'
         '    cobj->deref();\n'
-        '    PyMem_DEL(self);\n'
+        '    self->ob_type->tp_free(self);\n'
         '}\n\n'
         )
 
