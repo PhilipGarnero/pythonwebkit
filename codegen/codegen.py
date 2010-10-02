@@ -755,8 +755,8 @@ static int
     def write_getsets(self):
         lower_name = self.get_lower_name()
         getsets_name = lower_name + '_getsets'
-        getterprefix = '_wrap_' + lower_name + '__get_'
-        setterprefix = '_wrap_' + lower_name + '__set_'
+        getterprefix = 'WebKit::_wrap_' + lower_name + '__get_'
+        setterprefix = 'WebKit::_wrap_' + lower_name + '__set_'
 
         # no overrides for the whole function.  If no fields,
         # don't write a func
@@ -844,7 +844,7 @@ static int
                         "Could not write getter for %s.%s: %s\n"
                         % (self.objinfo.c_name, fname, str(ex)))
             if gettername != '0' or settername != '0':
-                getsets.append('    { "%s", (getter)WebKit::%s, (setter)WebKit::%s },\n' %
+                getsets.append('    { "%s", (getter)%s, (setter)%s },\n' %
                                (fixname(fname), gettername, settername))
 
         if not getsets:
