@@ -76,8 +76,8 @@ DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
 
 static PyMethodDef DOMObject_methods[] = {
     {"setptr", (PyCFunction)DOMObject_setptr, METH_VARARGS|METH_KEYWORDS,
-     PyDoc_STR("set pointer")},
-    {NULL,	NULL},
+     PyDoc_STR("set pointer"), NULL, NULL},
+    {NULL,	NULL, NULL, NULL},
 };
 
 
@@ -122,6 +122,8 @@ static PyTypeObject PyDOMObject_Type = {
     0,                       /* tp_init */
     0,                       /* tp_alloc */
     DOMObject_new,           /* tp_new */
+    0,                       /* tp_free */
+    0,                       /* tp_is_gc */
     0,                                 /* tp_bases */
     0,                                 /* tp_mro */
     0,                                 /* tp_cache */
