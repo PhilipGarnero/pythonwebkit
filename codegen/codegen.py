@@ -158,12 +158,25 @@ class Wrapper:
         'tp_traverse', 'tp_clear', 'tp_dealloc', 'tp_flags', 'tp_doc'
         ]
 
+    setter_tmpl = (
+        'static PyObject *\n'
+        '%(funcname)s(PyObject *self, PyObject *args, void *closure)\n'
+        '{\n'
+        '%(varlist)s'
+        '%(parseargs)s'
+        '%(codebefore)s'
+        '    %(setreturn)s%(field)s(%(arglist)s);\n'
+        '%(codeafter)s\n'
+        '}\n\n'
+        )
+
     getter_tmpl = (
         'static PyObject *\n'
         '%(funcname)s(PyObject *self, void *closure)\n'
         '{\n'
         '%(varlist)s'
-        '    ret = %(field)s;\n'
+        '%(codebefore)s'
+        '    ret = %(field)s%(farg)s;\n'
         '%(codeafter)s\n'
         '}\n\n'
         )
@@ -177,6 +190,12 @@ class Wrapper:
         '    cobj->deref();\n'
         '    self->ob_type->tp_free(self);\n'
         '}\n\n'
+        )
+
+    parseset_tmpl = (
+        '    if (!PyArg_Parse(args,'
+        '"%(typecodes)s:%(name)s"%(parselist)s))\n'
+        '        return %(errorreturn)s;\n'
         )
 
     parse_tmpl = (
@@ -370,7 +389,7 @@ class Wrapper:
 
         if exception_needed:
             info.arglist.append("ec")
-            info.codebefore.append("    WebCore::ExceptionCode ec = 0;")
+            info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
 
         substdict['setreturn'] = ''
         if handle_return:
@@ -741,6 +760,7 @@ static int
 
         # no overrides for the whole function.  If no fields,
         # don't write a func
+        print "getsets", self.objinfo.c_name, self.objinfo.fields
         if not self.objinfo.fields:
             return '0'
         getsets = []
@@ -763,27 +783,79 @@ static int
                     handler = argtypes.matcher.get(ftype)
                     # for attributes, we don't own the "return value"
                     handler.write_return(ftype, 0, info)
+                    exception_needed = self.objinfo.attributes[fname].getter
+                    if exception_needed:
+                        field_args = "(ec)"
+                        info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
+                    else:
+                        field_args = "()"
                     self.fp.write(self.getter_tmpl %
                                   { 'funcname': funcname,
                                     'varlist': info.varlist,
                                     'field': self.get_field_accessor(cfname),
+                                    'farg': field_args,
+                                    'codebefore': info.get_codebefore(),
                                     'codeafter': info.get_codeafter() })
                     gettername = funcname
                 except argtypes.ArgTypeError, ex:
                     sys.stderr.write(
                         "Could not write getter for %s.%s: %s\n"
                         % (self.objinfo.c_name, fname, str(ex)))
+            readonly = self.objinfo.attributes[fname].readonly
+            if settername == '0' and not readonly:
+                try:
+                    funcname = setterprefix + fname
+                    info = argtypes.WrapperInfo()
+                    info.parselist = [''] # remove kwlist, for PyArgs_Parse
+                    handler = argtypes.matcher.get(ftype)
+                    handler.write_param(ftype, fname, None,
+                                        False, info)
+                    exception_needed = self.objinfo.attributes[fname].setter
+                    if exception_needed:
+                        info.arglist.append("ec")
+                        info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
+
+                    argtypes.NoneArg().write_return(None, 0, info)
+                    substdict = { 'funcname': funcname,
+                                    'varlist': info.get_varlist(),
+                                    'field': self.get_field_setter(cfname),
+                                    'codeafter': info.get_codeafter() }
+                    substdict['varlist'] = substdict['varlist']
+                    substdict.setdefault('errorreturn', 'NULL')
+                    substdict.setdefault('name', funcname)
+                    substdict['setreturn'] = ''
+                    substdict['typecodes'] = info.parsestr
+                    substdict['parselist'] = info.get_parselist()
+                    substdict['arglist'] = info.get_arglist()
+                    substdict['codebefore'] = (
+                        string.replace(info.get_codebefore(),
+                        'return NULL', 'return ' + substdict['errorreturn'])
+                        )
+                    substdict['codeafter'] = (
+                        string.replace(info.get_codeafter(),
+                                       'return NULL',
+                                       'return ' + substdict['errorreturn']))
+
+                    substdict['parseargs'] = self.parseset_tmpl % substdict
+                    self.fp.write(self.setter_tmpl % substdict)
+                    gettername = funcname
+                except argtypes.ArgTypeError, ex:
+                    sys.stderr.write(
+                        "Could not write getter for %s.%s: %s\n"
+                        % (self.objinfo.c_name, fname, str(ex)))
             if gettername != '0' or settername != '0':
-                getsets.append('    { "%s", (getter)%s, (setter)%s },\n' %
+                getsets.append('    { "%s", (getter)WebKit::%s, (setter)WebKit::%s },\n' %
                                (fixname(fname), gettername, settername))
 
         if not getsets:
             return '0'
+        self.fp.write('extern "C" {\n\n')
         self.fp.write('static const PyGetSetDef %s[] = {\n' % getsets_name)
         for getset in getsets:
             self.fp.write(getset)
         self.fp.write('    { NULL, (getter)0, (setter)0 },\n')
         self.fp.write('};\n\n')
+        self.fp.write('}; // extern "C"\n')
 
         return getsets_name
 
@@ -1017,8 +1089,14 @@ class GObjectWrapper(Wrapper):
                  'tp_dictoffset'     : '0'} 
 
     def get_field_accessor(self, fieldname):
-        castmacro = string.replace(self.objinfo.typecode, '_TYPE_', '_', 1)
-        return '%s(pygobject_get(self))->%s' % (castmacro, fieldname)
+        castmacro = self.objinfo.typecode
+        fieldname = fieldname[0].lower() + fieldname[1:]
+        return '%s((PyDOMObject*)(self))->%s' % (castmacro, fieldname)
+
+    def get_field_setter(self, fieldname):
+        castmacro = self.objinfo.typecode
+        fieldname = fieldname[0].upper() + fieldname[1:]
+        return '%s((PyDOMObject*)(self))->set%s' % (castmacro, fieldname)
 
     def get_initial_constructor_substdict(self, constructor):
         substdict = Wrapper.get_initial_constructor_substdict(self,

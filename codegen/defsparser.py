@@ -50,6 +50,7 @@ class DefsParser(IncludeParser):
         odef = apply(ObjectDef, args)
         self.objects.append(odef)
         self.c_name[odef.c_name] = odef
+        return odef
     def define_interface(self, *args):
         idef = apply(InterfaceDef, args)
         self.interfaces.append(idef)

@@ -1092,7 +1092,7 @@ class IDLParser(object):
                          location=self.getLocation(p, 3),
                          doccomments=doccomments,
                          getter=getter,
-                         setter=getter,
+                         setter=setter,
                         )
 
     def p_member_method(self, p):
@@ -1276,6 +1276,13 @@ class IDLDefsParser(defsparser.DefsParser):
         x = p.parse(input, filename=self.filename)
         for obj in x.productions:
             if isinstance(obj, Interface):
+                atts = []
+                attsd = {}
+                for m in obj.members:
+                    if not isinstance(m, Attribute):
+                        continue
+                    atts.append((typeMap(m.type), m.name))
+                    attsd[m.name] = m
                 args = [ ("in-module", modulename),
                          ("gtype-id", "core"+obj.name), # XXX
                          ("c-name", obj.nativename) # XXX
@@ -1284,7 +1291,10 @@ class IDLDefsParser(defsparser.DefsParser):
                     args.append( ("parent", obj.base[0]) )
                 else:
                     args.append( ("parent", "DOMObject") )
-                self.define_object(obj.name, *args)
+                if atts:
+                    args.append( tuple(["fields"] + atts) )
+                odef = self.define_object(obj.name, *args)
+                odef.attributes = attsd
             for m in obj.members:
                 if isinstance(m, CDATA):
                     continue
