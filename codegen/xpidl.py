@@ -1246,7 +1246,7 @@ class IDLParser(object):
 
 tmap = {
   "float": "float",
-    "CompareHow": "WebCore::Range::CompareHow ",
+    "CompareHow": "CompareHow",
     "double": "double",
     "boolean": "bool",
     "char": "char",

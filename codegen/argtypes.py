@@ -205,6 +205,20 @@ class GUniCharArg(ArgType):
         info.codeafter.append(self.ret_tmpl)
 
 
+class CompareHowArg(ArgType):
+    def write_param(self, ptype, pname, pdflt, pnull, info):
+        if pdflt:
+            info.varlist.add('int', pname + ' = ' + pdflt)
+        else:
+            info.varlist.add('int', pname)
+        info.arglist.append("cvt_"+pname)
+        info.codebefore.append('    WebCore::Range::CompareHow cvt_%s = static_cast<WebCore::Range::CompareHow>(%s);\n' % \
+                            (pname, pname))
+        info.add_parselist('i', ['&' + pname], [pname])
+    def write_return(self, ptype, ownsreturn, info):
+        info.varlist.add('int', 'ret')
+        info.codeafter.append('    return PyInt_FromLong(ret);')
+
 class IntArg(ArgType):
     def write_param(self, ptype, pname, pdflt, pnull, info):
         if pdflt:
@@ -1027,6 +1041,9 @@ matcher.register('gint16', arg)
 matcher.register('gint32', arg)
 matcher.register('GTime', arg)
 matcher.register('GSeekType', arg) # Hack, but we have no python wrapper
+
+arg = CompareHowArg()
+matcher.register('CompareHow', arg)
 
 arg = LongArg()
 matcher.register('long', arg)
