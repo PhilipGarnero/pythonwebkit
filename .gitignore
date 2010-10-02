@@ -2,6 +2,7 @@
 *.pbxuser
 *.perspective*
 *.pyc
+.*.sw?
 build/
 .deps
 .libs
