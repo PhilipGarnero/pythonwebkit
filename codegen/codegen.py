@@ -755,12 +755,11 @@ static int
     def write_getsets(self):
         lower_name = self.get_lower_name()
         getsets_name = lower_name + '_getsets'
-        getterprefix = 'WebKit::_wrap_' + lower_name + '__get_'
-        setterprefix = 'WebKit::_wrap_' + lower_name + '__set_'
+        getterprefix = '_wrap_' + lower_name + '__get_'
+        setterprefix = '_wrap_' + lower_name + '__set_'
 
         # no overrides for the whole function.  If no fields,
         # don't write a func
-        print "getsets", self.objinfo.c_name, self.objinfo.fields
         if not self.objinfo.fields:
             return '0'
         getsets = []
@@ -796,7 +795,7 @@ static int
                                     'farg': field_args,
                                     'codebefore': info.get_codebefore(),
                                     'codeafter': info.get_codeafter() })
-                    gettername = funcname
+                    gettername = "WebKit::"+funcname
                 except argtypes.ArgTypeError, ex:
                     sys.stderr.write(
                         "Could not write getter for %s.%s: %s\n"
@@ -838,7 +837,7 @@ static int
 
                     substdict['parseargs'] = self.parseset_tmpl % substdict
                     self.fp.write(self.setter_tmpl % substdict)
-                    gettername = funcname
+                    settername = "WebKit::"+funcname
                 except argtypes.ArgTypeError, ex:
                     sys.stderr.write(
                         "Could not write getter for %s.%s: %s\n"
@@ -849,6 +848,7 @@ static int
 
         if not getsets:
             return '0'
+        self.fp.write('} // namespace WebKit\n')
         self.fp.write('extern "C" {\n\n')
         self.fp.write('static const PyGetSetDef %s[] = {\n' % getsets_name)
         for getset in getsets:
@@ -856,6 +856,9 @@ static int
         self.fp.write('    { NULL, (getter)0, (setter)0 },\n')
         self.fp.write('};\n\n')
         self.fp.write('}; // extern "C"\n')
+        self.fp.write('namespace WebKit {\n')
+        self.fp.write('using namespace WebCore;\n')
+        self.fp.write('\n')
 
         return getsets_name
 
