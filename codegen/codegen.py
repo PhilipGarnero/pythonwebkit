@@ -165,7 +165,7 @@ class Wrapper:
         ]
 
     setter_tmpl = (
-        'static PyObject *\n'
+        'static int\n'
         '%(funcname)s(PyObject *self, PyObject *args, void *closure)\n'
         '{\n'
         '%(varlist)s'
@@ -173,6 +173,7 @@ class Wrapper:
         '%(codebefore)s'
         '    %(setreturn)s%(field)s(%(arglist)s);\n'
         '%(codeafter)s\n'
+        '    return 0;\n'
         '}\n\n'
         )
 
@@ -820,13 +821,12 @@ static int
                         info.arglist.append("ec")
                         info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
 
-                    argtypes.NoneArg().write_return(None, 0, info)
                     substdict = { 'funcname': funcname,
                                     'varlist': info.get_varlist(),
                                     'field': self.get_field_setter(cfname),
                                     'codeafter': info.get_codeafter() }
                     substdict['varlist'] = substdict['varlist']
-                    substdict.setdefault('errorreturn', 'NULL')
+                    substdict.setdefault('errorreturn', '-1')
                     substdict.setdefault('name', funcname)
                     substdict['setreturn'] = ''
                     substdict['typecodes'] = info.parsestr
@@ -1584,8 +1584,8 @@ initpywebkit(void)
         self.fp.write('#include <wtf/text/CString.h>\n\n\n')
         self.fp.write('#include <wtf/Forward.h>\n\n\n')
         self.fp.write("""\
-char* cpUTF8(WTF::String const& s) { return (char*)(s.utf8().data()); }
-char* cpUTF8(WebCore::KURL const& s) { return (char*)(s.string().utf8().data()); }
+char* cpUTF8(WTF::String const& s) { return strdup((s.utf8().data())); }
+char* cpUTF8(WebCore::KURL const& s) { return strdup((s.string().utf8().data())); }
 """)
 
         if py_ssize_t_clean:
