@@ -46,7 +46,7 @@ DOMObject_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 DOMObject_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = { "ptr", NULL };
+    static char *kwlist[] = { (char*)"ptr", NULL };
     long ptr = 0;
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "|l", kwlist,
@@ -62,7 +62,7 @@ DOMObject_init(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = { "ptr", NULL };
+    static char *kwlist[] = { (char*)"ptr", NULL };
     long ptr;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,"l:shoddy.DOMObject.setptr",
@@ -122,6 +122,14 @@ static PyTypeObject PyDOMObject_Type = {
     0,                       /* tp_init */
     0,                       /* tp_alloc */
     DOMObject_new,           /* tp_new */
+    0,                                 /* tp_bases */
+    0,                                 /* tp_mro */
+    0,                                 /* tp_cache */
+    0,                                 /* tp_subclasses */
+    0,                                 /* tp_weaklist */
+    0,                                 /* tp_del */
+    0                                  /* tp_version_tag */
+
 };
 
 static PyObject* PyDOMObject_new(PyTypeObject *type, void *ptr)

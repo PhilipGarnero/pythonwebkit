@@ -849,7 +849,7 @@ static int
                         "Could not write getter for %s.%s: %s\n"
                         % (self.objinfo.c_name, fname, str(ex)))
             if gettername != '0' or settername != '0':
-                getsets.append('    { "%s", (getter)%s, (setter)%s, 0, 0 },\n' %
+                getsets.append('    { (char*)"%s", (getter)%s, (setter)%s, 0, 0 },\n' %
                                (fixname(fname), gettername, settername))
 
         if not getsets:

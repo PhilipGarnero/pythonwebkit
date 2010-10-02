@@ -60,8 +60,9 @@ class WrapperInfo:
     def get_varlist(self):
         return str(self.varlist)
     def get_kwlist(self):
+        kwlist = map(lambda x: "(char*)"+x, self.kwlist)
         ret = '    static char *kwlist[] = { %s };\n' % \
-              string.join(self.kwlist + [ 'NULL' ], ', ')
+              string.join(kwlist + [ 'NULL' ], ', ')
         if not self.get_varlist():
             ret = ret + '\n'
         return ret
