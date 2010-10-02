@@ -257,7 +257,7 @@
   (return-type "gpointer")
 )
 
-(define-method get_webkit_document
+(define-method get_dom_document
   (of-object "WebKitWebFrame")
   (c-name "webkit_web_frame_get_dom_document")
   (return-type "gpointer")
