@@ -132,6 +132,25 @@ class StringArg(ArgType):
         info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret));\n' +
                               '    return py_ret;')
 
+class SerializedStringArg(ArgType):
+    def write_param(self, ptype, pname, pdflt, pnull, info):
+        if pdflt != None:
+            if pdflt != 'NULL': pdflt = '"' + pdflt + '"'
+            info.varlist.add('char', '*' + pname + ' = ' + pdflt)
+        else:
+            info.varlist.add('char', '*' + pname)
+        info.arglist.append("cvt_"+pname)
+        info.codebefore.append('    WebCore::SerializedScriptValue cvt_%s = WebCore::SerializedScriptValue::create(WTF::String::fromUTF8(%s));\n' % \
+                            (pname, pname))
+        if pnull:
+            info.add_parselist('z', ['&' + pname], [pname])
+        else:
+            info.add_parselist('s', ['&' + pname], [pname])
+    def write_return(self, ptype, ownsreturn, info):
+        info.varlist.add('WebCore::SerializedScriptValue', 'ret')
+        info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret->toString()));\n' +
+                              '    return py_ret;')
+
 class UCharArg(ArgType):
     # allows strings with embedded NULLs.
     def write_param(self, ptype, pname, pdflt, pnull, info):
@@ -973,6 +992,9 @@ matcher.register('const-gchar*', arg)
 matcher.register('gchar-const*', arg)
 matcher.register('string', arg)
 matcher.register('static_string', arg)
+
+arg = SerializedStringArg()
+matcher.register('SerializedScriptValue', arg)
 
 arg = UCharArg()
 matcher.register('unsigned-char*', arg)

@@ -1254,6 +1254,7 @@ tmap = {
     "short": "short",
     "uchar": "uchar",
     "unsigned": "unsigned",
+    "any": "SerializedScriptValue",
     "int": "int",
     "unsigned int": "unsigned int",
     "unsigned long": "unsigned long",
