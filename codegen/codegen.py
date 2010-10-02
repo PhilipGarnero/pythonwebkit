@@ -849,7 +849,7 @@ static int
                         "Could not write getter for %s.%s: %s\n"
                         % (self.objinfo.c_name, fname, str(ex)))
             if gettername != '0' or settername != '0':
-                getsets.append('    { "%s", (getter)%s, (setter)%s },\n' %
+                getsets.append('    { "%s", (getter)%s, (setter)%s, 0, 0 },\n' %
                                (fixname(fname), gettername, settername))
 
         if not getsets:
@@ -859,7 +859,7 @@ static int
         self.fp.write('static const PyGetSetDef %s[] = {\n' % getsets_name)
         for getset in getsets:
             self.fp.write(getset)
-        self.fp.write('    { NULL, (getter)0, (setter)0 },\n')
+        self.fp.write('    { NULL, (getter)0, (setter)0, NULL, NULL },\n')
         self.fp.write('};\n\n')
         self.fp.write('}; // extern "C"\n')
         self.fp.write('namespace WebKit {\n')
