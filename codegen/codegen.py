@@ -37,6 +37,12 @@ class Coverage(object):
         else:
             fd.write("***INFO*** There are no declared %s.\n" % self.name)
 
+def startreplace(fieldname, opts):
+    for (opt, replace) in opts:
+        if fieldname.startswith(opt):
+            return replace+fieldname[3:]
+    return fieldname
+    
 functions_coverage = Coverage("global functions")
 methods_coverage = Coverage("methods")
 vproxies_coverage = Coverage("virtual proxies")
@@ -1094,11 +1100,16 @@ class GObjectWrapper(Wrapper):
     def get_field_accessor(self, fieldname):
         castmacro = self.objinfo.typecode
         fieldname = fieldname[0].lower() + fieldname[1:]
+        fieldname = startreplace(fieldname, (
+                        ("hTML", "html"), ("uRL", "url"), ("jS", "js"),
+                        ("xML", "xml"), ("xSLT", "xslt"),
+                        ("create", "isCreate"), ("exclusive", "isExclusive")))
         return '%s((PyDOMObject*)(self))->%s' % (castmacro, fieldname)
 
     def get_field_setter(self, fieldname):
         castmacro = self.objinfo.typecode
         fieldname = fieldname[0].upper() + fieldname[1:]
+        fieldname = startreplace(fieldname, (("Xml", "XML"),))
         return '%s((PyDOMObject*)(self))->set%s' % (castmacro, fieldname)
 
     def get_initial_constructor_substdict(self, constructor):

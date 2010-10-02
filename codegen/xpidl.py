@@ -1158,7 +1158,7 @@ class IDLParser(object):
                    | optsetter
                    |
         """
-        if len(p) == 3:
+        if len(p) == 4:
             p[0] = [p[1], p[3]]
         elif len(p) == 2:
             p[0] = [p[1]]
@@ -1260,7 +1260,7 @@ tmap = {
     "unsigned long long": "unsigned long long",
     "unsigned short": "unsigned short",
     "void": "none",
-    "EventTarget": "Node*",
+    #"EventTarget": "Node*",
     "DOMString": "char*"
 }
 
@@ -1281,6 +1281,20 @@ class IDLDefsParser(defsparser.DefsParser):
                 for m in obj.members:
                     if not isinstance(m, Attribute):
                         continue
+                    # HACKS!
+                    if m.attributes.has_key("Reflect"):
+                        continue
+                    if m.attributes.has_key("CustomGetter"):
+                        continue
+                    if m.attributes.has_key("Replaceable"):
+                        m.readonly = True
+                    if m.attributes.has_key("Conditional"):
+                        if m.attributes['Conditional'][0] == ["TOUCH_EVENTS"]:
+                            continue
+                        if m.attributes['Conditional'][0] == ["FULLSCREEN_API"]:
+                            continue
+                        if m.attributes['Conditional'][0] == ["DEVICE_ORIENTATION"]:
+                            continue
                     atts.append((typeMap(m.type), m.name))
                     attsd[m.name] = m
                 args = [ ("in-module", modulename),
