@@ -140,14 +140,14 @@ class SerializedStringArg(ArgType):
         else:
             info.varlist.add('char', '*' + pname)
         info.arglist.append("cvt_"+pname)
-        info.codebefore.append('    WebCore::SerializedScriptValue cvt_%s = WebCore::SerializedScriptValue::create(WTF::String::fromUTF8(%s));\n' % \
+        info.codebefore.append('    WebCore::SerializedScriptValue *cvt_%s = WebCore::SerializedScriptValue::create(WTF::String::fromUTF8(%s));\n' % \
                             (pname, pname))
         if pnull:
             info.add_parselist('z', ['&' + pname], [pname])
         else:
             info.add_parselist('s', ['&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
-        info.varlist.add('WebCore::SerializedScriptValue', 'ret')
+        info.varlist.add('WebCore::SerializedScriptValue*', 'ret')
         info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret->toString()));\n' +
                               '    return py_ret;')
 

@@ -1314,6 +1314,10 @@ class IDLDefsParser(defsparser.DefsParser):
                 if isinstance(m, CDATA):
                     continue
                 if isinstance(m, Method):
+                    if obj.name == 'History' \
+                       and m.name in ['pushState', 'replaceState']:
+                        # XXX HACK! skip it for now
+                        continue
                     if obj.name == 'EventListener' \
                        and m.name == 'handleEvent':
                         # XXX HACK! skip it for now
