@@ -86,7 +86,9 @@
 #include "ResourceHandle.h"
 #include "ScriptValue.h"
 #include "Scrollbar.h"
+#ifdef WEBKIT_GOBJECT_BINDINGS
 #include "webkit/WebKitDOMDocumentPrivate.h"
+#endif
 #include <wtf/text/CString.h>
 
 #include <gdk/gdkkeysyms.h>

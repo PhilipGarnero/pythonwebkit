@@ -122,6 +122,7 @@ pywebkit_la_LIBADD = \
 	$(UNICODE_LIBS) \
 	$(PYWEBKITGTKDEPS_LIBS) \
 	$(XT_LIBS)
+
 pywebkit_cppflags += \
 	$(CAIRO_CFLAGS) \
 	-I$(srcdir)/WebCore/platform/network/soup \
@@ -210,4 +211,5 @@ DerivedSources/python/webkit.defs: $(pywebkit_defs)
 BUILT_SOURCES += \
     $(pywebkit_built_sources) \
     $(pywebkit_built_nosources)
+
 
