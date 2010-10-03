@@ -165,7 +165,10 @@ private:
     PythonEventListener(PyObject *callback)
       : WebCore::EventListener(WebCore::EventListener::PythonEventListenerType)
       , m_callback(callback)
-    {}
+    {
+        if (m_callback)
+            Py_INCREF(m_callback);
+    }
     ~PythonEventListener()
     {
         if (m_callback)
@@ -203,12 +206,18 @@ extern "C" {
 WebCore::EventListener*
 webkit_create_python_event_listener(PyObject *callback)
 {
-    return WTF::getPtr(PythonEventListener::create(callback));
+    PassRefPtr<PythonEventListener> listener;
+    PythonEventListener * p_listener;
+    listener = PythonEventListener::create(callback);
+    p_listener = WTF::getPtr(listener);
+    p_listener->ref();
+    return p_listener;
 }
 
 void webkit_delete_python_event_listener(WebCore::EventListener *l)
 {
-    delete l;
+    l->deref(); /* XXX - results in delete due to refcount=0? */
+    /*delete l;*/
 }
 
 } /* extern C */
