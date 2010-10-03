@@ -182,10 +182,10 @@ void PythonEventListener::handleEvent(WebCore::ScriptExecutionContext*,
     Py_DECREF(arglist);
     Py_DECREF(pev);
     if (result == NULL)
-        return false; /* Pass error back */
+        return; /* Pass error back */
     /* Here maybe use the result */
     Py_DECREF(result);
-    return true;
+    return;
 }
 
 bool PythonEventListener::operator==(const EventListener& listener)

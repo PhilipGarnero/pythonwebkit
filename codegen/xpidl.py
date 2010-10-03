@@ -1262,7 +1262,8 @@ tmap = {
     "unsigned short": "unsigned short",
     "void": "none",
     #"EventTarget": "Node*",
-    "DOMString": "char*"
+    "DOMString": "char*",
+    "EventListener": "EventListener"
 }
 
 def typeMap(ptype):
