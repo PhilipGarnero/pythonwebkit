@@ -43,7 +43,8 @@ namespace WebCore {
             ObjCEventListenerType,
             CPPEventListenerType,
             ConditionEventListenerType,
-            GObjectEventListenerType
+            GObjectEventListenerType,
+            PythonEventListenerType
         };
 
         virtual ~EventListener() { }

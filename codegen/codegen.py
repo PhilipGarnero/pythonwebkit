@@ -1584,6 +1584,7 @@ initpywebkit(void)
         self.fp.write('#include <wtf/text/CString.h>\n\n\n')
         self.fp.write('#include <wtf/Forward.h>\n\n\n')
         self.fp.write("""\
+/* TODO: resolve memory leak */
 char* cpUTF8(WTF::String const& s) { return strdup((s.utf8().data())); }
 char* cpUTF8(WebCore::KURL const& s) { return strdup((s.string().utf8().data())); }
 """)

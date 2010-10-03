@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Nuanti Ltd.
  * Copyright (C) 2009 Jan Alonzo <jmalonzo@gmail.com>
  * Copyright (C) 2009 Gustavo Noronha Silva <gns@gnome.org>
+ * Copyright (C) 2010 Free Software Foundation
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public

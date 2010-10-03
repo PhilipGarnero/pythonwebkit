@@ -1,8 +1,6 @@
 /* -*- Mode: C; c-basic-offset: 4 -*- */
 /*
- Copyright (C) 2006, Red Hat, Inc.
- Copyright (C) 2007, One Laptop Per Child
- Copyright (C) 2009, Jan Michael Alonzo <jmalonzo@gmail.com>
+ Copyright (C) 2010, Free Software Foundation
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -141,6 +139,79 @@ static PyObject* PyDOMObject_new(PyTypeObject *type, void *ptr)
     v->ptr = ptr;
     return (PyObject *) v;
 }
+
+/* python callback-wrapped event listener.  associates a python callback
+   function with a c++ object of type "EventListener" so that 
+*/
+
+PyObject *WebKit::toPython(WebCore::Event *);
+
+class PythonEventListener : public WebCore::EventListener {
+public:
+    static PassRefPtr<PythonEventListener> create(PyObject* callback)
+    { return adoptRef(new PythonEventListener(callback)); }
+
+    virtual void handleEvent(WebCore::ScriptExecutionContext*, WebCore::Event*);
+    virtual bool operator==(const EventListener& other);
+    static const PythonEventListener* cast(const EventListener* listener)
+    {
+        return listener->type() == PythonEventListenerType
+            ? static_cast<const PythonEventListener*>(listener)
+            : 0;
+    }
+
+private:
+    PyObject *m_callback;
+    PythonEventListener(PyObject *callback)
+      : WebCore::EventListener(WebCore::EventListener::PythonEventListenerType)
+      , m_callback(callback)
+    {}
+    ~PythonEventListener()
+    {
+        if (m_callback)
+            Py_DECREF(m_callback);
+    }
+};
+
+void PythonEventListener::handleEvent(WebCore::ScriptExecutionContext*,
+                                      WebCore::Event* event)
+{
+    PyObject* pev = WebKit::toPython(event);
+    PyObject* arglist = Py_BuildValue((char*)"(O)", pev);
+    PyObject* result = PyEval_CallObject(m_callback, arglist);
+    Py_DECREF(arglist);
+    Py_DECREF(pev);
+    if (result == NULL)
+        return false; /* Pass error back */
+    /* Here maybe use the result */
+    Py_DECREF(result);
+    return true;
+}
+
+bool PythonEventListener::operator==(const EventListener& listener)
+{
+    const PythonEventListener* pyEventListener;
+    pyEventListener = PythonEventListener::cast(&listener);
+    if (pyEventListener)
+        return m_callback == pyEventListener->m_callback;
+
+    return false;
+}
+
+extern "C" {
+
+WebCore::EventListener*
+webkit_create_python_event_listener(PyObject *callback)
+{
+    return WTF::getPtr(PythonEventListener::create(callback));
+}
+
+void webkit_delete_python_event_listener(WebCore::EventListener *l)
+{
+    delete l;
+}
+
+} /* extern C */
 
 %%
 init
