@@ -814,8 +814,9 @@ static int
                     info = argtypes.WrapperInfo()
                     info.parselist = [''] # remove kwlist, for PyArgs_Parse
                     handler = argtypes.matcher.get(ftype)
+                    hack = ftype == 'EventListener*' # XXX HACK!
                     handler.write_param(ftype, fname, None,
-                                        False, info)
+                                        hack, info)
                     exception_needed = self.objinfo.attributes[fname].setter
                     if exception_needed:
                         info.arglist.append("ec")
