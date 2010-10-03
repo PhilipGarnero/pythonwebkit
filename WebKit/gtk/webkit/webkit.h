@@ -23,7 +23,9 @@
 
 #include <webkit/webkitversion.h>
 #include <webkit/webkitdefines.h>
+#ifdef WEBKIT_GOBJECT_BINDINGS
 #include <webkit/webkitdom.h>
+#endif
 #include <webkit/webkitdownload.h>
 #include <webkit/webkitgeolocationpolicydecision.h>
 #include <webkit/webkithittestresult.h>
