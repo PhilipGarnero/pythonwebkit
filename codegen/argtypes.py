@@ -525,10 +525,10 @@ class ObjectArg(ArgType):
             '        return NULL;\n'
             '    }\n')
     dflt = '    if (py_%(name)s)\n' \
-           '        %(name)s = %(cast)s(py_%(name)s->obj);\n'
+           '        %(name)s = %(cast)s(py_%(name)s);\n'
     def __init__(self, objname, parent, typecode):
         self.objname = objname
-        self.cast = string.replace(typecode, '_TYPE_', '_', 1)
+        self.cast = typecode
         self.parent = parent
     def write_param(self, ptype, pname, pdflt, pnull, info):
         if pnull:
@@ -540,7 +540,7 @@ class ObjectArg(ArgType):
                                                         'type':self.objname})
             else:
                 info.varlist.add(self.objname, '*' + pname + ' = NULL')
-                info.varlist.add('PyObject', '*py_' + pname)
+                info.varlist.add('PyDOMObject', '*py_' + pname)
                 info.codebefore.append(self.dflt % {'name':pname,
                                                     'cast':self.cast,
                                                     'type':self.objname})
