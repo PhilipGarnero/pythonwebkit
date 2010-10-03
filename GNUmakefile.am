@@ -345,11 +345,15 @@ webkitgtk_h_api += \
 # the rule that builds it depends on webkitgtk_built_h_api (circular dependency).
 webkitgtk_built_sources += \
 	$(webkitgtk_built_h_api) \
-	$(webkitgtk_gdom_built_sources) \
 	DerivedSources/webkit/webkitmarshal.cpp \
 	DerivedSources/webkit/webkitmarshal.h \
 	WebKit/gtk/webkit/webkitenumtypes.cpp \
 	WebKit/gtk/webkit/webkitenumtypes.h
+
+if WEBKIT_GOBJECT_BINDINGS
+webkitgtk_built_sources += \
+	$(webkitgtk_gdom_built_sources)
+endif
 
 webkitgtk_sources += \
 	WebKit/gtk/WebCoreSupport/ChromeClientGtk.cpp \
@@ -374,7 +378,6 @@ webkitgtk_sources += \
 	WebKit/gtk/webkit/webkitapplicationcache.cpp \
 	WebKit/gtk/webkit/webkitdownload.cpp \
 	WebKit/gtk/webkit/webkiterror.cpp \
-	WebKit/gtk/webkit/webkithittestresult.cpp \
 	WebKit/gtk/webkit/webkitnetworkrequest.cpp \
 	WebKit/gtk/webkit/webkitnetworkresponse.cpp \
 	WebKit/gtk/webkit/webkitprivate.cpp \
@@ -396,6 +399,11 @@ webkitgtk_sources += \
 	WebKit/gtk/webkit/webkitwebview.cpp \
 	WebKit/gtk/webkit/webkitwebwindowfeatures.cpp \
 	WebKit/gtk/webkit/webkitworkers.cpp
+
+if WEBKIT_GOBJECT_BINDINGS
+webkitgtk_sources += \
+	WebKit/gtk/webkit/webkithittestresult.cpp 
+endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = WebKit/gtk/@WEBKITGTK_PC_NAME@-@WEBKITGTK_API_VERSION@.pc

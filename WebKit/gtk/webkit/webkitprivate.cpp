@@ -143,6 +143,7 @@ WebCore::EditingBehaviorType core(WebKitEditingBehavior type)
     return (WebCore::EditingBehaviorType)type;
 }
 
+#ifdef WEBKIT_GOBJECT_BINDINGS
 WebKitHitTestResult* kit(const WebCore::HitTestResult& result)
 {
     guint context = WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT;
@@ -183,6 +184,7 @@ WebKitHitTestResult* kit(const WebCore::HitTestResult& result)
                                                "inner-node", node,
                                                NULL));
 }
+#endif
 
 PasteboardHelperGtk* pasteboardHelperInstance()
 {

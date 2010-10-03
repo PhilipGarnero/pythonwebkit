@@ -4535,6 +4535,7 @@ void webkit_web_view_set_tooltip_text(WebKitWebView* webView, const char* toolti
 #endif
 }
 
+#ifdef WEBKIT_GOBJECT_BINDINGS
 /**
  * webkit_web_view_get_hit_test_result:
  * @webView: a #WebKitWebView
@@ -4561,6 +4562,7 @@ WebKitHitTestResult* webkit_web_view_get_hit_test_result(WebKitWebView* webView,
 
     return kit(mev.hitTestResult());
 }
+#endif
 
 /**
  * webkit_web_view_get_icon_uri:
@@ -4581,6 +4583,7 @@ G_CONST_RETURN gchar* webkit_web_view_get_icon_uri(WebKitWebView* webView)
     return webView->priv->iconURI.data();
 }
 
+#ifdef WEBKIT_GOBJECT_BINDINGS
 /**
  * webkit_web_view_get_dom_document:
  * @webView: a #WebKitWebView
@@ -4604,6 +4607,7 @@ webkit_web_view_get_dom_document(WebKitWebView* webView)
 
     return static_cast<WebKitDOMDocument*>(kit(doc));
 }
+#endif
 
 /**
  * SECTION:webkit

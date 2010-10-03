@@ -26,8 +26,10 @@
 #include <libsoup/soup.h>
 #include <JavaScriptCore/JSBase.h>
 
+#ifdef WEBKIT_GOBJECT_BINDINGS
 #include <webkit/webkitdefines.h>
 #include <webkit/webkitdom.h>
+#endif
 #include <webkit/webkitwebbackforwardlist.h>
 #include <webkit/webkitwebframe.h>
 #include <webkit/webkitwebhistoryitem.h>
@@ -385,9 +387,11 @@ webkit_web_view_set_view_source_mode            (WebKitWebView        *web_view,
 WEBKIT_API gboolean
 webkit_web_view_get_view_source_mode            (WebKitWebView        *web_view);
 
+#ifdef WEBKIT_GOBJECT_BINDINGS
 WEBKIT_API WebKitHitTestResult*
 webkit_web_view_get_hit_test_result             (WebKitWebView        *webView,
                                                  GdkEventButton       *event);
+#endif
 
 WEBKIT_API G_CONST_RETURN gchar *
 webkit_web_view_get_icon_uri                    (WebKitWebView        *webView);
@@ -398,8 +402,10 @@ webkit_set_cache_model                          (WebKitCacheModel     cache_mode
 WEBKIT_API WebKitCacheModel
 webkit_get_cache_model                          (void);
 
+#ifdef WEBKIT_GOBJECT_BINDINGS
 WEBKIT_API WebKitDOMDocument *
 webkit_web_view_get_dom_document                (WebKitWebView        *webView);
+#endif
 
 G_END_DECLS
 
