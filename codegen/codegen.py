@@ -1480,6 +1480,29 @@ class GPointerWrapper(GBoxedWrapper):
 
 class SourceWriter:
 
+    # this is a bit odd / multi-purpose. inputs include Py_None,
+    # or an already-created python-wrapped EventListener object,
+    # or a callable function.  a callable function ends up being
+    # stored inside the PythonEventListener
+    wrapcore_eventlistener_tmpl = (
+        'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
+        '{\n'
+        '    PyObject *obj = (PyObject*)request;\n'
+        '    if (obj == Py_None) {\n'
+        '        return NULL;\n'
+        '    }\n'
+        '    if (Py_TYPE((PyObject*)obj) == PtrPyDOMEventListener_Type) {\n'
+        '        void *coreptr = ((PyDOMObject*)request)->ptr;\n'
+        '        return static_cast<WebCore::%(classname)s*>(coreptr);\n'
+        '    }\n'
+        '    if (!PyCallable_Check(obj)) {\n'
+        '        PyErr_SetString(PyExc_TypeError, "param must be callable");\n'
+        '        return NULL;\n'
+        '    }\n'
+        '    return webkit_create_python_event_listener(obj);\n'
+        '}\n\n'
+        )
+
     wrapcore_tmpl = (
         'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
         '{\n'
@@ -1623,7 +1646,11 @@ typedef intobjargproc ssizeobjargproc;
             if not self.overrides.is_type_ignored(obj.c_name):
                 txt = self.wrapnode_tmpl % {'classname': obj.c_name}
                 self.fp.write(txt)
-                txt = self.wrapcore_tmpl % {'classname': obj.c_name}
+                if obj.c_name == 'EventListener':
+                    tmpl = self.wrapcore_eventlistener_tmpl 
+                else:
+                    tmpl = self.wrapcore_tmpl 
+                txt = tmpl % {'classname': obj.c_name}
                 self.fp.write(txt)
             if obj.c_name not in \
                     ["Node", "Document", "HTMLCollection", "SVGPathSeg",

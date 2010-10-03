@@ -1262,8 +1262,7 @@ tmap = {
     "unsigned short": "unsigned short",
     "void": "none",
     #"EventTarget": "Node*",
-    "DOMString": "char*",
-    "EventListener": "EventListener"
+    "DOMString": "char*"
 }
 
 def typeMap(ptype):
@@ -1346,7 +1345,10 @@ class IDLDefsParser(defsparser.DefsParser):
                             # HACK! XMLHTTPRequest.open url is WebCore::KURL
                             p = ('kurl', p.name)
                         else:
-                            p = (typeMap(p.type), p.name)
+                            if p.type == 'EventListener':
+                                p = (typeMap(p.type), p.name, ('null-ok',))
+                            else:
+                                p = (typeMap(p.type), p.name)
                             # XXX TODO: sort out attributes
                         params.append(p)
                         if rt:

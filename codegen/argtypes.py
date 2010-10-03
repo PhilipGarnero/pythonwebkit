@@ -534,14 +534,14 @@ class ObjectArg(ArgType):
         if pnull:
             if pdflt:
                 info.varlist.add(self.objname, '*' + pname + ' = ' + pdflt)
-                info.varlist.add('PyGObject', '*py_' + pname + ' = NULL')
+                info.varlist.add('PyObject', '*py_' + pname + ' = NULL')
                 info.codebefore.append(self.nulldflt % {'name':pname,
                                                         'cast':self.cast,
                                                         'type':self.objname})
             else:
                 info.varlist.add(self.objname, '*' + pname + ' = NULL')
-                info.varlist.add('PyGObject', '*py_' + pname)
-                info.codebefore.append(self.null % {'name':pname,
+                info.varlist.add('PyObject', '*py_' + pname)
+                info.codebefore.append(self.dflt % {'name':pname,
                                                     'cast':self.cast,
                                                     'type':self.objname})
             if ptype.endswith('*'):
