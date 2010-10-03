@@ -342,6 +342,22 @@ AC_SUBST(GTK_LIBS)
 AC_SUBST(CAIRO_CFLAGS)
 AC_SUBST(CAIRO_LIBS)
 
+# check whether to build python bindings
+AC_MSG_CHECKING([whether to enable python bindings])
+AC_ARG_ENABLE(python_bindings,
+              AC_HELP_STRING([--enable-python-bindings],
+                             [enable python bindings [default=yes]]),
+              [],[enable_python_bindings="yes"])
+AC_MSG_RESULT([$enable_python_bindings])
+
+# check whether to build gobject bindings
+AC_MSG_CHECKING([whether to enable gobject bindings])
+AC_ARG_ENABLE(gobject_bindings,
+              AC_HELP_STRING([--enable-gobject-bindings],
+                             [enable gobject bindings [default=no]]),
+              [],[enable_gobject_bindings="no"])
+AC_MSG_RESULT([$enable_gobject_bindings])
+
 # check whether to build with debugging enabled
 AC_MSG_CHECKING([whether to do a debug build])
 AC_ARG_ENABLE(debug,
@@ -917,6 +933,8 @@ AM_CONDITIONAL([USE_GSETTINGS], [test "$have_gsettings" = "yes"])
 AM_CONDITIONAL([USE_GSTREAMER], [test "$have_gstreamer" = "yes"])
 
 # WebKit feature conditionals
+AM_CONDITIONAL([WEBKIT_GOBJECT_BINDINGS],[test "$enable_gobject_bindings" = "yes"])
+AM_CONDITIONAL([WEBKIT_PYTHON_BINDINGS],[test "$enable_python_bindings" = "yes"])
 AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 AM_CONDITIONAL([ENABLE_3D_TRANSFORMS],[test "$enable_3D_transforms" = "yes"])
 AM_CONDITIONAL([ENABLE_BLOB],[test "$enable_blob" = "yes"])
@@ -1069,6 +1087,8 @@ GTK+ configuration:
  GDK target                                               : $with_target
  Hildon UI extensions                                     : $with_hildon
  Introspection support                                    : $enable_introspection
+ Python bindings                                          : $enable_python_bindings
+ GObject bindings                                         : $enable_gobject_bindings
 "
 if test "$with_unicode_backend" = "glib"; then
    echo "     >> WARNING: the glib-based unicode backend is slow and incomplete <<"

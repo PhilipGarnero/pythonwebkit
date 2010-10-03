@@ -4,90 +4,6 @@ HTML_FEATURES :=
 WEBCORE_CSS_PROPERTY_NAMES := $(WebCore)/css/CSSPropertyNames.in
 WEBCORE_CSS_VALUE_KEYWORDS := $(WebCore)/css/CSSValueKeywords.in
 
-pywebkit_cppflags += \
-	$(CAIRO_CFLAGS) \
-	-I$(srcdir)/WebCore/platform/network/soup \
-	-I$(srcdir)/WebCore/bindings/python \
-	-I$(top_builddir)/DerivedSources
-
-
-pywebkit_sources += \
-	WebCore/bindings/python/PythonBinding.cpp \
-	WebCore/bindings/python/WebkitCSSRuleCustom.cpp \
-	WebCore/bindings/python/WebkitCSSValueCustom.cpp \
-	WebCore/bindings/python/WebkitDocumentCustom.cpp \
-	WebCore/bindings/python/WebkitElementCustom.cpp \
-	WebCore/bindings/python/WebkitEventCustom.cpp \
-	WebCore/bindings/python/WebkitEventTargetCustom.cpp \
-	WebCore/bindings/python/WebkitHTMLCollectionCustom.cpp \
-	WebCore/bindings/python/WebkitStyleSheetCustom.cpp \
-	WebCore/bindings/python/WebkitTextCustom.cpp
-
-pywebkit_built_sources += \
-	DerivedSources/python/PyWebkit.cpp \
-	DerivedSources/PythonHTMLElementWrapperFactory.cpp \
-	DerivedSources/PythonHTMLElementWrapperFactory.h
-
-
-DerivedSources/PythonHTMLElementWrapperFactory.h: DerivedSources/PythonHTMLElementWrapperFactory.cpp;
-
-if HTML_FLAGS
-DerivedSources/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
-	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --extraDefines "$(HTML_FEATURES)" --wrapperFactory --outputDir "$(GENSOURCES)"
-else
-DerivedSources/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
-	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --wrapperFactory --outputDir "$(GENSOURCES)"
-endif # HTML_FLAGS
-
-DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
-
-DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py \
-				codegen/argtypes.py $(srcdir)/codegen/_pywebkit.override \
-				$(srcdir)/codegen/idl_files.txt \
-				$(shell cat $(srcdir)/codegen/idl_files.txt)
-	mkdir -p $(GENSOURCES)/python
-	$(PYTHON) codegen/xpidl.py \
-                $(srcdir)/codegen/_pywebkit.override \
-                $(shell cat $(srcdir)/codegen/idl_files.txt)
-
-DerivedSources/python/webkit.defs.c: DerivedSources/python/webkit.defs \
-								$(pysrcdir)/webkit/webkit.override
-	mkdir -p $(GENSOURCES)/python
-	($(PYGOBJECT_CODEGEN) \
-            --register $(PYGTK_DEFSDIR)/gdk-types.defs \
-            --register $(PYGTK_DEFSDIR)/gtk-types.defs \
-			--override pywebkitgtk/webkit/webkit.override \
-			--prefix pywebkit DerivedSources/python/webkit.defs) 2>&1 > \
-			         $(*D)/gen-$(*F).c | tee $(*D)/$(*F).errors \
-    && cp $(*D)/gen-$(*F).c DerivedSources/python/webkit.c \
-    && rm -f $(*D)/gen-$(*F).c
-
-DerivedSources/python/webkit.c: $(pywebkit_defs) \
-    DerivedSources/python/webkit.defs \
-    DerivedSources/python/webkit.defs.c \
-	$(pysrcdir)/webkit/webkit.override;
-
-
-pywebkit_defs := 
-pywebkit_defs += $(pysrcdir)/webkit/webkit-base-types.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1-types.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.0.2.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1.defs
-
-pywebkit_sources += \
-	pywebkitgtk/webkit/webkitmodule.c \
-	pywebkitgtk/webkit/webkit.cpp
-
-pywebkit_built_sources += \
-	DerivedSources/python/webkit.c
-
-pywebkit_built_nosources += $(pywebkit_defs)
-
-CREATEDEFS = $(PYTHON) $(PYGTK_CODEGENDIR)/createdefs.py
-
-DerivedSources/python/webkit.defs: $(pywebkit_defs)
-	mkdir -p $(GENSOURCES)/python
-	$(CREATEDEFS) $@ $(pywebkit_defs)
 
 # WebKit/Gtk definitions
 
@@ -718,19 +634,6 @@ webcore_sources += \
 	WebCore/bindings/generic/GenericBinding.h \
 	WebCore/bindings/generic/RuntimeEnabledFeatures.cpp \
 	WebCore/bindings/generic/RuntimeEnabledFeatures.h \
-	WebCore/bindings/gobject/ConvertToUTF8String.cpp \
-	WebCore/bindings/gobject/ConvertToUTF8String.h \
-	WebCore/bindings/gobject/GObjectEventListener.cpp \
-	WebCore/bindings/gobject/GObjectEventListener.h \
-	WebCore/bindings/gobject/WebKitDOMBinding.cpp \
-	WebCore/bindings/gobject/WebKitDOMBinding.h \
-	WebCore/bindings/gobject/WebKitDOMEventTarget.cpp \
-	WebCore/bindings/gobject/WebKitDOMEventTarget.h \
-	WebCore/bindings/gobject/WebKitDOMEventTargetPrivate.h \
-	WebCore/bindings/gobject/WebKitDOMObject.cpp \
-	WebCore/bindings/gobject/WebKitDOMObject.h \
-	WebCore/bindings/gobject/WebKitHTMLElementWrapperFactory.cpp \
-	WebCore/bindings/gobject/WebKitHTMLElementWrapperFactory.h \
 	WebCore/bindings/js/CachedScriptSourceProvider.h \
 	WebCore/bindings/js/DOMObjectHashTableMap.cpp \
 	WebCore/bindings/js/DOMObjectHashTableMap.h \
@@ -3497,6 +3400,23 @@ webcore_sources += \
 	WebCore/xml/XSLTProcessorLibxslt.cpp \
 	WebCore/xml/XSLTUnicodeSort.cpp \
 	WebCore/xml/XSLTUnicodeSort.h
+
+if WEBKIT_GOBJECT_BINDINGS
+webcore_sources += \
+	WebCore/bindings/gobject/ConvertToUTF8String.cpp \
+	WebCore/bindings/gobject/ConvertToUTF8String.h \
+	WebCore/bindings/gobject/GObjectEventListener.cpp \
+	WebCore/bindings/gobject/GObjectEventListener.h \
+	WebCore/bindings/gobject/WebKitDOMBinding.cpp \
+	WebCore/bindings/gobject/WebKitDOMBinding.h \
+	WebCore/bindings/gobject/WebKitDOMEventTarget.cpp \
+	WebCore/bindings/gobject/WebKitDOMEventTarget.h \
+	WebCore/bindings/gobject/WebKitDOMEventTargetPrivate.h \
+	WebCore/bindings/gobject/WebKitDOMObject.cpp \
+	WebCore/bindings/gobject/WebKitDOMObject.h \
+	WebCore/bindings/gobject/WebKitHTMLElementWrapperFactory.cpp \
+	WebCore/bindings/gobject/WebKitHTMLElementWrapperFactory.h
+endif
 
 webcoregtk_sources += \
 	WebCore/accessibility/gtk/AccessibilityObjectAtk.cpp \
