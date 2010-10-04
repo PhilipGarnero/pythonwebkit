@@ -22,6 +22,14 @@ headers
 #include <Python.h>
 %%
 body
+
+static void py_wk_exc(WebCore::ExceptionCode &ec)
+{
+    WebCore::ExceptionCodeDescription ecdesc;
+    WebCore::getExceptionCodeDescription(ec, ecdesc);
+    PyErr_SetString(PyExc_Exception, ecdesc.name);
+}
+
 typedef struct {
     PyObject_HEAD
     void * ptr;
@@ -58,6 +66,12 @@ DOMObject_init(PyObject *self, PyObject *args, PyObject *kwds)
 */
 
 static PyObject *
+DOMObject_getptr(PyDOMObject *self, PyObject *)
+{
+    return PyInt_FromLong((long)self->ptr);
+}
+
+static PyObject *
 DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { (char*)"ptr", NULL };
@@ -75,6 +89,8 @@ DOMObject_setptr(PyDOMObject *self, PyObject *args, PyObject *kwargs)
 static PyMethodDef DOMObject_methods[] = {
     {"setptr", (PyCFunction)DOMObject_setptr, METH_VARARGS|METH_KEYWORDS,
      PyDoc_STR("set pointer")},
+    {"getptr", (PyCFunction)DOMObject_getptr, METH_NOARGS,
+     PyDoc_STR("get pointer")},
     {NULL,	NULL, NULL, NULL},
 };
 

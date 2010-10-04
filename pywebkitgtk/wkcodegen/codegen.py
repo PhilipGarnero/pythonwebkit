@@ -409,7 +409,10 @@ class Wrapper:
                      'removeChild', 'appendChild']):
                     substdict['setreturn'] = 'bool ok = '
                     info.codeafter.append('    /* TODO: raise exception */\n')
-                    info.codeafter.append('    if (!ok) return NULL;\n')
+                    info.codeafter.append('    if (!ok) {\n')
+                    info.codeafter.append('        py_wk_exc(ec);\n')
+                    info.codeafter.append('        return NULL;\n')
+                    info.codeafter.append('    }\n')
                     res = function_obj.return_param[1] # XXX assumption!
                     info.codeafter.append('    return (PyObject*)%s;\n' % res)
                 else:

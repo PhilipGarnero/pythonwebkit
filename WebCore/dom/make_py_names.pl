@@ -618,7 +618,7 @@ sub printBindingElementWrapDecl
             print F "#if ${conditionalString}\n";
         }
 
-        print F "PyObject* wrap${JSInterfaceName}(WebCore::${JSInterfaceName}*);\n";
+        print F "PyObject* pywrap${JSInterfaceName}(WebCore::${JSInterfaceName}*);\n";
         if ($conditional) {
             print F "#endif\n\n";
         }

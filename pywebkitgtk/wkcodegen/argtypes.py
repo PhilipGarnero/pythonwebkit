@@ -580,14 +580,18 @@ class ObjectArg(ArgType):
             except ValueError:
                 const = ''
         info.varlist.add("WTF::PassRefPtr<WebCore::%s>" % typename, 'ret')
+        info.varlist.add("WebCore::%s*" % typename, '_ret')
+        info.varlist.add('PyObject', '*py_ret')
         if ownsreturn:
-            info.varlist.add('PyObject', '*py_ret')
             info.codeafter.append('    py_ret = pygobject_new((GObject *)ret);\n'
                                   '    if (ret != NULL)\n'
                                   '        g_object_unref(ret);\n'
                                   '    return py_ret;')
         else:
-            info.codeafter.append('    return toPython(ret.get());') 
+            info.codeafter.append('    _ret = WTF::getPtr(ret);\n') 
+            #info.codeafter.append('    _ret->ref(); /* XXX test */\n') 
+            info.codeafter.append('    py_ret = toPython(_ret);\n') 
+            info.codeafter.append('    return py_ret;') 
 
 class BoxedArg(ArgType):
     # haven't done support for default args.  Is it needed?
