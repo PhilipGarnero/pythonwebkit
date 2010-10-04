@@ -1,4 +1,6 @@
 # -*- Mode: Python; py-indent-offset: 4 -*-
+# Conversion for use in pywebkit Copyright (C) 2010 Free Software Foundation
+
 import os, sys
 import scmexpr
 from definitions import BoxedDef, EnumDef, FlagsDef, FunctionDef, \

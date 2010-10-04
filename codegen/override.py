@@ -1,4 +1,5 @@
 # -*- Mode: Python; py-indent-offset: 4 -*-
+# Conversion for use in pywebkit Copyright (C) 2010 Free Software Foundation
 
 # this file contains code for loading up an override file.  The override file
 # provides implementations of functions where the code generator could not

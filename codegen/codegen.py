@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+#
+# Conversion for use in pywebkit Copyright (C) 2010 Free Software Foundation
+#
 
 import getopt
 import keyword
