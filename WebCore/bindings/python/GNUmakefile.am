@@ -11,13 +11,9 @@ pkgpyexec_LTLIBRARIES = pywebkit.la
 pywebkit_built_sources :=
 pywebkit_built_nosources :=
 pywebkit_sources :=
-pywebkit_h_api :=
 pywebkit_cppflags := -pthread -fno-strict-aliasing -Wno-write-strings \
 					 -Wno-deprecated -DNDEBUG -fwrapv -O2 -Wall -fPIC
 pywebkit_cflags := 
-pywebkit_ladir = $(prefix)/include/webkit-@WEBKITGTK_API_VERSION@/python
-pywebkit_la_HEADERS = \
-        $(pywebkit_h_api) 
 
 pywebkit_cppflags += \
 	$(global_cppflags) \

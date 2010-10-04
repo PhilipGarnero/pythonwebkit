@@ -592,9 +592,6 @@ webkit_tests_ldflags = \
 	-no-fast-install
 
 TEST_PROGS += \
-	Programs/unittests/testdomdocument \
-	Programs/unittests/testdomdomwindow \
-	Programs/unittests/testdomnode \
 	Programs/unittests/testhttpbackend \
 	Programs/unittests/testloading \
 	Programs/unittests/testglobals \
@@ -608,13 +605,20 @@ TEST_PROGS += \
 	Programs/unittests/testdownload \
 	Programs/unittests/testatk \
 	Programs/unittests/testatkroles \
-	Programs/unittests/testhittestresult \
 	Programs/unittests/testwebsettings \
 	Programs/unittests/testwebresource \
 	Programs/unittests/testwebdatasource \
 	Programs/unittests/testwebview \
 	Programs/unittests/testkeyevents \
 	Programs/unittests/testcopyandpaste
+
+if WEBKIT_GOBJECT_BINDINGS
+TEST_PROGS += \
+	Programs/unittests/testhittestresult \
+	Programs/unittests/testdomdocument \
+	Programs/unittests/testdomdomwindow \
+	Programs/unittests/testdomnode
+endif
 
 # Add additional tests here
 Programs_unittests_testdomdocument_SOURCES = WebKit/gtk/tests/testdomdocument.c

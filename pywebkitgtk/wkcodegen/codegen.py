@@ -174,7 +174,7 @@ class Wrapper:
         '%(varlist)s'
         '%(parseargs)s'
         '%(codebefore)s'
-        '    %(setreturn)s%(field)s(%(arglist)s);\n'
+        '    %(setreturn)s%(field)s%(arglist)s);\n'
         '%(codeafter)s\n'
         '    return 0;\n'
         '}\n\n'
@@ -785,6 +785,7 @@ static int
                     gettername = getterprefix + fname
                 if string.find(code, setterprefix + fname) >= 0:
                     settername = setterprefix + fname
+            attribs = self.objinfo.attributes[fname]
             if gettername == '0':
                 try:
                     funcname = getterprefix + fname
@@ -792,16 +793,17 @@ static int
                     handler = argtypes.matcher.get(ftype)
                     # for attributes, we don't own the "return value"
                     handler.write_return(ftype, 0, info)
-                    exception_needed = self.objinfo.attributes[fname].getter
+                    exception_needed = attribs.getter
                     if exception_needed:
-                        field_args = "(ec)"
+                        field_args = "ec)"
                         info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
                     else:
-                        field_args = "()"
+                        field_args = ")"
+                    facc = self.get_field_accessor(cfname, ftype, attribs.attributes)
                     self.fp.write(self.getter_tmpl %
                                   { 'funcname': funcname,
                                     'varlist': info.varlist,
-                                    'field': self.get_field_accessor(cfname),
+                                    'field': facc,
                                     'farg': field_args,
                                     'codebefore': info.get_codebefore(),
                                     'codeafter': info.get_codeafter() })
@@ -810,7 +812,7 @@ static int
                     sys.stderr.write(
                         "Could not write getter for %s.%s: %s\n"
                         % (self.objinfo.c_name, fname, str(ex)))
-            readonly = self.objinfo.attributes[fname].readonly
+            readonly = attribs.readonly
             if settername == '0' and not readonly:
                 try:
                     funcname = setterprefix + fname
@@ -820,14 +822,15 @@ static int
                     hack = ftype == 'EventListener*' # XXX HACK!
                     handler.write_param(ftype, fname, None,
                                         hack, info)
-                    exception_needed = self.objinfo.attributes[fname].setter
+                    exception_needed = attribs.setter
                     if exception_needed:
                         info.arglist.append("ec")
                         info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
 
+                    fset = self.get_field_setter(cfname, ftype, attribs.attributes)
                     substdict = { 'funcname': funcname,
                                     'varlist': info.get_varlist(),
-                                    'field': self.get_field_setter(cfname),
+                                    'field': fset,
                                     'codeafter': info.get_codeafter() }
                     substdict['varlist'] = substdict['varlist']
                     substdict.setdefault('errorreturn', '-1')
@@ -1101,20 +1104,82 @@ class GObjectWrapper(Wrapper):
                  'tp_weaklistoffset' : '0', 
                  'tp_dictoffset'     : '0'} 
 
-    def get_field_accessor(self, fieldname):
-        castmacro = self.objinfo.typecode
-        fieldname = fieldname[0].lower() + fieldname[1:]
-        fieldname = startreplace(fieldname, (
-                        ("hTML", "html"), ("uRL", "url"), ("jS", "js"),
-                        ("xML", "xml"), ("xSLT", "xslt"),
-                        ("create", "isCreate"), ("exclusive", "isExclusive")))
-        return '%s((PyDOMObject*)(self))->%s' % (castmacro, fieldname)
+    def attr_name_for_getter_setter(self, attr_name, attr_type):
+        if attr_name == 'operator':
+            return "_operator" # avoid c++ name-clash
+        # TODO: SVG Animated type extension
+        # if isSVGAnimatedType(attr_type): return "Animated"+attr_name
+        return attr_name
 
-    def get_field_setter(self, fieldname):
+    def content_attribute_name(self, iface, attr_name, attr_type, reflect):
+        if reflect is None:
+            return None
+        reflect = reflect[0]
+        if reflect is None:
+            attr_name = self.attr_name_for_getter_setter(attr_name, attr_type)
+        else:
+            attr_name = reflect
+            if isinstance(attr_name, list):
+                attr_name = attr_name[0]
+        # XXX TODO: detect interface, use SVGNames if appropriate.
+        return "WebCore::%s::%sAttr" % (iface, attr_name)
+
+    def get_field_accessor(self, attr_name, attr_type, attributes):
         castmacro = self.objinfo.typecode
-        fieldname = fieldname[0].upper() + fieldname[1:]
-        fieldname = startreplace(fieldname, (("Xml", "XML"),))
-        return '%s((PyDOMObject*)(self))->set%s' % (castmacro, fieldname)
+        reflect = attributes.get('Reflect', None)
+        fieldname = attr_name
+        attr_name = self.content_attribute_name("HTMLNames", attr_name.lower(),
+                                                 attr_type, reflect)
+        if attr_name is None:
+            fieldname = self.attr_name_for_getter_setter(fieldname, attr_type)
+            fieldname = fieldname[0].lower() + fieldname[1:]
+            fieldname = startreplace(fieldname, (
+                            ("hTML", "html"), ("uRL", "url"), ("jS", "js"),
+                            ("xML", "xml"), ("xSLT", "xslt"),
+                            ("create", "isCreate"),
+                            ("exclusive", "isExclusive")))
+            return '%s((PyDOMObject*)(self))->%s(' % (castmacro, fieldname)
+
+        if attributes.has_key("URL"):
+            if attributes.has_key("NonEmpty"):
+                functionName = "getNonEmptyURLAttribute"
+            else:
+                functionName = "getURLAttribute"
+        elif attr_type == 'bool':
+            functionName = "hasAttribute"
+        elif attr_type == 'long':
+            functionName = "getIntegralAttribute"
+        elif attr_type == 'unsigned long':
+            functionName = "getUnsignedIntegralAttribute"
+        else:
+            functionName = "getAttribute"
+
+        return '%s((PyDOMObject*)(self))->%s(%s' % \
+                (castmacro, functionName, attr_name)
+
+    def get_field_setter(self, attr_name, attr_type, attributes):
+        castmacro = self.objinfo.typecode
+        reflect = attributes.get('Reflect', None)
+        fieldname = attr_name
+        attr_name = self.content_attribute_name("HTMLNames", attr_name.lower(),
+                                                 attr_type, reflect)
+        if attr_name is None:
+            fieldname = self.attr_name_for_getter_setter(fieldname, attr_type)
+            fieldname = fieldname[0].upper() + fieldname[1:]
+            fieldname = startreplace(fieldname, (("Xml", "XML"),))
+            return '%s((PyDOMObject*)(self))->set%s(' % (castmacro, fieldname)
+
+        if attr_type == 'bool':
+            functionName = "setBooleanAttribute"
+        elif attr_type == 'long':
+            functionName = "setIntegralAttribute"
+        elif attr_type == 'unsigned long':
+            functionName = "setUnsignedIntegralAttribute"
+        else:
+            functionName = "setAttribute"
+
+        return '%s((PyDOMObject*)(self))->%s(%s, ' % \
+                (castmacro, functionName, attr_name)
 
     def get_initial_constructor_substdict(self, constructor):
         substdict = Wrapper.get_initial_constructor_substdict(self,
@@ -1605,9 +1670,10 @@ initpywebkit(void)
             self.fp.write('#define PY_SSIZE_T_CLEAN\n')
         self.fp.write('#include <Python.h>\n')
         self.fp.write('#include "config.h"\n\n\n')
-        self.fp.write('#include "PythonBinding.h"\n\n\n')
+        self.fp.write('#include "HTMLNames.h"\n\n\n')
         self.fp.write('#include "KURL.h"\n\n\n')
         self.fp.write('#include "PlatformString.h"\n\n\n')
+        self.fp.write('#include "PythonBinding.h"\n\n\n')
         self.fp.write('#include <wtf/text/CString.h>\n\n\n')
         self.fp.write('#include <wtf/Forward.h>\n\n\n')
         self.fp.write("""\

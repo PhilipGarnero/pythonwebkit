@@ -1285,8 +1285,6 @@ class IDLDefsParser(defsparser.DefsParser):
                     if not isinstance(m, Attribute):
                         continue
                     # HACKS!
-                    if m.attributes.has_key("Reflect"):
-                        continue
                     if m.attributes.has_key("CustomGetter"):
                         continue
                     if m.attributes.has_key("Replaceable"):
