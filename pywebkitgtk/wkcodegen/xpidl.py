@@ -1373,16 +1373,12 @@ if __name__ == '__main__':
     modname = "pywebkit"
     p = IDLDefsParser(None)
     o = override.Overrides(sys.argv[1])
+    output_fname = sys.argv[2]
     cwd = os.path.abspath(os.getcwd())
-    for f in sys.argv[2:]:
+    for f in sys.argv[3:]:
         print "Parsing %s" % f
         (pth, fn) = os.path.split(f)
         (fn, ext) = os.path.splitext(fn)
-        try:
-            os.mkdir("DerivedSources")
-            os.mkdir("DerivedSources/python")
-        except OSError:
-            pass
         cmd = 'cpp -DLANGUAGE_PYTHON=1 %s' % f.replace(" ", "\ ")
         proc = subprocess.Popen(cmd,
                            stdin=subprocess.PIPE,
@@ -1395,7 +1391,7 @@ if __name__ == '__main__':
 
         p.startParsing(stdout_value, modname, filename=f)
         codegen.register_types(p)
-    fo = codegen.FileOutput(open("DerivedSources/python/PyWebkit.cpp", "w"))
+    fo = codegen.FileOutput(open(output_fname, "w"))
     sw = codegen.SourceWriter(p, o, modname, fo)
     sw.write()
     fo.close()

@@ -160,14 +160,20 @@ endif # HTML_FLAGS
 
 DerivedSources/WebCore/PythonHTMLElementWrapperFactory.cpp: DerivedSources/WebCore/HTMLNames.cpp;
 
-DerivedSources/python/PyWebkit.cpp: codegen/codegen.py codegen/xpidl.py \
-				codegen/argtypes.py $(srcdir)/codegen/_pywebkit.override \
-				$(srcdir)/codegen/idl_files.txt \
-				$(shell cat $(srcdir)/codegen/idl_files.txt)
+pycodegen = $(srcdir)/pywebkitgtk/wkcodegen
+
+DerivedSources/python/PyWebkit.cpp: \
+				$(pycodegen)/codegen.py \
+				$(pycodegen)/xpidl.py \
+				$(pycodegen)/argtypes.py  \
+				$(pycodegen)/_pywebkit.override \
+				$(pycodegen)/idl_files.txt \
+				$(shell cat $(pycodegen)/idl_files.txt)
 	mkdir -p $(GENSOURCES)/python
-	$(PYTHON) codegen/xpidl.py \
-                $(srcdir)/codegen/_pywebkit.override \
-                $(shell cat $(srcdir)/codegen/idl_files.txt)
+	$(PYTHON) $(pycodegen)/xpidl.py \
+				$(pycodegen)/_pywebkit.override \
+				DerivedSources/python/PyWebkit.cpp \
+				$(shell cat $(pycodegen)/idl_files.txt)
 
 DerivedSources/python/webkit.defs.c: DerivedSources/python/webkit.defs \
 								$(pysrcdir)/webkit/webkit.override
