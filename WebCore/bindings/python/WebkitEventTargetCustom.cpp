@@ -53,7 +53,7 @@ PyObject* toPython(XMLHttpRequestUpload* obj);
 PyObject* toPython(EventTarget* target)
 {
     if (!target)
-        return NULL;
+        Py_RETURN_NONE;
 
 #ifdef __TODO_BUG_20586__ /* TODO - see #20586 */
 #if ENABLE(SVG)
@@ -86,7 +86,7 @@ PyObject* toPython(EventTarget* target)
 #endif
 
     ASSERT_NOT_REACHED();
-    return NULL;
+    Py_RETURN_NONE;
 }
 
 } // namespace WebKit

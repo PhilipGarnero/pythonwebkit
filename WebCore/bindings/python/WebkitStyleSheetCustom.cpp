@@ -48,7 +48,7 @@ PyObject* pywrapStyleSheet(StyleSheet*);
 PyObject* toPython(StyleSheet* styleSheet)
 {
     if (!styleSheet)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(styleSheet);
     if (pobj)

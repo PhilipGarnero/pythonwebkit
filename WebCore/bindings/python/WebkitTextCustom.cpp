@@ -47,7 +47,7 @@ PyObject* pywrapText(Text*);
 PyObject* toPython(Text* text)
 {
     if (!text)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(text);
     if (pobj)

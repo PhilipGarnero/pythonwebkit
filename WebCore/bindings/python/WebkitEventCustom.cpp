@@ -89,7 +89,7 @@ PyObject* pywrapWebKitTransitionEvent(WebKitTransitionEvent*);
 PyObject* toPython(Event* event)
 {
     if (!event)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(event);
     if (pobj)

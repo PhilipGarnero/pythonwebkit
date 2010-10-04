@@ -49,7 +49,7 @@ PyObject* pywrapHTMLOptionsCollection(HTMLOptionsCollection*);
 PyObject* toPython(HTMLCollection* collection)
 {
     if (!collection)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(collection);
 

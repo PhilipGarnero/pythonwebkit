@@ -65,7 +65,7 @@ PyObject* pywrapCSSPrimitiveValue(CSSPrimitiveValue*);
 PyObject* toPython(CSSValue* value)
 {
     if (!value)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(value);
 

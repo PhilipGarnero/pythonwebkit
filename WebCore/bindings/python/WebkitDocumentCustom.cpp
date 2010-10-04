@@ -61,7 +61,7 @@ PyObject* pywrapSVGDocument(SVGDocument*);
 PyObject* toPython(Document* doc)
 {
     if (!doc)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(doc);
     if (pobj)

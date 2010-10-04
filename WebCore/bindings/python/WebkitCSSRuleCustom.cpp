@@ -61,7 +61,7 @@ extern PyObject* pywrapCSSRule(CSSRule*);
 PyObject* toPython(CSSRule* rule)
 {
     if (!rule)
-        return NULL;
+        Py_RETURN_NONE;
 
     PyObject* pobj = PythonObjectCache::getDOMObject(rule);
 

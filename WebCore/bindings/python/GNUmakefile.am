@@ -12,7 +12,7 @@ pywebkit_built_sources :=
 pywebkit_built_nosources :=
 pywebkit_sources :=
 pywebkit_cppflags := -pthread -fno-strict-aliasing -Wno-write-strings \
-					 -Wno-deprecated -DNDEBUG -fwrapv -O2 -Wall -fPIC
+					 -Wno-deprecated -DNDEBUG -fwrapv -g -Wall -fPIC
 pywebkit_cflags := 
 
 pywebkit_cppflags += \

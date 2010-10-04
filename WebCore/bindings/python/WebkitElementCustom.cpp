@@ -57,7 +57,7 @@ PyObject* pywrapElement(Element*);
 PyObject* toPython(Element* element)
 {
     if (!element)
-        return NULL;
+        Py_RETURN_NONE;
 
     // shouldn't be one? ASSERT(!ScriptInterpreter::getDOMObject(element));
     PyObject* pobj = PythonObjectCache::getDOMObject(element);

@@ -104,7 +104,7 @@ static PyObject* createWrapper(Node* node);
 PyObject* toPythonNewlyCreated(Node* node)
 {
     if (!node)
-        return NULL;
+        Py_RETURN_NONE;
 
     return createWrapper(node);
 }
@@ -112,7 +112,10 @@ PyObject* toPythonNewlyCreated(Node* node)
 PyObject* toPython(Node* node)
 {
     if (!node)
-        return NULL;
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 
     PyObject* ret = PythonObjectCache::getDOMObject(node);
     if (ret)

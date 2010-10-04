@@ -1594,10 +1594,7 @@ class SourceWriter:
 PyObject* toPython(WebCore::%(classname)s* obj)
 {
     if (!obj)
-    {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
+        Py_RETURN_NONE;
 
     if (PyObject* ret = PythonObjectCache::getDOMObject(obj))
         return ret;
