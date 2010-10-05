@@ -414,6 +414,7 @@ class Wrapper:
                     info.codeafter.append('        return NULL;\n')
                     info.codeafter.append('    }\n')
                     res = function_obj.return_param[1] # XXX assumption!
+                    info.codeafter.append('    Py_INCREF((PyObject*)%s);\n' % res)
                     info.codeafter.append('    return (PyObject*)%s;\n' % res)
                 else:
                     substdict['setreturn'] = 'ret = '
@@ -1557,6 +1558,7 @@ class SourceWriter:
     # or a callable function.  a callable function ends up being
     # stored inside the PythonEventListener
     wrapcore_eventlistener_tmpl = (
+        'PyObject* toPython(WebCore::%(classname)s*);\n\n'
         'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
         '{\n'
         '    PyObject *obj = (PyObject*)request;\n'
@@ -1572,6 +1574,10 @@ class SourceWriter:
         '        return NULL;\n'
         '    }\n'
         '    return webkit_create_python_event_listener(obj);\n'
+        #'    WebCore::%(classname)s *listener;\n'
+        #'    listener = webkit_create_python_event_listener(obj);\n'
+        #'    toPython(listener);\n'
+        #'    return listener;\n'
         '}\n\n'
         )
 

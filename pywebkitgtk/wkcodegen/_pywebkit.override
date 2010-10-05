@@ -182,8 +182,8 @@ private:
       : WebCore::EventListener(WebCore::EventListener::PythonEventListenerType)
       , m_callback(callback)
     {
-        if (m_callback)
-            Py_INCREF(m_callback);
+        if (callback)
+            Py_INCREF(callback);
     }
     ~PythonEventListener()
     {
@@ -197,7 +197,10 @@ void PythonEventListener::handleEvent(WebCore::ScriptExecutionContext*,
 {
     PyObject* pev = WebKit::toPython(event);
     PyObject* arglist = Py_BuildValue((char*)"(O)", pev);
-    PyObject* result = PyEval_CallObject(m_callback, arglist);
+    PyGILState_STATE __py_state;
+    __py_state = PyGILState_Ensure();
+    PyObject* result = PyObject_CallObject(m_callback, arglist);
+    PyGILState_Release(__py_state);
     Py_DECREF(arglist);
     Py_DECREF(pev);
     if (result == NULL)
