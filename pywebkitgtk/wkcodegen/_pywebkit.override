@@ -203,8 +203,10 @@ void PythonEventListener::handleEvent(WebCore::ScriptExecutionContext*,
     PyGILState_Release(__py_state);
     Py_DECREF(arglist);
     Py_DECREF(pev);
-    if (result == NULL)
+    if (result == NULL) {
+        printf("exception occurred: TODO, something about it!\n");
         return; /* Pass error back */
+    }
     /* Here maybe use the result */
     Py_DECREF(result);
     return;
