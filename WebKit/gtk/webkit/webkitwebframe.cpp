@@ -478,7 +478,12 @@ gpointer webkit_web_frame_get_xml_http_request(WebKitWebFrame* frame)
 
     Frame* coreFrame = core(frame);
     ASSERT(coreFrame);
-    return static_cast<gpointer>(XMLHttpRequest::create(coreFrame->document()).get());
+    WebCore::ScriptExecutionContext *ctx;
+    ctx = coreFrame->document()->scriptExecutionContext();
+    PassRefPtr<WebCore::XMLHttpRequest> xhr = XMLHttpRequest::create(ctx).get();
+    WebCore::XMLHttpRequest *_xhr = WTF::getPtr(xhr);
+    _xhr->ref();
+    return static_cast<gpointer>(_xhr);
 }
 
 /**

@@ -105,8 +105,12 @@ class URLStringArg(ArgType):
             info.varlist.add('char', '*' + pname)
         info.arglist.append("cvt_"+pname)
         # BIG UGLY HACK! yuk!
-        info.codebefore.append('    WebCore::KURL cvt_%s = coreXMLHttpRequest(self)->scriptExecutionContext()->completeURL(WTF::String::fromUTF8(%s));\n' % \
+        info.codebefore.append('    WTF::String _cvt_%s = WTF::String::fromUTF8((const char*)%s);\n' % \
                             (pname, pname))
+        info.codebefore.append('    WebCore::KURL cvt_%s = coreXMLHttpRequest(self)->scriptExecutionContext()->completeURL(_cvt_%s);\n' % \
+                            (pname, pname))
+        #info.codebefore.append('    WebCore::KURL cvt_%s;\n' % \
+        #                    (pname))
         if pnull:
             info.add_parselist('z', ['&' + pname], [pname])
         else:
@@ -124,7 +128,7 @@ class StringArg(ArgType):
         else:
             info.varlist.add('char', '*' + pname)
         info.arglist.append("cvt_"+pname)
-        info.codebefore.append('    WTF::String cvt_%s = WTF::String::fromUTF8(%s);\n' % \
+        info.codebefore.append('    WTF::String cvt_%s = WTF::String::fromUTF8((const char*)%s);\n' % \
                             (pname, pname))
         if pnull:
             info.add_parselist('z', ['&' + pname], [pname])
@@ -143,7 +147,7 @@ class SerializedStringArg(ArgType):
         else:
             info.varlist.add('char', '*' + pname)
         info.arglist.append("cvt_"+pname)
-        info.codebefore.append('    WebCore::SerializedScriptValue *cvt_%s = WebCore::SerializedScriptValue::create(WTF::String::fromUTF8(%s));\n' % \
+        info.codebefore.append('    WebCore::SerializedScriptValue *cvt_%s = WebCore::SerializedScriptValue::create(WTF::String::fromUTF8((const char*)%s));\n' % \
                             (pname, pname))
         if pnull:
             info.add_parselist('z', ['&' + pname], [pname])

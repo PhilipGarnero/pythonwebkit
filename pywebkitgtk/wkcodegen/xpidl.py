@@ -1285,7 +1285,10 @@ class IDLDefsParser(defsparser.DefsParser):
                     if not isinstance(m, Attribute):
                         continue
                     # HACKS!
-                    if m.attributes.has_key("CustomGetter"):
+                    #if m.attributes.has_key("CustomGetter"):
+                    #    continue
+                    if obj.name == 'DOMWindow' and m.name == 'event':
+                        # XXX HACK! skip it for now
                         continue
                     if m.attributes.has_key("Replaceable"):
                         m.readonly = True
