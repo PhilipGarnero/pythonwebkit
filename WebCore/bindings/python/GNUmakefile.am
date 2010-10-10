@@ -1,5 +1,5 @@
-# pywebkit - forced to link in to absolutely identical code as
-# libwebkitgtk due to key functions (webcore) not being exported.
+# python pywebkit.so
+
 #pkgpyexecdir = $(pyexecdir)
 pysrcdir = @srcdir@/pywebkitgtk
 
@@ -23,8 +23,10 @@ pywebkit_cppflags += \
 	-I$(top_builddir)/WebKit/gtk \
 	-I$(top_builddir)/WebKit/webkit \
 	-I$(srcdir)/WebKit/gtk/webkit \
-	-I$(top_builddir)/DerivedSources/python \
-	-I$(top_builddir)/DerivedSources
+	-I$(srcdir)/WebCore/platform/network/soup \
+	-I$(srcdir)/WebCore/bindings/python \
+	-I$(top_builddir)/DerivedSources \
+	-I$(top_builddir)/DerivedSources/python
 
 pywebkit_la_LDFLAGS = \
 	$(shell python-config --libs) \
@@ -32,19 +34,12 @@ pywebkit_la_LDFLAGS = \
 	-export-symbols-regex initpywebkit 
 
 pywebkit_la_SOURCES = \
-	$(pywebkit_sources) \
-	$(webcore_sources) \
-	$(webcoregtk_sources) \
-	$(webkitgtk_sources)
+	$(pywebkit_sources) 
 
+noinst_pywebkit_la = pywebkit.la
 
 nodist_pywebkit_la_SOURCES = \
-   $(pywebkit_built_sources) \
-	$(webcore_built_sources) \
-	$(webkitgtk_built_sources)
-
-nodist_EXTRA_pywebkit_la_SOURCES = \
-	$(webcore_built_nosources)
+   $(pywebkit_built_sources) 
 
 pywebkit_la_CXXFLAGS = \
     $(global_cxxflags)
@@ -68,25 +63,7 @@ pywebkit_la_CPPFLAGS = \
 	-I$(top_builddir)/WebKit/gtk/webkit \
 	-I$(GENSOURCES_WEBKIT) \
 	$(global_cppflags) \
-	$(webcore_cppflags) \
-	$(webcoregtk_cppflags) \
 	$(javascriptcore_cppflags) \
-	-fno-strict-aliasing \
-	$(HILDON_CPPFLAGS) \
-	$(COVERAGE_CFLAGS) \
-	$(ENCHANT_CFLAGS) \
-	$(GAIL_CFLAGS) \
-	$(GEOCLUE_CFLAGS) \
-	$(GLIB_CFLAGS) \
-	$(GSTREAMER_CFLAGS) \
-	$(GTK_CFLAGS) \
-	$(HILDON_CFLAGS) \
-	$(LIBSOUP_CFLAGS) \
-	$(LIBXML_CFLAGS) \
-	$(LIBXSLT_CFLAGS) \
-	$(SQLITE3_CFLAGS) \
-	$(UNICODE_CFLAGS) \
-	$(XT_CFLAGS) \
 	$(pywebkit_cppflags) \
 	$(PYWEBKITGTKDEPS_CFLAGS)
 
@@ -98,68 +75,28 @@ endif
 
 pywebkit_la_LIBADD = \
 	-lpthread \
+	libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la \
 	libJavaScriptCore.la \
 	$(webcore_ldflags) \
-	$(CAIRO_LIBS) \
-	$(COVERAGE_LDFLAGS) \
-	$(ENCHANT_LIBS) \
-	$(FREETYPE_LIBS) \
-	$(GAIL_LIBS) \
-	$(GEOCLUE_LIBS) \
-	$(GLIB_LIBS) \
-	$(GSTREAMER_LIBS) \
-	$(GTK_LIBS) \
-	$(HILDON_LIBS) \
-	$(JPEG_LIBS) \
-	$(LIBSOUP_LIBS) \
-	$(LIBXML_LIBS) \
-	$(LIBXSLT_LIBS) \
-	$(PANGO_LIBS) \
-	$(PNG_LIBS) \
-	$(SQLITE3_LIBS) \
-	$(UNICODE_LIBS) \
-	$(PYWEBKITGTKDEPS_LIBS) \
-	$(XT_LIBS)
+	$(PYWEBKITGTKDEPS_LIBS) 
 
-pywebkit_cppflags += \
-	$(CAIRO_CFLAGS) \
-	-I$(srcdir)/WebCore/platform/network/soup \
-	-I$(srcdir)/WebCore/bindings/python \
-	-I$(top_builddir)/DerivedSources \
-	-I$(top_builddir)/DerivedSources/python
-
-
-pywebkit_built_sources += \
-	DerivedSources/python/PyWebkit.cpp
-
-webcore_built_sources += \
-	DerivedSources/python/PythonHTMLElementWrapperFactory.cpp \
-	DerivedSources/python/PythonHTMLElementWrapperFactory.h
-
-DerivedSources/python/PythonHTMLElementWrapperFactory.h: DerivedSources/python/PythonHTMLElementWrapperFactory.cpp;
-
-if HTML_FLAGS
-DerivedSources/python/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
-	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --extraDefines "$(HTML_FEATURES)" --wrapperFactory --outputDir "$(GENSOURCES)/python"
-else
-DerivedSources/python/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
-	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --wrapperFactory --outputDir "$(GENSOURCES)/python"
-endif # HTML_FLAGS
 
 pycodegen = $(srcdir)/pywebkitgtk/wkcodegen
 
-DerivedSources/python/PyWebkit.cpp: \
-				$(pycodegen)/codegen.py \
-				$(pycodegen)/xpidl.py \
-				$(pycodegen)/argtypes.py  \
-				$(pycodegen)/_pywebkit.override \
-				$(pycodegen)/idl_files.txt \
-				$(shell cat $(pycodegen)/idl_files.txt)
+pywebkit_defs := 
+pywebkit_defs += $(pysrcdir)/webkit/webkit-base-types.defs
+pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1-types.defs
+pywebkit_defs += $(pysrcdir)/webkit/webkit-1.0.2.defs
+pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1.defs
+
+pywebkit_sources += \
+	pywebkitgtk/webkit/webkitmodule.cpp
+
+CREATEDEFS = $(PYTHON) $(PYGTK_CODEGENDIR)/createdefs.py
+
+DerivedSources/python/webkit.defs: $(pywebkit_defs)
 	mkdir -p $(GENSOURCES)/python
-	$(PYTHON) $(pycodegen)/xpidl.py \
-				$(pycodegen)/_pywebkit.override \
-				DerivedSources/python/PyWebkit.cpp \
-				$(shell cat $(pycodegen)/idl_files.txt)
+	$(CREATEDEFS) $@ $(pywebkit_defs)
 
 DerivedSources/python/webkit.defs.c: DerivedSources/python/webkit.defs \
 								$(pysrcdir)/webkit/webkit.override
@@ -178,28 +115,63 @@ DerivedSources/python/webkit.c: $(pywebkit_defs) \
     DerivedSources/python/webkit.defs.c \
 	$(pysrcdir)/webkit/webkit.override;
 
-
-pywebkit_defs := 
-pywebkit_defs += $(pysrcdir)/webkit/webkit-base-types.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1-types.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.0.2.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1.defs
-
-pywebkit_sources += \
-	pywebkitgtk/webkit/webkitmodule.cpp
-
 pywebkit_built_sources += \
 	DerivedSources/python/webkit.c
 
 pywebkit_built_nosources += $(pywebkit_defs)
 
-CREATEDEFS = $(PYTHON) $(PYGTK_CODEGENDIR)/createdefs.py
+BUILT_SOURCES += \
+    $(pywebkit_built_sources) \
+    $(pywebkit_built_nosources)
 
-DerivedSources/python/webkit.defs: $(pywebkit_defs)
+
+# extensions to webcore to include python bindings
+
+# this is something of a hack, thanks to the decision by the webkit
+# developers to force-close the WebCore API.  the alternative situation -
+# to pass in pointers to standard python structures and functions via
+# the python-webkit initialisation function (as higher-order callbacks)
+# isn't going to cut it.
+# so, if in order to add python bindings, all applications must link with
+# the python library even if they don't use it, so be it: you can't have
+# it both ways.
+libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LDFLAGS += \
+	$(shell python-config --libs)
+
+webcore_cppflags += \
+	$(shell python-config --includes) \
+	-I$(srcdir)/WebCore/bindings/python \
+	-I$(top_builddir)/DerivedSources/python
+
+webcore_built_sources += \
+	DerivedSources/python/PyWebkit.cpp \
+	DerivedSources/python/PythonHTMLElementWrapperFactory.cpp \
+	DerivedSources/python/PythonHTMLElementWrapperFactory.h
+
+DerivedSources/python/PythonHTMLElementWrapperFactory.h: DerivedSources/python/PythonHTMLElementWrapperFactory.cpp;
+
+if HTML_FLAGS
+DerivedSources/python/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
+	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --extraDefines "$(HTML_FEATURES)" --wrapperFactory --outputDir "$(GENSOURCES)/python"
+else
+DerivedSources/python/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
+	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --wrapperFactory --outputDir "$(GENSOURCES)/python"
+endif # HTML_FLAGS
+
+DerivedSources/python/PyWebkit.cpp: \
+				$(pycodegen)/codegen.py \
+				$(pycodegen)/xpidl.py \
+				$(pycodegen)/argtypes.py  \
+				$(pycodegen)/_pywebkit.override \
+				$(pycodegen)/idl_files.txt \
+				$(shell cat $(pycodegen)/idl_files.txt)
 	mkdir -p $(GENSOURCES)/python
-	$(CREATEDEFS) $@ $(pywebkit_defs)
+	$(PYTHON) $(pycodegen)/xpidl.py \
+				$(pycodegen)/_pywebkit.override \
+				DerivedSources/python/PyWebkit.cpp \
+				$(shell cat $(pycodegen)/idl_files.txt)
 
-pywebkit_sources += \
+webcore_sources += \
 	WebCore/bindings/python/PythonBinding.cpp \
 	WebCore/bindings/python/WebkitCSSRuleCustom.cpp \
 	WebCore/bindings/python/WebkitCSSValueCustom.cpp \
@@ -210,9 +182,4 @@ pywebkit_sources += \
 	WebCore/bindings/python/WebkitHTMLCollectionCustom.cpp \
 	WebCore/bindings/python/WebkitStyleSheetCustom.cpp \
 	WebCore/bindings/python/WebkitTextCustom.cpp
-
-BUILT_SOURCES += \
-    $(pywebkit_built_sources) \
-    $(pywebkit_built_nosources)
-
 
