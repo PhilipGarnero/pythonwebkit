@@ -1,130 +1,3 @@
-# python pywebkit.so
-
-#pkgpyexecdir = $(pyexecdir)
-pysrcdir = @srcdir@/pywebkitgtk
-
-#pkgpythondir = $(pyexecdir)/webkit
-#pkgpyexecdir = $(pyexecdir)/webkit
-
-pkgpyexec_LTLIBRARIES = pywebkit.la
-
-pywebkit_built_sources :=
-pywebkit_built_nosources :=
-pywebkit_sources :=
-pywebkit_cppflags := -pthread -fno-strict-aliasing -Wno-write-strings \
-					 -Wno-deprecated -DNDEBUG -fwrapv -O2 -Wall -fPIC
-pywebkit_cflags := -pthread -fno-strict-aliasing -Wno-write-strings \
-					 -Wno-deprecated -DNDEBUG -fwrapv -O2 -Wall -fPIC
-
-pywebkit_cppflags += \
-	$(global_cppflags) \
-	$(shell python-config --includes) \
-	-I$(srcdir)/WebKit/gtk \
-	-I$(top_builddir)/WebKit/gtk \
-	-I$(top_builddir)/WebKit/webkit \
-	-I$(srcdir)/WebKit/gtk/webkit \
-	-I$(srcdir)/WebCore/platform/network/soup \
-	-I$(srcdir)/WebCore/bindings/python \
-	-I$(top_builddir)/DerivedSources \
-	-I$(top_builddir)/DerivedSources/python
-
-pywebkit_la_LDFLAGS = \
-	$(shell python-config --libs) \
-	-module -avoid-version \
-	-export-symbols-regex initpywebkit 
-
-pywebkit_la_SOURCES = \
-	$(pywebkit_sources) 
-
-noinst_pywebkit_la = pywebkit.la
-
-nodist_pywebkit_la_SOURCES = \
-   $(pywebkit_built_sources) 
-
-pywebkit_la_CXXFLAGS = \
-    $(global_cxxflags)
-
-pywebkit_la_CFLAGS = \
-    $(global_cflags) \
-	$(PYWEBKITGTKDEPS_CFLAGS)
-
-pywebkit_la_CPPFLAGS = \
-	-DBUILDING_WEBKIT \
-	-DPACKAGE_LOCALE_DIR=\"$(localedir)\" \
-	-DDATA_DIR=\"${datadir}\" \
-	-I$(top_builddir)/DerivedSources/webkit \
-	-I$(top_builddir)/DerivedSources/python \
-	-I$(srcdir)/WebCore/bindings \
-	-I$(srcdir)/WebCore/bindings/gobject \
-	-I$(srcdir)/WebKit/gtk \
-	-I$(srcdir)/WebKit/gtk/WebCoreSupport \
-	-I$(srcdir)/WebKit/gtk/webkit \
-	-I$(top_builddir)/WebKit/gtk \
-	-I$(top_builddir)/WebKit/gtk/webkit \
-	-I$(GENSOURCES_WEBKIT) \
-	$(global_cppflags) \
-	$(javascriptcore_cppflags) \
-	$(pywebkit_cppflags) \
-	$(PYWEBKITGTKDEPS_CFLAGS)
-
-# For the Gtk port we want to use XP_UNIX both in X11 and Mac
-if !TARGET_WIN32
-pywebkit_la_CPPFLAGS += \
-	-DXP_UNIX
-endif
-
-pywebkit_la_LIBADD = \
-	-lpthread \
-	libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la \
-	libJavaScriptCore.la \
-	$(webcore_ldflags) \
-	$(PYWEBKITGTKDEPS_LIBS) 
-
-
-pycodegen = $(srcdir)/pywebkitgtk/wkcodegen
-
-pywebkit_defs := 
-pywebkit_defs += $(pysrcdir)/webkit/webkit-base-types.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1-types.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.0.2.defs
-pywebkit_defs += $(pysrcdir)/webkit/webkit-1.1.defs
-
-pywebkit_sources += \
-	pywebkitgtk/webkit/webkitmodule.cpp
-
-CREATEDEFS = $(PYTHON) $(PYGTK_CODEGENDIR)/createdefs.py
-
-DerivedSources/python/webkit.defs: $(pywebkit_defs)
-	mkdir -p $(GENSOURCES)/python
-	$(CREATEDEFS) $@ $(pywebkit_defs)
-
-DerivedSources/python/webkit.defs.c: DerivedSources/python/webkit.defs \
-								$(pysrcdir)/webkit/webkit.override
-	mkdir -p $(GENSOURCES)/python
-	($(PYGOBJECT_CODEGEN) \
-            --register $(PYGTK_DEFSDIR)/gdk-types.defs \
-            --register $(PYGTK_DEFSDIR)/gtk-types.defs \
-			--override pywebkitgtk/webkit/webkit.override \
-			--prefix pywebkit DerivedSources/python/webkit.defs) 2>&1 > \
-			         $(*D)/gen-$(*F).c | tee $(*D)/$(*F).errors \
-    && cp $(*D)/gen-$(*F).c DerivedSources/python/webkit.c \
-    && rm -f $(*D)/gen-$(*F).c
-
-DerivedSources/python/webkit.c: $(pywebkit_defs) \
-    DerivedSources/python/webkit.defs \
-    DerivedSources/python/webkit.defs.c \
-	$(pysrcdir)/webkit/webkit.override;
-
-pywebkit_built_sources += \
-	DerivedSources/python/webkit.c
-
-pywebkit_built_nosources += $(pywebkit_defs)
-
-BUILT_SOURCES += \
-    $(pywebkit_built_sources) \
-    $(pywebkit_built_nosources)
-
-
 # extensions to webcore to include python bindings
 
 # this is something of a hack, thanks to the decision by the webkit
@@ -132,9 +5,6 @@ BUILT_SOURCES += \
 # to pass in pointers to standard python structures and functions via
 # the python-webkit initialisation function (as higher-order callbacks)
 # isn't going to cut it.
-# so, if in order to add python bindings, all applications must link with
-# the python library even if they don't use it, so be it: you can't have
-# it both ways.
 libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LDFLAGS += \
 	$(shell python-config --libs)
 
@@ -157,6 +27,8 @@ else
 DerivedSources/python/PythonHTMLElementWrapperFactory.cpp: $(WebCore)/dom/make_py_names.pl $(WebCore)/html/HTMLTagNames.in $(WebCore)/html/HTMLAttributeNames.in DerivedSources/WebCore/HTMLNames.cpp 
 	$(PERL) -I$(WebCore)/bindings/scripts $< --bindingType Python --tags $(WebCore)/html/HTMLTagNames.in --attrs $(WebCore)/html/HTMLAttributeNames.in --wrapperFactory --outputDir "$(GENSOURCES)/python"
 endif # HTML_FLAGS
+
+pycodegen = $(srcdir)/pywebkitgtk/wkcodegen
 
 DerivedSources/python/PyWebkit.cpp: \
 				$(pycodegen)/codegen.py \
