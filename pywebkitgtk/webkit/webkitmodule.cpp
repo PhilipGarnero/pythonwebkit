@@ -17,6 +17,7 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+extern "C" {
 #include <Python.h>
 
 #include <glib.h>
@@ -24,8 +25,20 @@
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
-void pywebkit_gtk_init()
+#include "pywebkit.h"
+
+extern PyMethodDef pywebkit_functions[];
+
+void pywebkit_register_classes (PyObject *d);
+void webkit_init_pywebkit(PyObject *m, struct pyjoinapi *api_fns);
+
+struct pyjoinapi pywebkit_api_fns;
+
+DL_EXPORT(void)
+initpywebkit(void)
 {
+    PyObject *m, *d;
+
     if (!pygobject_init(-1, -1, -1)) {
         PyErr_Print();
         Py_FatalError ("can't initialise module gobject");
@@ -33,7 +46,15 @@ void pywebkit_gtk_init()
 
     init_pygtk();
 
-    if (!g_thread_supported())
-        g_thread_init (NULL);
-}
+    /* webkit module */
+    m = Py_InitModule ("pywebkit", pywebkit_functions);
+    d = PyModule_GetDict (m);
+    pywebkit_register_classes (d);
+    webkit_init_pywebkit(m, &pywebkit_api_fns);
 
+    if (PyErr_Occurred ()) {
+        PyErr_Print();
+        Py_FatalError ("can't initialise module webkit.gjs");
+    }
+}
+}; // extern "C"

@@ -30,9 +30,10 @@ headers
 
 #include "config.h"
 
-PyObject* toPythonFromDocumentPtr(gpointer);
-PyObject* toPythonFromDOMWindowPtr(gpointer);
-PyObject* toPythonFromXMLHttpRequestPtr(gpointer);
+#include "pywebkit.h"
+
+extern struct pyjoinapi pywebkit_api_fns;
+
 
 %%
 body
@@ -310,7 +311,7 @@ _wrap_webkit_web_frame_get_dom_document(PyGObject *self)
 {
     gpointer ptr;
     ptr = webkit_web_frame_get_dom_document(WEBKIT_WEB_FRAME(self->obj));
-    return toPythonFromDocumentPtr(ptr);
+    return pywebkit_api_fns.doc(ptr);
 }
 
 %%
@@ -320,7 +321,7 @@ _wrap_webkit_web_frame_get_xml_http_request(PyGObject *self)
 {
     gpointer ptr;
     ptr = webkit_web_frame_get_xml_http_request(WEBKIT_WEB_FRAME(self->obj));
-    return toPythonFromXMLHttpRequestPtr(ptr);
+    return pywebkit_api_fns.xhr(ptr);
 }
 
 %%
@@ -330,6 +331,6 @@ _wrap_webkit_web_frame_get_dom_window(PyGObject *self)
 {
     gpointer ptr;
     ptr = webkit_web_frame_get_dom_window(WEBKIT_WEB_FRAME(self->obj));
-    return toPythonFromDOMWindowPtr(ptr);
+    return pywebkit_api_fns.win(ptr);
 }
 

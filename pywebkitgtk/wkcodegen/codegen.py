@@ -1643,23 +1643,32 @@ PyObject* toPython(WebCore::%(classname)s* obj)
         self.write_extension_init()
         self.write_registers()
         self.fp.write("""
-extern PyMethodDef pywebkit_functions[];
 
-void pywebkit_register_classes (PyObject *d);
-extern void pywebkit_gtk_init();
-
-PyMODINIT_FUNC
-initpywebkit(void)
+PyObject *toPythonFromDocumentPtr(gpointer ptr)
 {
-    PyObject *m, *d;
+    WebCore::Document *doc = static_cast<WebCore::Document*>(ptr);
+    return WebKit::toPython(doc);
+}
+
+PyObject *toPythonFromDOMWindowPtr(gpointer ptr)
+{
+    WebCore::DOMWindow *win = static_cast<WebCore::DOMWindow*>(ptr);
+    return WebKit::toPython(win);
+}
+
+PyObject *toPythonFromXMLHttpRequestPtr(gpointer ptr)
+{
+    WebCore::XMLHttpRequest *xhr = static_cast<WebCore::XMLHttpRequest*>(ptr);
+    return WebKit::toPython(xhr);
+}
+
+void webkit_init_pywebkit(PyObject *m, struct pyjoinapi *fns)
+{
+    fns->xhr = toPythonFromXMLHttpRequestPtr;
+    fns->doc = toPythonFromDocumentPtr;
+    fns->win = toPythonFromDOMWindowPtr;
 
     typedeclpywebkit();
-    pywebkit_gtk_init();
-
-    /* webkit module */
-    m = Py_InitModule ("pywebkit", pywebkit_functions);
-    d = PyModule_GetDict (m);
-    pywebkit_register_classes (d);
     registerpywebkit(m);
 
     if (PyErr_Occurred ()) {
@@ -1683,6 +1692,7 @@ initpywebkit(void)
         self.fp.write('#include "KURL.h"\n\n\n')
         self.fp.write('#include "PlatformString.h"\n\n\n')
         self.fp.write('#include "PythonBinding.h"\n\n\n')
+        self.fp.write('#include "pywebkit.h"\n\n\n')
         self.fp.write('#include <wtf/text/CString.h>\n\n\n')
         self.fp.write('#include <wtf/Forward.h>\n\n\n')
         self.fp.write("""\
