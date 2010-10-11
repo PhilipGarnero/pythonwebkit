@@ -50,6 +50,17 @@ module window {
         [Custom, V8OnInstance] void reload();
 
         // URI decomposition attributes
+#if defined(LANGUAGE_PYTHON) && LANGUAGE_PYTHON
+                 readonly attribute [CustomSetter] DOMString protocol;
+                 readonly attribute [CustomSetter] DOMString host;
+                 readonly attribute [CustomSetter] DOMString hostname;
+                 readonly attribute [CustomSetter] DOMString port;
+                 readonly attribute [CustomSetter] DOMString pathname;
+                 readonly attribute [CustomSetter] DOMString search;
+                 readonly attribute [CustomSetter] DOMString hash;
+
+                 readonly attribute DOMString origin;
+#else
 #if !defined(LANGUAGE_CPP) || !LANGUAGE_CPP
                  attribute [CustomSetter] DOMString protocol;
                  attribute [CustomSetter] DOMString host;
@@ -61,6 +72,8 @@ module window {
 
                  readonly attribute DOMString origin;
 #endif
+#endif // LANGUAGE_PYTHON
+
 
 #if defined(LANGUAGE_JAVASCRIPT) && LANGUAGE_JAVASCRIPT
         [DontEnum, Custom, V8OnInstance, V8ReadOnly] DOMString toString();

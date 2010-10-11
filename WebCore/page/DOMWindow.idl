@@ -54,7 +54,11 @@ module window {
         attribute [Replaceable] BarInfo toolbar;
         attribute [Replaceable] Navigator navigator;
         attribute [Replaceable] Navigator clientInformation;
+#if defined(LANGUAGE_PYTHON) && LANGUAGE_PYTHON
+        readonly attribute [DoNotCheckDomainSecurity, JSCCustom, V8CustomSetter, V8DisallowShadowing, CPPCustom] Location location;
+#else
         attribute [DoNotCheckDomainSecurity, JSCCustom, V8CustomSetter, V8DisallowShadowing, CPPCustom] Location location;
+#endif
 
         attribute [Replaceable, CustomGetter, V8CustomSetter] Event event;
 

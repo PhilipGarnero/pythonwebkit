@@ -136,6 +136,7 @@ WebCore/page/EventSource.idl
 WebCore/page/Geolocation.idl
 WebCore/page/Geoposition.idl
 WebCore/page/History.idl
+WebCore/page/Location.idl
 WebCore/page/Navigator.idl
 WebCore/page/PositionError.idl
 WebCore/page/Screen.idl
