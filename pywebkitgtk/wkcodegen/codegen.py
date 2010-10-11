@@ -8,6 +8,7 @@ import keyword
 import os
 import string
 import sys
+import traceback
 
 import argtypes
 import definitions
@@ -856,8 +857,9 @@ static int
                     self.fp.write(self.setter_tmpl % substdict)
                     settername = "WebKit::"+funcname
                 except argtypes.ArgTypeError, ex:
+                    traceback.print_exc()
                     sys.stderr.write(
-                        "Could not write getter for %s.%s: %s\n"
+                        "Could not write setter for %s.%s: %s\n"
                         % (self.objinfo.c_name, fname, str(ex)))
             if gettername != '0' or settername != '0':
                 getsets.append('    { (char*)"%s", (getter)%s, (setter)%s, 0, 0 },\n' %
@@ -1696,7 +1698,6 @@ void webkit_init_pywebkit(PyObject *m, struct pyjoinapi *fns)
         self.fp.write('#include <wtf/text/CString.h>\n\n\n')
         self.fp.write('#include <wtf/Forward.h>\n\n\n')
         self.fp.write("""\
-/* TODO: resolve memory leak */
 char* cpUTF8(WTF::String const& s) { return strdup((s.utf8().data())); }
 char* cpUTF8(WebCore::KURL const& s) { return strdup((s.string().utf8().data())); }
 """)

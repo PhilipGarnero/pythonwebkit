@@ -117,7 +117,10 @@ class URLStringArg(ArgType):
             info.add_parselist('s', ['&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
         info.varlist.add('WTF::String', 'ret')
-        info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret));\n' +
+        info.varlist.add('char', '*_ret')
+        info.codeafter.append('    _ret = cpUTF8(ret);\n'
+                              '    PyObject *py_ret = PyString_FromString(_ret);\n'
+                              '    free(_ret);\n'
                               '    return py_ret;')
 
 class StringArg(ArgType):
@@ -136,7 +139,10 @@ class StringArg(ArgType):
             info.add_parselist('s', ['&' + pname], [pname])
     def write_return(self, ptype, ownsreturn, info):
         info.varlist.add('WTF::String', 'ret')
-        info.codeafter.append('    PyObject *py_ret = PyString_FromString(cpUTF8(ret));\n' +
+        info.varlist.add('char', '*_ret')
+        info.codeafter.append('    _ret = cpUTF8(ret);\n'
+                              '    PyObject *py_ret = PyString_FromString(_ret);\n'
+                              '    free(_ret);\n'
                               '    return py_ret;')
 
 class SerializedStringArg(ArgType):
@@ -190,6 +196,25 @@ class CharArg(ArgType):
         info.codeafter.append('    return PyString_FromStringAndSize(&ret, 1);')
 
 class GUniCharArg(ArgType):
+    def write_param(self, ptype, pname, pdflt, pnull, info):
+        if pdflt != None:
+            if pdflt != 'NULL': pdflt = '"' + pdflt + '"'
+            info.varlist.add('Py_UNICODE', '*' + pname + ' = ' + pdflt)
+        else:
+            info.varlist.add('Py_UNICODE', '*' + pname)
+        info.arglist.append("cvt_"+pname)
+        info.codebefore.append('    WTF::String cvt_%s = WTF::String((const UChar*)%s);\n' % \
+                            (pname, pname))
+        if pnull:
+            info.add_parselist('z', ['&' + pname], [pname])
+        else:
+            info.add_parselist('z', ['&' + pname], [pname])
+    def write_return(self, ptype, ownsreturn, info):
+        info.varlist.add('WTF::String', 'ret')
+        info.codeafter.append('    PyObject *py_ret = PyUnicode_FromWideChar((const wchar_t*)(ret.characters()), ret.length());\n' +
+                              '    return py_ret;')
+
+class GUniCharArg2(ArgType):
     ret_tmpl = ('#if !defined(Py_UNICODE_SIZE) || Py_UNICODE_SIZE == 2\n'
                 '    if (ret > 0xffff) {\n'
                 '        PyErr_SetString(PyExc_RuntimeError, "returned character can not be represented in 16-bit unicode");\n'
@@ -1034,6 +1059,8 @@ matcher.register('guchar', arg)
 
 arg = GUniCharArg()
 matcher.register('gunichar', arg)
+matcher.register('DOMString', arg)
+matcher.register('wchar_t*', arg)
 
 arg = IntArg()
 matcher.register('int', arg)
