@@ -41,13 +41,19 @@ module window {
         CustomPrototypeDefineGetter,
         OmitConstructor
     ] Location {
+#if defined(LANGUAGE_PYTHON) && LANGUAGE_PYTHON
+                 readonly attribute [DoNotCheckDomainSecurityOnSet, CustomSetter, V8DisallowShadowing] DOMString href;
+#else
 #if !defined(LANGUAGE_CPP) || !LANGUAGE_CPP
                  attribute [DoNotCheckDomainSecurityOnSet, CustomSetter, V8DisallowShadowing] DOMString href;
 #endif
+#endif // LANGUAGE_PYTHON
 
+#if !defined(LANGUAGE_PYTHON) || !LANGUAGE_PYTHON
         [Custom, V8OnInstance] void assign(in DOMString url);
         [Custom, V8OnInstance] void replace(in DOMString url);
         [Custom, V8OnInstance] void reload();
+#endif
 
         // URI decomposition attributes
 #if defined(LANGUAGE_PYTHON) && LANGUAGE_PYTHON
