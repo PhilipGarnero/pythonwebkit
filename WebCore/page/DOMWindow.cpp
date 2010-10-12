@@ -1421,7 +1421,7 @@ void DOMWindow::resizeTo(float width, float height) const
     page->chrome()->setWindowRect(fr);
 }
 
-int DOMWindow::setTimeout(PassOwnPtr<ScheduledAction> action, int timeout, ExceptionCode& ec)
+int DOMWindow::setTimeout(PassOwnPtr<ScheduledActionBase> action, int timeout, ExceptionCode& ec)
 {
     ScriptExecutionContext* context = scriptExecutionContext();
     if (!context) {
@@ -1439,7 +1439,7 @@ void DOMWindow::clearTimeout(int timeoutId)
     DOMTimer::removeById(context, timeoutId);
 }
 
-int DOMWindow::setInterval(PassOwnPtr<ScheduledAction> action, int timeout, ExceptionCode& ec)
+int DOMWindow::setInterval(PassOwnPtr<ScheduledActionBase> action, int timeout, ExceptionCode& ec)
 {
     ScriptExecutionContext* context = scriptExecutionContext();
     if (!context) {

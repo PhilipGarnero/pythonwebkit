@@ -27,7 +27,7 @@
 #ifndef DOMTimer_h
 #define DOMTimer_h
 
-#include "ScheduledAction.h"
+#include "ScheduledActionBase.h"
 #include "SuspendableTimer.h"
 #include <wtf/OwnPtr.h>
 #include <wtf/PassOwnPtr.h>
@@ -41,7 +41,7 @@ namespace WebCore {
         virtual ~DOMTimer();
         // Creates a new timer owned by specified ScriptExecutionContext, starts it
         // and returns its Id.
-        static int install(ScriptExecutionContext*, PassOwnPtr<ScheduledAction>, int timeout, bool singleShot);
+        static int install(ScriptExecutionContext*, PassOwnPtr<ScheduledActionBase>, int timeout, bool singleShot);
         static void removeById(ScriptExecutionContext*, int timeoutId);
 
         // ActiveDOMObject
@@ -53,12 +53,12 @@ namespace WebCore {
         static void setMinTimerInterval(double value) { s_minTimerInterval = value; }
 
     private:
-        DOMTimer(ScriptExecutionContext*, PassOwnPtr<ScheduledAction>, int timeout, bool singleShot);
+        DOMTimer(ScriptExecutionContext*, PassOwnPtr<ScheduledActionBase>, int timeout, bool singleShot);
         virtual void fired();
 
         int m_timeoutId;
         int m_nestingLevel;
-        OwnPtr<ScheduledAction> m_action;
+        OwnPtr<ScheduledActionBase> m_action;
         static double s_minTimerInterval;
     };
 

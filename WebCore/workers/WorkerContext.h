@@ -51,7 +51,7 @@ namespace WebCore {
     class ErrorCallback;
     class FileSystemCallback;
     class NotificationCenter;
-    class ScheduledAction;
+    class ScheduledActionBase;
     class WorkerLocation;
     class WorkerNavigator;
     class WorkerThread;
@@ -93,9 +93,9 @@ namespace WebCore {
         WorkerNavigator* navigator() const;
 
         // Timers
-        int setTimeout(PassOwnPtr<ScheduledAction>, int timeout);
+        int setTimeout(PassOwnPtr<ScheduledActionBase>, int timeout);
         void clearTimeout(int timeoutId);
-        int setInterval(PassOwnPtr<ScheduledAction>, int timeout);
+        int setInterval(PassOwnPtr<ScheduledActionBase>, int timeout);
         void clearInterval(int timeoutId);
 
         // ScriptExecutionContext

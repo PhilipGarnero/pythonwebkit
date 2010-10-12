@@ -585,6 +585,7 @@ static int
                                  'docstring': meth.docstring })
                 methods_coverage.declare_wrapped()
             except argtypes.ArgTypeError, ex:
+                traceback.print_exc()
                 sys.stderr.write('declaration of type needed %s.%s: %s\n'
                                 % (klass, meth.name, ex))
 
@@ -824,7 +825,8 @@ static int
                     info = argtypes.WrapperInfo()
                     info.parselist = [''] # remove kwlist, for PyArgs_Parse
                     handler = argtypes.matcher.get(ftype)
-                    hack = ftype == 'EventListener*' # XXX HACK!
+                    hack = ftype in \
+                        ['EventListener*', 'ScheduledActionBase*'] # XXX HACK!
                     handler.write_param(ftype, fname, None,
                                         hack, info)
                     exception_needed = attribs.setter
@@ -1583,6 +1585,30 @@ class SourceWriter:
         '}\n\n'
         )
 
+    # this is a bit odd / multi-purpose. inputs include Py_None,
+    # or an already-created python-wrapped ScheduledAction object,
+    # or a callable function.  a callable function ends up being
+    # stored inside the PythonEventListener
+    wrapcore_scheduledaction_tmpl = (
+        'PyObject* toPython(WebCore::%(classname)s*);\n\n'
+        'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
+        '{\n'
+        '    PyObject *obj = (PyObject*)request;\n'
+        '    if (obj == Py_None) {\n'
+        '        return NULL;\n'
+        '    }\n'
+        '    if (Py_TYPE((PyObject*)obj) == PtrPyDOMScheduledAction_Type) {\n'
+        '        void *coreptr = ((PyDOMObject*)request)->ptr;\n'
+        '        return static_cast<WebCore::%(classname)s*>(coreptr);\n'
+        '    }\n'
+        '    if (!PyCallable_Check(obj)) {\n'
+        '        PyErr_SetString(PyExc_TypeError, "param must be callable");\n'
+        '        return NULL;\n'
+        '    }\n'
+        '    return webkit_create_python_scheduled_action(obj);\n'
+        '}\n\n'
+        )
+
     wrapcore_tmpl = (
         'WebCore::%(classname)s *core%(classname)s(PyDOMObject* request)\n'
         '{\n'
@@ -1736,7 +1762,9 @@ typedef intobjargproc ssizeobjargproc;
             if not self.overrides.is_type_ignored(obj.c_name):
                 txt = self.wrapnode_tmpl % {'classname': obj.c_name}
                 self.fp.write(txt)
-                if obj.c_name == 'EventListener':
+                if obj.c_name == 'ScheduledActionBase':
+                    tmpl = self.wrapcore_scheduledaction_tmpl 
+                elif obj.c_name == 'EventListener':
                     tmpl = self.wrapcore_eventlistener_tmpl 
                 else:
                     tmpl = self.wrapcore_tmpl 

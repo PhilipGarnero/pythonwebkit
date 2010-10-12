@@ -905,7 +905,7 @@ JSValue JSDOMWindow::postMessage(ExecState* exec)
 
 JSValue JSDOMWindow::setTimeout(ExecState* exec)
 {
-    OwnPtr<ScheduledAction> action = ScheduledAction::create(exec, currentWorld(exec));
+    OwnPtr<ScheduledActionBase> action = ScheduledAction::create(exec, currentWorld(exec));
     if (exec->hadException())
         return jsUndefined();
     int delay = exec->argument(1).toInt32(exec);
@@ -919,7 +919,7 @@ JSValue JSDOMWindow::setTimeout(ExecState* exec)
 
 JSValue JSDOMWindow::setInterval(ExecState* exec)
 {
-    OwnPtr<ScheduledAction> action = ScheduledAction::create(exec, currentWorld(exec));
+    OwnPtr<ScheduledActionBase> action = ScheduledAction::create(exec, currentWorld(exec));
     if (exec->hadException())
         return jsUndefined();
     int delay = exec->argument(1).toInt32(exec);

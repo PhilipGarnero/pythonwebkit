@@ -1257,6 +1257,7 @@ tmap = {
     "uchar": "uchar",
     "unsigned": "unsigned",
     "any": "SerializedScriptValue",
+    "TimeoutHandler": "ScheduledActionBase*",
     "int": "int",
     "unsigned int": "unsigned int",
     "unsigned long": "unsigned long",
@@ -1321,6 +1322,10 @@ class IDLDefsParser(defsparser.DefsParser):
                        and m.name in ['pushState', 'replaceState']:
                         # XXX HACK! skip it for now
                         continue
+                    if obj.name == 'DOMWindow' \
+                       and m.name in ['setTimeout', 'setInterval']:
+                        # XXX HACK! custom exception
+                        m.raises = 'DOMException'
                     if obj.name == 'EventListener' \
                        and m.name == 'handleEvent':
                         # XXX HACK! skip it for now
@@ -1348,7 +1353,7 @@ class IDLDefsParser(defsparser.DefsParser):
                             # HACK! XMLHTTPRequest.open url is WebCore::KURL
                             p = ('kurl', p.name)
                         else:
-                            if p.type == 'EventListener':
+                            if p.type in ['EventListener', 'TimeoutHandler']:
                                 p = (typeMap(p.type), p.name, ('null-ok',))
                             else:
                                 p = (typeMap(p.type), p.name)

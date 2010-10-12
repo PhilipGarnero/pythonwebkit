@@ -197,7 +197,7 @@ void WorkerContext::postTask(PassOwnPtr<Task> task)
     thread()->runLoop().postTask(task);
 }
 
-int WorkerContext::setTimeout(PassOwnPtr<ScheduledAction> action, int timeout)
+int WorkerContext::setTimeout(PassOwnPtr<ScheduledActionBase> action, int timeout)
 {
     return DOMTimer::install(scriptExecutionContext(), action, timeout, true);
 }
@@ -207,7 +207,7 @@ void WorkerContext::clearTimeout(int timeoutId)
     DOMTimer::removeById(scriptExecutionContext(), timeoutId);
 }
 
-int WorkerContext::setInterval(PassOwnPtr<ScheduledAction> action, int timeout)
+int WorkerContext::setInterval(PassOwnPtr<ScheduledActionBase> action, int timeout)
 {
     return DOMTimer::install(scriptExecutionContext(), action, timeout, false);
 }

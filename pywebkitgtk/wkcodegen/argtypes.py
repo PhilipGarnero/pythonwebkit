@@ -570,7 +570,10 @@ class ObjectArg(ArgType):
                                                         'cast':self.cast,
                                                         'type':self.objname})
             else:
-                info.varlist.add(self.objname, '*' + pname + ' = NULL')
+                if ptype == 'ScheduledActionBase*':
+                    info.varlist.add("PassOwnPtr<"+self.objname+">", pname + ' = NULL')
+                else:
+                    info.varlist.add(self.objname, '*' + pname + ' = NULL')
                 info.varlist.add('PyDOMObject', '*py_' + pname)
                 info.codebefore.append(self.dflt % {'name':pname,
                                                     'cast':self.cast,
@@ -581,7 +584,7 @@ class ObjectArg(ArgType):
                     const, typename = typename.split('const-')
                 except ValueError:
                     const = ''
-                if typename != ptype:
+                if typename != ptype and ptype != 'ScheduledActionBase*':
                     info.arglist.append('(%s *) %s' % (ptype[:-1], pname))
                 else:
                     info.arglist.append(pname)
@@ -975,6 +978,7 @@ class ArgMatcher:
         except KeyError:
             if ptype[:8] == 'GdkEvent' and ptype[-1] == '*':
                 return self.argtypes['GdkEvent*']
+            print self.argtypes['EventListener']
             raise ArgTypeNotFoundError(ptype)
     def _get_reverse_common(self, ptype, registry):
         props = dict(c_type=ptype)
@@ -1142,3 +1146,4 @@ del arg
 
 matcher.register('cairo_t*', CairoArg())
 matcher.register_boxed("GClosure", "G_TYPE_CLOSURE")
+matcher.register('ScheduledActionBase*', ObjectArg("ScheduledActionBase", "DOMObject", "coreScheduledActionBase"))

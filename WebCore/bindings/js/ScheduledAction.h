@@ -21,6 +21,7 @@
 #define ScheduledAction_h
 
 #include "PlatformString.h"
+#include "ScheduledActionBase.h"
 #include <JSDOMBinding.h>
 #include <runtime/JSCell.h>
 #include <runtime/Protect.h>
@@ -41,9 +42,9 @@ namespace WebCore {
     * time interval, either once or repeatedly. Used for window.setTimeout()
     * and window.setInterval()
     */
-    class ScheduledAction : public Noncopyable {
+    class ScheduledAction : public ScheduledActionBase {
     public:
-        static PassOwnPtr<ScheduledAction> create(JSC::ExecState*, DOMWrapperWorld* isolatedWorld);
+        static PassOwnPtr<ScheduledActionBase> create(JSC::ExecState*, DOMWrapperWorld* isolatedWorld);
 
         void execute(ScriptExecutionContext*);
 

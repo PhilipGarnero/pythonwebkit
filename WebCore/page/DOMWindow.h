@@ -69,7 +69,7 @@ namespace WebCore {
 #endif
 
     class PostMessageTimer;
-    class ScheduledAction;
+    class ScheduledActionBase;
     class SerializedScriptValue;
     class Screen;
     class WebKitPoint;
@@ -263,9 +263,9 @@ namespace WebCore {
         void resizeTo(float width, float height) const;
 
         // Timers
-        int setTimeout(PassOwnPtr<ScheduledAction>, int timeout, ExceptionCode&);
+        int setTimeout(PassOwnPtr<ScheduledActionBase>, int timeout, ExceptionCode&);
         void clearTimeout(int timeoutId);
-        int setInterval(PassOwnPtr<ScheduledAction>, int timeout, ExceptionCode&);
+        int setInterval(PassOwnPtr<ScheduledActionBase>, int timeout, ExceptionCode&);
         void clearInterval(int timeoutId);
 
         // Events
