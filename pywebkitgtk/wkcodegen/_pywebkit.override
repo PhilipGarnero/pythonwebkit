@@ -295,6 +295,10 @@ void PythonScheduledAction::execute(Document* document)
 
 extern "C" {
 
+// TODO: resolve how to free up the timer, which mayyy be happening
+// automatically through clearTimeout anyway, due to PassOwnPtr
+// clear() handling.  have to check.
+
 PassOwnPtr<WebCore::ScheduledActionBase>
 webkit_create_python_scheduled_action(PyObject *callback)
 {
