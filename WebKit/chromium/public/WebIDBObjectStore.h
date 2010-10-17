@@ -27,6 +27,7 @@
 #define WebIDBObjectStore_h
 
 #include "WebCommon.h"
+#include "WebExceptionCode.h"
 #include "WebDOMStringList.h"
 #include "WebIDBCallbacks.h"
 #include "WebIDBTransaction.h"
@@ -58,23 +59,22 @@ public:
         return WebDOMStringList();
     }
 
-    virtual void get(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void put(const WebSerializedScriptValue&, const WebIDBKey&, bool addOnly, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void remove(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    // FIXME: Remove once we update Chromium side.
-    virtual void createIndex(const WebString& name, const WebString& keyPath, bool unique, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void createIndex(const WebString& name, const WebString& keyPath, bool unique, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    // Transfers ownership of the WebIDBIndex to the caller.
-    virtual WebIDBIndex* index(const WebString& name)
+    virtual void get(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void put(const WebSerializedScriptValue&, const WebIDBKey&, bool addOnly, WebIDBCallbacks*, const WebIDBTransaction&, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void remove(const WebIDBKey&, WebIDBCallbacks*, const WebIDBTransaction&, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual WebIDBIndex* createIndex(const WebString& name, const WebString& keyPath, bool unique, const WebIDBTransaction&, WebExceptionCode&)
     {
         WEBKIT_ASSERT_NOT_REACHED();
         return 0;
     }
-    // FIXME: Remove once we update Chromium side.
-    virtual void removeIndex(const WebString& name, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void removeIndex(const WebString& name, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void openCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    // FIXME: finish.
+    // Transfers ownership of the WebIDBIndex to the caller.
+    virtual WebIDBIndex* index(const WebString& name, WebExceptionCode&)
+    {
+        WEBKIT_ASSERT_NOT_REACHED();
+        return 0;
+    }
+    virtual void removeIndex(const WebString& name, const WebIDBTransaction&, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void openCursor(const WebIDBKeyRange&, unsigned short direction, WebIDBCallbacks*, const WebIDBTransaction&, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
 };
 
 } // namespace WebKit

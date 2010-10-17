@@ -128,10 +128,10 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(HTMLCanvasElement* canvas, bo
         return;
     if (!p->settings()->accelerated2dCanvasEnabled())
         return;
-    m_context3D = p->chrome()->client()->getSharedGraphicsContext3D();
-    if (m_context3D) {
-        if (GraphicsContext* c = drawingContext()) {
-            m_drawingBuffer = DrawingBuffer::create(m_context3D.get(), IntSize(canvas->width(), canvas->height()));
+    if (GraphicsContext* c = drawingContext()) {
+        m_context3D = p->sharedGraphicsContext3D();
+        if (m_context3D) {
+            m_drawingBuffer = m_context3D->graphicsContext3D()->createDrawingBuffer(IntSize(canvas->width(), canvas->height()));
             c->setSharedGraphicsContext3D(m_context3D.get(), m_drawingBuffer.get(), IntSize(canvas->width(), canvas->height()));
         }
     }
@@ -167,8 +167,8 @@ void CanvasRenderingContext2D::reset()
     m_stateStack.first() = State();
     m_path.clear();
 #if ENABLE(ACCELERATED_2D_CANVAS)
-    if (m_context3D) {
-        if (GraphicsContext* c = drawingContext()) {
+    if (GraphicsContext* c = drawingContext()) {
+        if (m_context3D) {
             m_drawingBuffer->reset(IntSize(canvas()->width(), canvas()->height()));
             c->setSharedGraphicsContext3D(m_context3D.get(), m_drawingBuffer.get(), IntSize(canvas()->width(), canvas()->height()));
         }
@@ -249,7 +249,13 @@ void CanvasRenderingContext2D::setStrokeStyle(PassRefPtr<CanvasStyle> style)
     if (state().m_strokeStyle && state().m_strokeStyle->isEquivalentColor(*style))
         return;
 
-    checkOrigin(style->canvasPattern());
+    if (style->isCurrentColor()) {
+        if (style->hasOverrideAlpha())
+            style = CanvasStyle::createFromRGBA(colorWithOverrideAlpha(currentColor(canvas()), style->overrideAlpha()));
+        else
+            style = CanvasStyle::createFromRGBA(currentColor(canvas()));
+    } else
+        checkOrigin(style->canvasPattern());
 
     state().m_strokeStyle = style;
     GraphicsContext* c = drawingContext();
@@ -272,7 +278,13 @@ void CanvasRenderingContext2D::setFillStyle(PassRefPtr<CanvasStyle> style)
     if (state().m_fillStyle && state().m_fillStyle->isEquivalentColor(*style))
         return;
 
-    checkOrigin(style->canvasPattern());
+    if (style->isCurrentColor()) {
+        if (style->hasOverrideAlpha())
+            style = CanvasStyle::createFromRGBA(colorWithOverrideAlpha(currentColor(canvas()), style->overrideAlpha()));
+        else
+            style = CanvasStyle::createFromRGBA(currentColor(canvas()));
+    } else
+        checkOrigin(style->canvasPattern());
 
     state().m_fillStyle = style;
     GraphicsContext* c = drawingContext();
@@ -394,7 +406,7 @@ String CanvasRenderingContext2D::shadowColor() const
 
 void CanvasRenderingContext2D::setShadowColor(const String& color)
 {
-    if (!CSSParser::parseColor(state().m_shadowColor, color))
+    if (!parseColorOrCurrentColor(state().m_shadowColor, color, canvas()))
         return;
 
     applyShadow();
@@ -982,7 +994,7 @@ void CanvasRenderingContext2D::setShadow(float width, float height, float blur)
 
 void CanvasRenderingContext2D::setShadow(float width, float height, float blur, const String& color)
 {
-    if (!CSSParser::parseColor(state().m_shadowColor, color))
+    if (!parseColorOrCurrentColor(state().m_shadowColor, color, canvas()))
         return;
 
     state().m_shadowOffset = FloatSize(width, height);
@@ -1007,7 +1019,7 @@ void CanvasRenderingContext2D::setShadow(float width, float height, float blur, 
 {
     RGBA32 rgba;
 
-    if (!CSSParser::parseColor(rgba, color))
+    if (!parseColorOrCurrentColor(rgba, color, canvas()))
         return;
 
     state().m_shadowColor = colorWithOverrideAlpha(rgba, alpha);
@@ -1402,9 +1414,9 @@ PassRefPtr<CanvasGradient> CanvasRenderingContext2D::createLinearGradient(float 
         return 0;
     }
 
-    PassRefPtr<CanvasGradient> gradient = CanvasGradient::create(FloatPoint(x0, y0), FloatPoint(x1, y1));
+    RefPtr<CanvasGradient> gradient = CanvasGradient::create(FloatPoint(x0, y0), FloatPoint(x1, y1));
     prepareGradientForDashboard(gradient.get());
-    return gradient;
+    return gradient.release();
 }
 
 PassRefPtr<CanvasGradient> CanvasRenderingContext2D::createRadialGradient(float x0, float y0, float r0, float x1, float y1, float r1, ExceptionCode& ec)
@@ -1413,9 +1425,15 @@ PassRefPtr<CanvasGradient> CanvasRenderingContext2D::createRadialGradient(float 
         ec = NOT_SUPPORTED_ERR;
         return 0;
     }
-    PassRefPtr<CanvasGradient> gradient =  CanvasGradient::create(FloatPoint(x0, y0), r0, FloatPoint(x1, y1), r1);
+
+    if (r0 < 0 || r1 < 0) {
+        ec = INDEX_SIZE_ERR;
+        return 0;
+    }
+
+    RefPtr<CanvasGradient> gradient = CanvasGradient::create(FloatPoint(x0, y0), r0, FloatPoint(x1, y1), r1);
     prepareGradientForDashboard(gradient.get());
-    return gradient;
+    return gradient.release();
 }
 
 PassRefPtr<CanvasPattern> CanvasRenderingContext2D::createPattern(HTMLImageElement* image,
@@ -1513,7 +1531,7 @@ static PassRefPtr<ImageData> createEmptyImageData(const IntSize& size)
 {
     RefPtr<ImageData> data = ImageData::create(size.width(), size.height());
     memset(data->data()->data()->data(), 0, data->data()->data()->length());
-    return data.get();
+    return data.release();
 }
 
 PassRefPtr<ImageData> CanvasRenderingContext2D::createImageData(PassRefPtr<ImageData> imageData, ExceptionCode& ec) const
@@ -1614,16 +1632,16 @@ void CanvasRenderingContext2D::putImageData(ImageData* data, float dx, float dy,
     FloatRect clipRect(dirtyX, dirtyY, dirtyWidth, dirtyHeight);
     clipRect.intersect(IntRect(0, 0, data->width(), data->height()));
     IntSize destOffset(static_cast<int>(dx), static_cast<int>(dy));
-    IntRect sourceRect = enclosingIntRect(clipRect);
-    sourceRect.move(destOffset);
-    sourceRect.intersect(IntRect(IntPoint(), buffer->size()));
-    if (sourceRect.isEmpty())
+    IntRect destRect = enclosingIntRect(clipRect);
+    destRect.move(destOffset);
+    destRect.intersect(IntRect(IntPoint(), buffer->size()));
+    if (destRect.isEmpty())
         return;
+    IntRect sourceRect(destRect);
     sourceRect.move(-destOffset);
-    IntPoint destPoint(destOffset.width(), destOffset.height());
 
-    buffer->putUnmultipliedImageData(data, sourceRect, destPoint);
-    didDraw(sourceRect, CanvasDidDrawApplyNone); // ignore transform, shadow and clip
+    buffer->putUnmultipliedImageData(data, sourceRect, IntPoint(destOffset));
+    didDraw(destRect, CanvasDidDrawApplyNone); // ignore transform, shadow and clip
 }
 
 String CanvasRenderingContext2D::font() const
@@ -1732,7 +1750,7 @@ PassRefPtr<TextMetrics> CanvasRenderingContext2D::measureText(const String& text
     Font::setCodePath(oldCodePath);
 #endif
 
-    return metrics;
+    return metrics.release();
 }
 
 void CanvasRenderingContext2D::drawTextInternal(const String& text, float x, float y, bool fill, float /*maxWidth*/, bool /*useMaxWidth*/)

@@ -142,7 +142,7 @@ WebInspector.ResourcesPanel.prototype = {
 
         // Add a divider
         var dividerElement = document.createElement("div");
-        dividerElement.addStyleClass("divider");
+        dividerElement.addStyleClass("scope-bar-divider");
         this.filterBarElement.appendChild(dividerElement);
 
         for (var category in this.categories)
@@ -1250,17 +1250,27 @@ WebInspector.ResourcesPanel.prototype = {
 
     _contextMenu: function(event)
     {
-        // createBlobURL is enabled conditionally, do not expose resource export if it's not available.
-        if (typeof window.createBlobURL !== "function" || !Preferences.resourceExportEnabled)
-            return;
-
         var contextMenu = new WebInspector.ContextMenu();
         var resourceTreeItem = event.target.enclosingNodeOrSelfWithClass("resource-sidebar-tree-item");
-        if (resourceTreeItem && resourceTreeItem.treeElement) {
-            var resource = resourceTreeItem.treeElement.representedObject;
-            contextMenu.appendItem(WebInspector.UIString("Export to HAR"), this._exportResource.bind(this, resource));
+        var resource;
+        if (resourceTreeItem && resourceTreeItem.treeElement)
+            resource = resourceTreeItem.treeElement.representedObject;
+
+        var needSeparator = false;
+        // createBlobURL is enabled conditionally, do not expose resource export if it's not available.
+        if (typeof window.createBlobURL === "function" && Preferences.resourceExportEnabled) {
+            if (resource)
+                contextMenu.appendItem(WebInspector.UIString("Export to HAR"), this._exportResource.bind(this, resource));
+            contextMenu.appendItem(WebInspector.UIString("Export all to HAR"), this._exportAll.bind(this));
+            needSeparator = true;
         }
-        contextMenu.appendItem(WebInspector.UIString("Export all to HAR"), this._exportAll.bind(this));
+
+        if (resource && resource.category === WebInspector.resourceCategories.xhr) {
+            if (needSeparator)
+                contextMenu.appendSeparator();
+            contextMenu.appendItem(WebInspector.UIString("Set XHR Breakpoint"), WebInspector.breakpointManager.createXHRBreakpoint.bind(WebInspector.breakpointManager, resource.url));
+        }
+
         contextMenu.show(event);
     },
 
@@ -1283,7 +1293,7 @@ WebInspector.ResourcesPanel.prototype.__proto__ = WebInspector.Panel.prototype;
 
 WebInspector.getResourceContent = function(identifier, callback)
 {
-    InspectorBackend.getResourceContent(identifier, callback);
+    InspectorBackend.getResourceContent(identifier, false, callback);
 }
 
 WebInspector.ResourceBaseCalculator = function()

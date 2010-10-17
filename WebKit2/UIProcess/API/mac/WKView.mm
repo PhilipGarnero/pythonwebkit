@@ -30,6 +30,8 @@
 
 // Implementation
 #import "ChunkedUpdateDrawingAreaProxy.h"
+#import "FindIndicator.h"
+#import "FindIndicatorWindow.h"
 #import "LayerBackedDrawingAreaProxy.h"
 #import "NativeWebKeyboardEvent.h"
 #import "PageClientImpl.h"
@@ -41,8 +43,11 @@
 #import "WebPageProxy.h"
 #import "WebProcessManager.h"
 #import "WebProcessProxy.h"
+#import "WebSystemInterface.h"
 #import <QuartzCore/QuartzCore.h>
+#import <WebCore/FloatRect.h>
 #import <WebCore/IntRect.h>
+#import <WebCore/PlatformScreen.h>
 #import <wtf/RefPtr.h>
 #import <wtf/RetainPtr.h>
 
@@ -80,6 +85,8 @@ struct EditCommandState {
     bool _isPerformingUpdate;
     
     HashMap<String, EditCommandState> _menuMap;
+
+    OwnPtr<FindIndicatorWindow> _findIndicatorWindow;
 }
 @end
 
@@ -94,6 +101,7 @@ struct EditCommandState {
     if (!self)
         return nil;
 
+    InitWebCoreSystemInterface();
     RunLoop::initializeMainRunLoop();
 
     NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:frame
@@ -106,7 +114,7 @@ struct EditCommandState {
     _data = [[WKViewData alloc] init];
 
     _data->_pageClient = PageClientImpl::create(self);
-    _data->_page = toWK(pageNamespaceRef)->createWebPage();
+    _data->_page = toImpl(pageNamespaceRef)->createWebPage();
     _data->_page->setPageClient(_data->_pageClient.get());
     _data->_page->setDrawingArea(ChunkedUpdateDrawingAreaProxy::create(self));
     _data->_page->initializeWebPage(IntSize(frame.size));
@@ -121,7 +129,7 @@ struct EditCommandState {
 - (id)initWithFrame:(NSRect)frame
 {
     WebContext* context = WebContext::sharedProcessContext();
-    self = [self initWithFrame:frame pageNamespaceRef:toRef(context->createPageNamespace())];
+    self = [self initWithFrame:frame pageNamespaceRef:toAPI(context->createPageNamespace())];
     if (!self)
         return nil;
 
@@ -138,7 +146,7 @@ struct EditCommandState {
 
 - (WKPageRef)pageRef
 {
-    return toRef(_data->_page.get());
+    return toAPI(_data->_page.get());
 }
 
 - (BOOL)acceptsFirstResponder
@@ -170,6 +178,13 @@ struct EditCommandState {
     _data->_page->drawingArea()->setSize(IntSize(size));
 }
 
+- (void)renewGState
+{
+    // Hide the find indicator.
+    _data->_findIndicatorWindow = 0;
+
+    [super renewGState];
+}
 typedef HashMap<SEL, String> SelectorNameMap;
 
 // Map selectors into Editor command names.
@@ -298,7 +313,7 @@ EVENT_HANDLER(scrollWheel, Wheel)
 
 - (void)_updateWindowVisibility
 {
-    _data->_page->setWindowIsVisible(![[self window] isMiniaturized]);
+    _data->_page->updateWindowIsVisible(![[self window] isMiniaturized]);
 }
 
 - (BOOL)_ownsWindowGrowBox
@@ -397,7 +412,7 @@ static bool isViewVisible(NSView *view)
 {
     ASSERT([self window]);
 
-    _data->_page->setWindowFrame(enclosingIntRect([[self window] frame]));
+    _data->_page->updateWindowFrame(enclosingIntRect([[self window] frame]));
 }
 
 - (void)viewWillMoveToWindow:(NSWindow *)window
@@ -462,6 +477,7 @@ static bool isViewVisible(NSView *view)
     if (_data->_page->isValid() && _data->_page->drawingArea()) {
         CGContextRef context = static_cast<CGContextRef>([[NSGraphicsContext currentContext] graphicsPort]);
         _data->_page->drawingArea()->paint(IntRect(rect), context);
+        _data->_page->didDraw();
     }
 }
 
@@ -530,6 +546,16 @@ static bool isViewVisible(NSView *view)
         [_data->_menuList[i].get() update];
     
     _data->_menuList.clear();
+}
+
+- (NSRect)_convertToDeviceSpace:(NSRect)rect
+{
+    return toDeviceSpace(rect, [self window]);
+}
+
+- (NSRect)_convertToUserSpace:(NSRect)rect
+{
+    return toUserSpace(rect, [self window]);
 }
 
 // Any non-zero value will do, but using something recognizable might help us debug some day.
@@ -644,6 +670,19 @@ static bool isViewVisible(NSView *view)
         _data->_lastToolTipTag = [self addToolTipRect:wideOpenRect owner:self userData:NULL];
         [self _sendToolTipMouseEntered];
     }
+}
+
+- (void)_setFindIndicator:(PassRefPtr<FindIndicator>)findIndicator fadeOut:(BOOL)fadeOut
+{
+    if (!findIndicator) {
+        _data->_findIndicatorWindow = 0;
+        return;
+    }
+
+    if (!_data->_findIndicatorWindow)
+        _data->_findIndicatorWindow = FindIndicatorWindow::create(self);
+
+    _data->_findIndicatorWindow->setFindIndicator(findIndicator, fadeOut);
 }
 
 #if USE(ACCELERATED_COMPOSITING)

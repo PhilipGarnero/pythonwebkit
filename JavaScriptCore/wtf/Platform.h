@@ -398,7 +398,7 @@
 
 /* OS(NETBSD) - NetBSD */
 #if defined(__NetBSD__)
-#define WTF_PLATFORM_NETBSD 1
+#define WTF_OS_NETBSD 1
 #endif
 
 /* OS(OPENBSD) - OpenBSD */
@@ -574,6 +574,8 @@
 #define WTF_USE_QT4_UNICODE 1
 #elif OS(WINCE)
 #define WTF_USE_WINCE_UNICODE 1
+#elif PLATFORM(BREWMP)
+#define WTF_USE_BREWMP_UNICODE 1
 #elif PLATFORM(GTK)
 /* The GTK+ Unicode backend is configurable */
 #else

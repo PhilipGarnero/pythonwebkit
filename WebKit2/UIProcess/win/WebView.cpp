@@ -26,13 +26,16 @@
 #include "WebView.h"
 
 #include "ChunkedUpdateDrawingAreaProxy.h"
+#include "FindIndicator.h"
 #include "RunLoop.h"
 #include "NativeWebKeyboardEvent.h"
 #include "WebEditCommandProxy.h"
 #include "WebEventFactory.h"
 #include "WebPageNamespace.h"
 #include "WebPageProxy.h"
+#include "WebPopupMenuProxyWin.h"
 #include <Commctrl.h>
+#include <WebCore/FloatRect.h>
 #include <WebCore/IntRect.h>
 #include <WebCore/WebCoreInstanceHandle.h>
 #include <WebCore/WindowMessageBroadcaster.h>
@@ -336,6 +339,8 @@ LRESULT WebView::onKeyEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 {
     m_page->handleKeyboardEvent(NativeWebKeyboardEvent(hWnd, message, wParam, lParam));
 
+    // We claim here to always have handled the event. If the event is not in fact handled, we will
+    // find out later in didNotHandleKeyEvent.
     handled = true;
     return 0;
 }
@@ -572,7 +577,11 @@ void WebView::setCursor(const WebCore::Cursor& cursor)
     ::SetCursor(platformCursor);
 }
 
-void WebView::registerEditCommand(PassRefPtr<WebEditCommandProxy>, UndoOrRedo)
+void WebView::setViewportArguments(const WebCore::ViewportArguments&)
+{
+}
+
+void WebView::registerEditCommand(PassRefPtr<WebEditCommandProxy>, WebPageProxy::UndoOrRedo)
 {
 }
 
@@ -580,8 +589,35 @@ void WebView::clearAllEditCommands()
 {
 }
 
-void WebView::setEditCommandState(const WTF::String&, bool, int)
+void WebView::setEditCommandState(const String&, bool, int)
 {
+}
+
+FloatRect WebView::convertToDeviceSpace(const FloatRect& rect)
+{
+    return rect;
+}
+
+FloatRect WebView::convertToUserSpace(const FloatRect& rect)
+{
+    return rect;
+}
+
+void WebView::didNotHandleKeyEvent(const NativeWebKeyboardEvent& event)
+{
+    // Calling ::DefWindowProcW will ensure that pressing the Alt key will generate a WM_SYSCOMMAND
+    // event, e.g. See <http://webkit.org/b/47671>.
+    ::DefWindowProcW(event.nativeEvent()->hwnd, event.nativeEvent()->message, event.nativeEvent()->wParam, event.nativeEvent()->lParam);
+}
+
+PassRefPtr<WebPopupMenuProxy> WebView::createPopupMenuProxy()
+{
+    return WebPopupMenuProxyWin::create();
+}
+
+void WebView::setFindIndicator(PassRefPtr<FindIndicator>, bool fadeOut)
+{
+    // FIXME: Implement.
 }
 
 #if USE(ACCELERATED_COMPOSITING)

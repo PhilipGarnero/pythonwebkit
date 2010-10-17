@@ -38,6 +38,7 @@
 #include "app/gfx/gl/gl_context.h"
 #include "NotImplemented.h"
 #include "WebView.h"
+#include <wtf/OwnArrayPtr.h>
 #include <wtf/PassOwnPtr.h>
 #include <wtf/text/CString.h>
 
@@ -1190,6 +1191,71 @@ DELEGATE_TO_GL_2(sampleCoverage, SampleCoverage, double, bool)
 
 DELEGATE_TO_GL_4(scissor, Scissor, long, long, unsigned long, unsigned long)
 
+unsigned bytesPerComponent(unsigned type)
+{
+    switch (type) {
+    case GL_BYTE:
+    case GL_UNSIGNED_BYTE:
+        return 1;
+    case GL_SHORT:
+    case GL_UNSIGNED_SHORT:
+    case GL_UNSIGNED_SHORT_5_6_5:
+    case GL_UNSIGNED_SHORT_4_4_4_4:
+    case GL_UNSIGNED_SHORT_5_5_5_1:
+        return 2;
+    case GL_FLOAT:
+        return 4;
+    default:
+        return 4;
+    }
+}
+
+unsigned componentsPerPixel(unsigned format, unsigned type)
+{
+    switch (type) {
+    case GL_UNSIGNED_SHORT_5_6_5:
+    case GL_UNSIGNED_SHORT_4_4_4_4:
+    case GL_UNSIGNED_SHORT_5_5_5_1:
+        return 1;
+    default:
+        break;
+    }
+    switch (format) {
+    case GL_LUMINANCE:
+        return 1;
+    case GL_LUMINANCE_ALPHA:
+        return 2;
+    case GL_RGB:
+        return 3;
+    case GL_RGBA:
+    case GL_BGRA_EXT:
+        return 4;
+    default:
+        return 4;
+    }
+}
+
+// N.B.:  This code does not protect against integer overflow (as the command
+// buffer implementation does), so it should not be considered robust enough
+// for use in the browser.  Since this implementation is only used for layout
+// tests, this should be ok for now.
+size_t imageSizeInBytes(unsigned width, unsigned height, unsigned format, unsigned type)
+{
+    return width * height * bytesPerComponent(type) * componentsPerPixel(format, type);
+}
+
+void WebGraphicsContext3DDefaultImpl::texImage2D(unsigned target, unsigned level, unsigned internalFormat, unsigned width, unsigned height, unsigned border, unsigned format, unsigned type, const void* pixels)
+{
+    OwnArrayPtr<uint8> zero;
+    if (!pixels) {
+        size_t size = imageSizeInBytes(width, height, format, type);
+        zero.set(new uint8[size]);
+        memset(zero.get(), 0, size);
+        pixels = zero.get();
+    }
+    glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+}
+
 void WebGraphicsContext3DDefaultImpl::shaderSource(WebGLId shader, const char* string)
 {
     makeContextCurrent();
@@ -1220,8 +1286,6 @@ DELEGATE_TO_GL_2(stencilMaskSeparate, StencilMaskSeparate, unsigned long, unsign
 DELEGATE_TO_GL_3(stencilOp, StencilOp, unsigned long, unsigned long, unsigned long)
 
 DELEGATE_TO_GL_4(stencilOpSeparate, StencilOpSeparate, unsigned long, unsigned long, unsigned long, unsigned long)
-
-DELEGATE_TO_GL_9(texImage2D, TexImage2D, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, const void*)
 
 DELEGATE_TO_GL_3(texParameterf, TexParameterf, unsigned, unsigned, float);
 
@@ -1414,29 +1478,20 @@ bool WebGraphicsContext3DDefaultImpl::angleCreateCompilers()
     if (!ShInitialize())
         return false;
 
-    TBuiltInResource resource;
-    resource.MaxVertexAttribs = 0;
-    getIntegerv(GL_MAX_VERTEX_ATTRIBS, &resource.MaxVertexAttribs);
-    resource.MaxVertexUniformVectors = 0;
-    getIntegerv(MAX_VERTEX_UNIFORM_VECTORS,
-                &resource.MaxVertexUniformVectors);
-    resource.MaxVaryingVectors = 0;
-    getIntegerv(MAX_VARYING_VECTORS,
-                &resource.MaxVaryingVectors);
-    resource.MaxVertexTextureImageUnits = 0;
-    getIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &resource.MaxVertexTextureImageUnits);
-    resource.MaxCombinedTextureImageUnits = 0;
-    getIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &resource.MaxCombinedTextureImageUnits);
-    resource.MaxTextureImageUnits = 0;
-    getIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &resource.MaxTextureImageUnits);
-    resource.MaxFragmentUniformVectors = 0;
-    getIntegerv(MAX_FRAGMENT_UNIFORM_VECTORS,
-                &resource.MaxFragmentUniformVectors);
+    ShBuiltInResources resources;
+    ShInitBuiltInResources(&resources);
+    getIntegerv(GL_MAX_VERTEX_ATTRIBS, &resources.MaxVertexAttribs);
+    getIntegerv(MAX_VERTEX_UNIFORM_VECTORS, &resources.MaxVertexUniformVectors);
+    getIntegerv(MAX_VARYING_VECTORS, &resources.MaxVaryingVectors);
+    getIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &resources.MaxVertexTextureImageUnits);
+    getIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &resources.MaxCombinedTextureImageUnits);
+    getIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &resources.MaxTextureImageUnits);
+    getIntegerv(MAX_FRAGMENT_UNIFORM_VECTORS, &resources.MaxFragmentUniformVectors);
     // Always set to 1 for OpenGL ES.
-    resource.MaxDrawBuffers = 1;
+    resources.MaxDrawBuffers = 1;
 
-    m_fragmentCompiler = ShConstructCompiler(EShLangFragment, EShSpecWebGL, &resource);
-    m_vertexCompiler = ShConstructCompiler(EShLangVertex, EShSpecWebGL, &resource);
+    m_fragmentCompiler = ShConstructCompiler(SH_FRAGMENT_SHADER, SH_WEBGL_SPEC, &resources);
+    m_vertexCompiler = ShConstructCompiler(SH_VERTEX_SHADER, SH_WEBGL_SPEC, &resources);
     return (m_fragmentCompiler && m_vertexCompiler);
 }
 
@@ -1476,7 +1531,7 @@ bool WebGraphicsContext3DDefaultImpl::angleValidateShaderSource(ShaderSourceEntr
     if (!compiler)
         return false;
 
-    if (!ShCompile(compiler, &entry.source, 1, EShOptObjectCode)) {
+    if (!ShCompile(compiler, &entry.source, 1, SH_OBJECT_CODE)) {
         int logSize = 0;
         ShGetInfo(compiler, SH_INFO_LOG_LENGTH, &logSize);
         if (logSize > 1 && tryFastMalloc(logSize * sizeof(char)).getValue(entry.log))

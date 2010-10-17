@@ -60,25 +60,31 @@ class AbstractQueueTest(CommandsTest):
     def test_log_directory(self):
         self.assertEquals(TestQueue()._log_directory(), "test-queue-logs")
 
-    def _assert_run_webkit_patch(self, run_args):
+    def _assert_run_webkit_patch(self, run_args, port=None):
         queue = TestQueue()
         tool = MockTool()
         tool.status_server.bot_id = "gort"
         tool.executive = Mock()
         queue.bind_to_tool(tool)
+        queue._options = Mock()
+        queue._options.port = port
 
         queue.run_webkit_patch(run_args)
-        expected_run_args = ["echo", "--status-host=example.com", "--bot-id=gort"] + run_args
+        expected_run_args = ["echo", "--status-host=example.com", "--bot-id=gort"]
+        if port:
+            expected_run_args.append("--port=%s" % port)
+        expected_run_args.extend(run_args)
         tool.executive.run_and_throw_if_fail.assert_called_with(expected_run_args)
 
     def test_run_webkit_patch(self):
         self._assert_run_webkit_patch([1])
         self._assert_run_webkit_patch(["one", 2])
+        self._assert_run_webkit_patch([1], port="mockport")
 
     def test_iteration_count(self):
         queue = TestQueue()
-        queue.options = Mock()
-        queue.options.iterations = 3
+        queue._options = Mock()
+        queue._options.iterations = 3
         self.assertTrue(queue.should_continue_work_queue())
         self.assertTrue(queue.should_continue_work_queue())
         self.assertTrue(queue.should_continue_work_queue())
@@ -86,7 +92,7 @@ class AbstractQueueTest(CommandsTest):
 
     def test_no_iteration_count(self):
         queue = TestQueue()
-        queue.options = Mock()
+        queue._options = Mock()
         self.assertTrue(queue.should_continue_work_queue())
         self.assertTrue(queue.should_continue_work_queue())
         self.assertTrue(queue.should_continue_work_queue())
@@ -140,6 +146,8 @@ class AbstractPatchQueueTest(CommandsTest):
         queue = AbstractPatchQueue()
         tool = MockTool()
         queue.bind_to_tool(tool)
+        queue._options = Mock()
+        queue._options.port = None
         self.assertEquals(queue._fetch_next_work_item(), None)
         tool.status_server = MockStatusServer(work_items=[2, 1, 3])
         self.assertEquals(queue._fetch_next_work_item(), 2)
@@ -150,6 +158,8 @@ class AbstractReviewQueueTest(CommandsTest):
         queue = TestReviewQueue()
         tool = MockTool()
         queue.bind_to_tool(tool)
+        queue._options = Mock()
+        queue._options.port = None
         self.assertEquals(queue.collection_name(), "test-review-queue")
         self.assertEquals(queue.fetch_potential_patch_ids(), [103])
         queue.status_server()
@@ -173,7 +183,20 @@ class AlwaysCommitQueueTool(object):
 
 
 class SecondThoughtsCommitQueue(CommitQueue):
-    def _build_and_test_patch(self, patch, first_run=True):
+    def __init__(self):
+        self._reject_patch = False
+        CommitQueue.__init__(self)
+
+    def run_command(self, command):
+        # We want to reject the patch after the first validation,
+        # so wait to reject it until after some other command has run.
+        self._reject_patch = True
+        return CommitQueue.run_command(self, command)
+
+    def refetch_patch(self, patch):
+        if not self._reject_patch:
+            return self._tool.bugs.fetch_attachment(patch.id())
+
         attachment_dictionary = {
             "id": patch.id(),
             "bug_id": patch.bug_id(),
@@ -186,9 +209,7 @@ class SecondThoughtsCommitQueue(CommitQueue):
             "committer_email": "foo@bar.com",
             "attacher_email": "Contributer1",
         }
-        patch = Attachment(attachment_dictionary, None)
-        self._tool.bugs.set_override_patch(patch)
-        return True
+        return Attachment(attachment_dictionary, None)
 
 
 class CommitQueueTest(QueuesTest):
@@ -237,7 +258,7 @@ MOCK: update_status: commit-queue Fail
             "next_work_item": "",
             "process_work_item": """MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'apply-attachment', '--force-clean', '--non-interactive', '--quiet', 197]
 MOCK: update_status: commit-queue Applied patch
-MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'build', '--no-clean', '--no-update', '--build', '--build-style=both', '--quiet']
+MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'build', '--no-clean', '--no-update', '--build-style=both', '--quiet']
 MOCK: update_status: commit-queue Built patch
 MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'build-and-test', '--no-clean', '--no-update', '--test', '--quiet', '--non-interactive']
 MOCK: update_status: commit-queue Passed tests
@@ -260,7 +281,7 @@ MOCK: update_status: commit-queue Pass
             "next_work_item": "",
             "process_work_item": """MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'apply-attachment', '--force-clean', '--non-interactive', '--quiet', 197]
 MOCK: update_status: commit-queue Applied patch
-MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'build', '--no-clean', '--no-update', '--build', '--build-style=both', '--quiet']
+MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'build', '--no-clean', '--no-update', '--build-style=both', '--quiet']
 MOCK: update_status: commit-queue Built patch
 MOCK run_and_throw_if_fail: ['echo', '--status-host=example.com', 'build-and-test', '--no-clean', '--no-update', '--test', '--quiet', '--non-interactive']
 MOCK: update_status: commit-queue Passed tests
@@ -291,14 +312,37 @@ MOCK: update_status: commit-queue Pass
     def test_manual_reject_during_processing(self):
         queue = SecondThoughtsCommitQueue()
         queue.bind_to_tool(MockTool())
+        queue._options = Mock()
+        queue._options.port = None
         expected_stderr = """MOCK: update_status: commit-queue Applied patch
 MOCK: update_status: commit-queue Built patch
 MOCK: update_status: commit-queue Passed tests
-MOCK: update_status: commit-queue Landed patch
-MOCK: update_status: commit-queue Pass
+MOCK: update_status: commit-queue Retry
 """
         OutputCapture().assert_outputs(self, queue.process_work_item, [MockPatch()], expected_stderr=expected_stderr)
 
+    def test_report_flaky_tests(self):
+        queue = CommitQueue()
+        queue.bind_to_tool(MockTool())
+        expected_stderr = """MOCK bug comment: bug_id=142, cc=[]
+--- Begin comment ---
+The commit-queue encountered the following flaky tests while processing attachment 197:
+
+['foo/bar.html', 'bar/baz.html']
+
+Please file bugs against the tests.  The commit-queue is continuing to process your patch.
+--- End comment ---
+
+"""
+        OutputCapture().assert_outputs(self, queue.report_flaky_tests, [MockPatch(), ["foo/bar.html", "bar/baz.html"]], expected_stderr=expected_stderr)
+
+    def test_layout_test_results(self):
+        queue = CommitQueue()
+        queue.bind_to_tool(MockTool())
+        queue._read_file_contents = lambda path: None
+        self.assertEquals(queue.layout_test_results(), None)
+        queue._read_file_contents = lambda path: ""
+        self.assertEquals(queue.layout_test_results(), None)
 
 class RietveldUploadQueueTest(QueuesTest):
     def test_rietveld_upload_queue(self):

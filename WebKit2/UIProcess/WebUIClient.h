@@ -50,13 +50,24 @@ public:
     PassRefPtr<WebPageProxy> createNewPage(WebPageProxy*);
     void showPage(WebPageProxy*);
     void close(WebPageProxy*);
+
     void runJavaScriptAlert(WebPageProxy*, const String&, WebFrameProxy*);
     bool runJavaScriptConfirm(WebPageProxy*, const String&, WebFrameProxy*);
     String runJavaScriptPrompt(WebPageProxy*, const String&, const String&, WebFrameProxy*);
+
     void setStatusText(WebPageProxy*, const String&);
     void mouseDidMoveOverElement(WebPageProxy*, WebEvent::Modifiers, APIObject*);
+
     void contentsSizeChanged(WebPageProxy*, const WebCore::IntSize&, WebFrameProxy*);
     void didNotHandleKeyEvent(WebPageProxy*, const NativeWebKeyboardEvent&);
+
+    void setWindowFrame(WebPageProxy*, const WebCore::FloatRect&);
+    WebCore::FloatRect windowFrame(WebPageProxy*);
+
+    bool canRunBeforeUnloadConfirmPanel();
+    bool runBeforeUnloadConfirmPanel(WebPageProxy*, const String&, WebFrameProxy*);
+
+    void didDraw(WebPageProxy*);
 
 private:
     WKPageUIClient m_pageUIClient;

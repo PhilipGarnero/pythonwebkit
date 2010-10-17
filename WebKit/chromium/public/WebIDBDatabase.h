@@ -28,6 +28,7 @@
 
 #include "WebCommon.h"
 #include "WebDOMStringList.h"
+#include "WebExceptionCode.h"
 
 namespace WebKit {
 
@@ -61,21 +62,16 @@ public:
         WEBKIT_ASSERT_NOT_REACHED();
         return WebDOMStringList();
     }
-    // FIXME: Remove once we update Chromium side.
-    virtual void createObjectStore(const WebString& name, const WebString& keyPath, bool autoIncrement, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void createObjectStore(const WebString& name, const WebString& keyPath, bool autoIncrement, WebIDBCallbacks*, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    // Transfers ownership of the WebIDBObjectStore to the caller.
-    virtual WebIDBObjectStore* objectStore(const WebString& name, unsigned short mode)
-    {
+
+    virtual WebIDBObjectStore* createObjectStore(const WebString& name, const WebString& keyPath, bool autoIncrement, const WebIDBTransaction&, WebExceptionCode&)
+    { 
         WEBKIT_ASSERT_NOT_REACHED();
         return 0;
     }
-    // FIXME: Remove once we update Chromium side.
-    virtual void removeObjectStore(const WebString& name, WebIDBCallbacks* callbacks) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void removeObjectStore(const WebString& name, WebIDBCallbacks* callbacks, const WebIDBTransaction&) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void setVersion(const WebString& version, WebIDBCallbacks* callbacks) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void removeObjectStore(const WebString& name, const WebIDBTransaction&, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void setVersion(const WebString& version, WebIDBCallbacks* callbacks, WebExceptionCode&) { WEBKIT_ASSERT_NOT_REACHED(); }
     // Transfers ownership of the WebIDBTransaction to the caller.
-    virtual WebIDBTransaction* transaction(const WebDOMStringList& names, unsigned short mode, unsigned long timeout)
+    virtual WebIDBTransaction* transaction(const WebDOMStringList& names, unsigned short mode, unsigned long timeout, WebExceptionCode&)
     {
         WEBKIT_ASSERT_NOT_REACHED();
         return 0;

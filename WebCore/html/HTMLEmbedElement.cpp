@@ -25,7 +25,6 @@
 #include "HTMLEmbedElement.h"
 
 #include "Attribute.h"
-#include "CSSHelper.h"
 #include "CSSPropertyNames.h"
 #include "DocumentLoader.h"
 #include "Frame.h"
@@ -33,6 +32,7 @@
 #include "HTMLImageLoader.h"
 #include "HTMLNames.h"
 #include "HTMLObjectElement.h"
+#include "HTMLParserIdioms.h"
 #include "MainResourceLoader.h"
 #include "PluginDocument.h"
 #include "RenderEmbeddedObject.h"
@@ -97,9 +97,9 @@ void HTMLEmbedElement::parseMappedAttribute(Attribute* attr)
         if (!isImageType() && m_imageLoader)
             m_imageLoader.clear();
     } else if (attr->name() == codeAttr)
-        m_url = deprecatedParseURL(value.string());
+        m_url = stripLeadingAndTrailingHTMLSpaces(value.string());
     else if (attr->name() == srcAttr) {
-        m_url = deprecatedParseURL(value.string());
+        m_url = stripLeadingAndTrailingHTMLSpaces(value.string());
         if (renderer() && isImageType()) {
             if (!m_imageLoader)
                 m_imageLoader = adoptPtr(new HTMLImageLoader(this));
@@ -161,7 +161,12 @@ void HTMLEmbedElement::updateWidget(bool onlyCreateNonNetscapePlugins)
     Vector<String> paramValues;
     parametersForPlugin(paramNames, paramValues);
 
-    if (!dispatchBeforeLoadEvent(m_url)) {
+    ASSERT(!m_inBeforeLoadEventHandler);
+    m_inBeforeLoadEventHandler = true;
+    bool beforeLoadAllowedLoad = dispatchBeforeLoadEvent(m_url);
+    m_inBeforeLoadEventHandler = false;
+
+    if (!beforeLoadAllowedLoad) {
         if (document()->isPluginDocument()) {
             // Plugins inside plugin documents load differently than other plugins. By the time
             // we are here in a plugin document, the load of the plugin (which is the plugin document's
@@ -187,7 +192,7 @@ bool HTMLEmbedElement::rendererIsNeeded(RenderStyle* style)
 
     // If my parent is an <object> and is not set to use fallback content, I
     // should be ignored and not get a renderer.
-    Node* p = parentNode();
+    ContainerNode* p = parentNode();
     if (p && p->hasTagName(objectTag)) {
         ASSERT(p->renderer());
         if (!static_cast<HTMLObjectElement*>(p)->useFallbackContent()) {

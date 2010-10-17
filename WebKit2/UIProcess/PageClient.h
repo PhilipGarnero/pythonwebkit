@@ -26,15 +26,21 @@
 #ifndef PageClient_h
 #define PageClient_h
 
+#include "WebPageProxy.h"
+#include "WebPopupMenuProxy.h"
 #include <wtf/Forward.h>
 
 namespace WebCore {
     class Cursor;
+    struct ViewportArguments;
 }
 
 namespace WebKit {
 
+class FindIndicator;
+class NativeWebKeyboardEvent;
 class WebEditCommandProxy;
+class WebPopupMenuProxy;
 
 class PageClient {
 public:
@@ -47,11 +53,20 @@ public:
     virtual void toolTipChanged(const String&, const String&) = 0;
 
     virtual void setCursor(const WebCore::Cursor&) = 0;
+    virtual void setViewportArguments(const WebCore::ViewportArguments&) = 0;
 
-    enum UndoOrRedo { Undo, Redo };
-    virtual void registerEditCommand(PassRefPtr<WebEditCommandProxy>, UndoOrRedo) = 0;
+    virtual void registerEditCommand(PassRefPtr<WebEditCommandProxy>, WebPageProxy::UndoOrRedo) = 0;
     virtual void clearAllEditCommands() = 0;
     virtual void setEditCommandState(const String& commandName, bool isEnabled, int state) = 0;
+
+    virtual WebCore::FloatRect convertToDeviceSpace(const WebCore::FloatRect&) = 0;
+    virtual WebCore::FloatRect convertToUserSpace(const WebCore::FloatRect&) = 0;
+
+    virtual void didNotHandleKeyEvent(const NativeWebKeyboardEvent&) = 0;
+
+    virtual PassRefPtr<WebPopupMenuProxy> createPopupMenuProxy() = 0;
+
+    virtual void setFindIndicator(PassRefPtr<FindIndicator>, bool fadeOut) = 0;
 
 #if USE(ACCELERATED_COMPOSITING)
     virtual void pageDidEnterAcceleratedCompositing() = 0;

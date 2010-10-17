@@ -27,16 +27,14 @@
 #define BackingStore_h
 
 #include "SharedMemory.h"
-#include <WebCore/IntSize.h>
+#include <WebCore/IntRect.h>
 #include <wtf/PassOwnPtr.h>
 #include <wtf/PassRefPtr.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
-#include <wtf/RetainPtr.h>
 
 namespace WebCore {
     class GraphicsContext;
-    class IntRect;
 }
 
 namespace WebKit {
@@ -58,6 +56,8 @@ public:
     ~BackingStore();
 
     const WebCore::IntSize& size() const { return m_size; }
+    WebCore::IntRect bounds() const { return WebCore::IntRect(WebCore::IntPoint(), size()); }
+
     bool resize(const WebCore::IntSize& size);
 
     // Create a graphics context that can be used to paint into the backing store.

@@ -28,6 +28,7 @@
 
 #include "NetscapePluginModule.h"
 #include "Plugin.h"
+#include "RunLoop.h"
 #include <WebCore/GraphicsLayer.h>
 #include <WebCore/IntRect.h>
 #include <wtf/HashMap.h>
@@ -55,6 +56,11 @@ public:
 #if PLATFORM(MAC)
     NPError setDrawingModel(NPDrawingModel);
     NPError setEventModel(NPEventModel);
+#ifndef NP_NO_CARBON
+    WindowRef windowRef() const;
+#endif
+#elif PLATFORM(WIN)
+    HWND containingWindow() const;
 #endif
 
     void invalidate(const NPRect*);
@@ -66,6 +72,7 @@ public:
     void setStatusbarText(const String&);
     static void setException(const String&);
     bool evaluate(NPObject*, const String&scriptString, NPVariant* result);
+    bool isPrivateBrowsingEnabled();
 
     // These return retained objects.
     NPObject* windowScriptNPObject();
@@ -75,6 +82,10 @@ public:
     void removePluginStream(NetscapePluginStream*);
 
     bool isAcceleratedCompositingEnabled();
+
+    String proxiesForURL(const String& urlString);
+    String cookiesForURL(const String& urlString);
+    void setCookiesForURL(const String& urlString, const String& cookieString);
 
     // Member functions for calling into the plug-in.
     NPError NPP_New(NPMIMEType pluginType, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData*);
@@ -88,6 +99,7 @@ public:
     int16_t NPP_HandleEvent(void* event);
     void NPP_URLNotify(const char* url, NPReason, void* notifyData);
     NPError NPP_GetValue(NPPVariable, void *value);
+    NPError NPP_SetValue(NPNVariable, void *value);
 
 private:
     NetscapePlugin(PassRefPtr<NetscapePluginModule> pluginModule);
@@ -107,6 +119,7 @@ private:
     bool platformHandleWheelEvent(const WebWheelEvent&);
     bool platformHandleMouseEnterEvent(const WebMouseEvent&);
     bool platformHandleMouseLeaveEvent(const WebMouseEvent&);
+    bool platformHandleKeyboardEvent(const WebKeyboardEvent&);
     void platformSetFocus(bool);
 
     // Plugin
@@ -135,7 +148,9 @@ private:
     virtual bool handleWheelEvent(const WebWheelEvent&);
     virtual bool handleMouseEnterEvent(const WebMouseEvent&);
     virtual bool handleMouseLeaveEvent(const WebMouseEvent&);
+    virtual bool handleKeyboardEvent(const WebKeyboardEvent&);
     virtual void setFocus(bool);
+    virtual NPObject* pluginScriptableNPObject();
 
 #if PLATFORM(MAC)
     virtual void windowFocusChanged(bool);
@@ -143,7 +158,7 @@ private:
     virtual void windowVisibilityChanged(bool);
 #endif
 
-    virtual NPObject* pluginScriptableNPObject();
+    virtual void privateBrowsingStateChanged(bool);
 
     virtual PluginController* controller();
 
@@ -175,6 +190,14 @@ private:
     NPDrawingModel m_drawingModel;
     NPEventModel m_eventModel;
     RetainPtr<PlatformLayer> m_pluginLayer;
+#ifndef NP_NO_CARBON
+    void nullEventTimerFired();
+
+    // FIXME: It's a bit wasteful to have one null event timer per plug-in.
+    // We should investigate having one per window.
+    RunLoop::Timer<NetscapePlugin> m_nullEventTimer;
+    NP_CGContext m_npCGContext;
+#endif
 #elif PLATFORM(WIN)
     HWND m_window;
 #endif

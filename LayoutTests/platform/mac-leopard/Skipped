@@ -1,9 +1,6 @@
 # <rdar://problem/5313536> frame-loading-via-document-write.html sometimes fails on Leopard
 http/tests/security/frame-loading-via-document-write.html
 
-# <rdar://problem/5686552> svg/css/glyph-orientation-rounding-test.xhtml sometimes fails
-svg/css/glyph-orientation-rounding-test.xhtml
-
 # Tests of table accessibility functionality not supported on Leopard
 platform/mac/accessibility/table-multi-bodies.html
 # Lists are not supported on Leopard.
@@ -79,10 +76,6 @@ storage/indexeddb
 # https://bugs.webkit.org/show_bug.cgi?id=41545
 fast/canvas/webgl/texture-npot.html
 
-# Disable an SVG test that causes an assertion failure in debug-mode WebKit under 10.5.
-# https://bugs.webkit.org/show_bug.cgi?id=41808
-svg/filters/filter-empty-g.svg
-
 # Results depend on user defaults.
 # https://bugs.webkit.org/show_bug.cgi?id=43296
 fast/text/hyphenate-locale.html
@@ -100,3 +93,9 @@ media/video-autoplay.html
 media/video-aspect-ratio.html
 media/video-play-pause-events.html
 media/video-width-height.html
+
+# Disable spelling tests for autocorrection panel
+platform/mac/editing/spelling/autocorrection-delete.html
+platform/mac/editing/spelling/autocorrection-removing-underline-after-paste.html
+platform/mac/editing/spelling/autocorrection-removing-underline.html
+platform/mac/editing/spelling/autocorrection-simple.html

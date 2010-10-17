@@ -30,6 +30,7 @@
 #include "WebEvent.h"
 #include "WebPage.h"
 #include <WebCore/Chrome.h>
+#include <WebCore/CookieJar.h>
 #include <WebCore/DocumentLoader.h>
 #include <WebCore/Event.h>
 #include <WebCore/FocusController.h>
@@ -40,6 +41,8 @@
 #include <WebCore/HTMLPlugInElement.h>
 #include <WebCore/HostWindow.h>
 #include <WebCore/NetscapePlugInStreamLoader.h>
+#include <WebCore/NetworkingContext.h>
+#include <WebCore/ProxyServer.h>
 #include <WebCore/RenderEmbeddedObject.h>
 #include <WebCore/RenderLayer.h>
 #include <WebCore/ScrollView.h>
@@ -415,6 +418,15 @@ JSObject* PluginView::scriptObject(JSGlobalObject* globalObject)
     return jsObject;
 }
 
+void PluginView::privateBrowsingStateChanged(bool privateBrowsingEnabled)
+{
+    // The plug-in can be null here if it failed to initialize.
+    if (!m_plugin)
+        return;
+
+    m_plugin->privateBrowsingStateChanged(privateBrowsingEnabled);
+}
+
 void PluginView::setFrameRect(const WebCore::IntRect& rect)
 {
     Widget::setFrameRect(rect);
@@ -467,7 +479,7 @@ void PluginView::handleEvent(Event* event)
 
     bool didHandleEvent = false;
 
-    if ((event->type() == eventNames().mousemoveEvent && currentEvent->type() == WebEvent::MouseMove) 
+    if ((event->type() == eventNames().mousemoveEvent && currentEvent->type() == WebEvent::MouseMove)
         || (event->type() == eventNames().mousedownEvent && currentEvent->type() == WebEvent::MouseDown)
         || (event->type() == eventNames().mouseupEvent && currentEvent->type() == WebEvent::MouseUp)) {
         // We have a mouse event.
@@ -484,6 +496,10 @@ void PluginView::handleEvent(Event* event)
     } else if (event->type() == eventNames().mouseoutEvent && currentEvent->type() == WebEvent::MouseMove) {
         // We have a mouse leave event.
         didHandleEvent = m_plugin->handleMouseLeaveEvent(static_cast<const WebMouseEvent&>(*currentEvent));
+    } else if ((event->type() == eventNames().keydownEvent && currentEvent->type() == WebEvent::KeyDown)
+               || (event->type() == eventNames().keyupEvent && currentEvent->type() == WebEvent::KeyUp)) {
+        // We have a keyboard event.
+        didHandleEvent = m_plugin->handleKeyboardEvent(static_cast<const WebKeyboardEvent&>(*currentEvent));
     }
 
     if (didHandleEvent)
@@ -823,6 +839,37 @@ HWND PluginView::nativeParentWindow()
     return m_webPage->nativeWindow();
 }
 #endif
+
+String PluginView::proxiesForURL(const String& urlString)
+{
+    const FrameLoader* frameLoader = frame() ? frame()->loader() : 0;
+    const NetworkingContext* context = frameLoader ? frameLoader->networkingContext() : 0;
+    Vector<ProxyServer> proxyServers = proxyServersForURL(KURL(KURL(), urlString), context);
+    return toString(proxyServers);
+}
+
+String PluginView::cookiesForURL(const String& urlString)
+{
+    return cookies(m_pluginElement->document(), KURL(KURL(), urlString));
+}
+
+void PluginView::setCookiesForURL(const String& urlString, const String& cookieString)
+{
+    setCookies(m_pluginElement->document(), KURL(KURL(), urlString), cookieString);
+}
+
+bool PluginView::isPrivateBrowsingEnabled()
+{
+    // If we can't get the real setting, we'll assume that private browsing is enabled.
+    if (!frame())
+        return true;
+
+    Settings* settings = frame()->settings();
+    if (!settings)
+        return true;
+
+    return settings->privateBrowsingEnabled();
+}
 
 void PluginView::didFinishLoad(WebFrame* webFrame)
 {

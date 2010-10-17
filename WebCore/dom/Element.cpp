@@ -44,6 +44,7 @@
 #include "FrameView.h"
 #include "HTMLElement.h"
 #include "HTMLNames.h"
+#include "HTMLParserIdioms.h"
 #include "InspectorInstrumentation.h"
 #include "NodeList.h"
 #include "NodeRenderStyle.h"
@@ -93,6 +94,11 @@ NodeRareData* Element::createRareData()
     return new ElementRareData;
 }
 
+DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, blur);
+DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, error);
+DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, focus);
+DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, load);
+
 PassRefPtr<DocumentFragment> Element::deprecatedCreateContextualFragment(const String& markup, FragmentScriptingPermission scriptingPermission)
 {
     RefPtr<DocumentFragment> fragment = document()->createDocumentFragment();
@@ -116,18 +122,19 @@ PassRefPtr<DocumentFragment> Element::deprecatedCreateContextualFragment(const S
     for (RefPtr<Node> node = fragment->firstChild(); node; node = nextNode) {
         nextNode = node->nextSibling();
         if (node->hasTagName(htmlTag) || node->hasTagName(bodyTag)) {
-            Node* firstChild = node->firstChild();
+            HTMLElement* element = static_cast<HTMLElement*>(node.get());
+            Node* firstChild = element->firstChild();
             if (firstChild)
                 nextNode = firstChild;
             RefPtr<Node> nextChild;
             for (RefPtr<Node> child = firstChild; child; child = nextChild) {
                 nextChild = child->nextSibling();
-                node->removeChild(child.get(), ignoredExceptionCode);
+                element->removeChild(child.get(), ignoredExceptionCode);
                 ASSERT(!ignoredExceptionCode);
-                fragment->insertBefore(child, node.get(), ignoredExceptionCode);
+                fragment->insertBefore(child, element, ignoredExceptionCode);
                 ASSERT(!ignoredExceptionCode);
             }
-            fragment->removeChild(node.get(), ignoredExceptionCode);
+            fragment->removeChild(element, ignoredExceptionCode);
             ASSERT(!ignoredExceptionCode);
         } else if (node->hasTagName(headTag)) {
             fragment->removeChild(node.get(), ignoredExceptionCode);
@@ -680,7 +687,7 @@ static bool isEventHandlerAttribute(const QualifiedName& name)
 
 static bool isAttributeToRemove(const QualifiedName& name, const AtomicString& value)
 {    
-    return (name.localName().endsWith(hrefAttr.localName()) || name == srcAttr || name == actionAttr) && protocolIsJavaScript(deprecatedParseURL(value));       
+    return (name.localName().endsWith(hrefAttr.localName()) || name == srcAttr || name == actionAttr) && protocolIsJavaScript(stripLeadingAndTrailingHTMLSpaces(value));       
 }
 
 void Element::setAttributeMap(PassRefPtr<NamedNodeMap> list, FragmentScriptingPermission scriptingPermission)
@@ -769,7 +776,7 @@ KURL Element::baseURI() const
     if (!base.protocol().isEmpty())
         return base;
 
-    Node* parent = parentNode();
+    ContainerNode* parent = parentNode();
     if (!parent)
         return base;
 
@@ -1612,7 +1619,7 @@ KURL Element::getURLAttribute(const QualifiedName& name) const
             ASSERT(isURLAttribute(attribute));
     }
 #endif
-    return document()->completeURL(deprecatedParseURL(getAttribute(name)));
+    return document()->completeURL(stripLeadingAndTrailingHTMLSpaces(getAttribute(name)));
 }
 
 KURL Element::getNonEmptyURLAttribute(const QualifiedName& name) const
@@ -1623,7 +1630,7 @@ KURL Element::getNonEmptyURLAttribute(const QualifiedName& name) const
             ASSERT(isURLAttribute(attribute));
     }
 #endif
-    String value = deprecatedParseURL(getAttribute(name));
+    String value = stripLeadingAndTrailingHTMLSpaces(getAttribute(name));
     if (value.isEmpty())
         return KURL();
     return document()->completeURL(value);

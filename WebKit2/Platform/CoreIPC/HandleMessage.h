@@ -3,158 +3,181 @@
 
 namespace CoreIPC {
 
-template<typename T> struct RemoveReference { typedef T Type; };
-template<typename T> struct RemoveReference<T&> { typedef T Type; };
+// Dispatch functions with no reply arguments.
 
-template<typename T, typename C>
-void handleMessage(ArgumentDecoder* arguments, C* object, void (C::*function)())
+template<typename C, typename MF>
+void callMemberFunction(const Arguments0&, C* object, MF function)
 {
     (object->*function)();
 }
 
-template<typename T, typename C, typename P>
-void handleMessage(ArgumentDecoder* arguments, C* object, void (C::*function)(P))
+template<typename C, typename MF, typename P1>
+void callMemberFunction(const Arguments1<P1>& args, C* object, MF function)
 {
-    typename RemoveReference<typename T::FirstArgumentType>::Type argument;
-    if (!arguments->decode(argument))
-        return;
-    (object->*function)(argument);
+    (object->*function)(args.argument1);
 }
 
-template<typename T, typename C, typename P1, typename P2>
-void handleMessage(ArgumentDecoder* arguments, C* object, void (C::*function)(P1, P2))
+template<typename C, typename MF, typename P1, typename P2>
+void callMemberFunction(const Arguments2<P1, P2>& args, C* object, MF function)
 {
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-    typename RemoveReference<typename T::SecondArgumentType>::Type secondArgument;
-    if (!arguments->decode(secondArgument))
-        return;
-    (object->*function)(firstArgument, secondArgument);
+    (object->*function)(args.argument1, args.argument2);
 }
 
-template<typename T, typename C, typename P1, typename P2, typename P3>
-void handleMessage(ArgumentDecoder* arguments, C* object, void (C::*function)(P1, P2, P3))
+template<typename C, typename MF, typename P1, typename P2, typename P3>
+void callMemberFunction(const Arguments3<P1, P2, P3>& args, C* object, MF function)
 {
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-    typename RemoveReference<typename T::SecondArgumentType>::Type secondArgument;
-    if (!arguments->decode(secondArgument))
-        return;
-    typename RemoveReference<typename T::ThirdArgumentType>::Type thirdArgument;
-    if (!arguments->decode(thirdArgument))
-        return;
-    (object->*function)(firstArgument, secondArgument, thirdArgument);
+    (object->*function)(args.argument1, args.argument2, args.argument3);
 }
 
-template<typename T, typename C, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
-void handleMessage(ArgumentDecoder* arguments, C* object, void (C::*function)(P1, P2, P3, P4, P5, P6))
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4>
+void callMemberFunction(const Arguments4<P1, P2, P3, P4>& args, C* object, MF function)
 {
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-    typename RemoveReference<typename T::SecondArgumentType>::Type secondArgument;
-    if (!arguments->decode(secondArgument))
-        return;
-    typename RemoveReference<typename T::ThirdArgumentType>::Type thirdArgument;
-    if (!arguments->decode(thirdArgument))
-        return;
-    typename RemoveReference<typename T::FourthArgumentType>::Type fourthArgument;
-    if (!arguments->decode(fourthArgument))
-        return;
-    typename RemoveReference<typename T::FifthArgumentType>::Type fifthArgument;
-    if (!arguments->decode(fifthArgument))
-        return;
-    typename RemoveReference<typename T::SixthArgumentType>::Type sixthArgument;
-    if (!arguments->decode(sixthArgument))
-        return;
-    (object->*function)(firstArgument, secondArgument, thirdArgument, fourthArgument, fifthArgument, sixthArgument);
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4);
 }
 
-template<typename T, typename C, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
-void handleMessage(ArgumentDecoder* arguments, C* object, void (C::*function)(P1, P2, P3, P4, P5, P6, P7))
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4, typename P5>
+void callMemberFunction(const Arguments5<P1, P2, P3, P4, P5>& args, C* object, MF function)
 {
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-    typename RemoveReference<typename T::SecondArgumentType>::Type secondArgument;
-    if (!arguments->decode(secondArgument))
-        return;
-    typename RemoveReference<typename T::ThirdArgumentType>::Type thirdArgument;
-    if (!arguments->decode(thirdArgument))
-        return;
-    typename RemoveReference<typename T::FourthArgumentType>::Type fourthArgument;
-    if (!arguments->decode(fourthArgument))
-        return;
-    typename RemoveReference<typename T::FifthArgumentType>::Type fifthArgument;
-    if (!arguments->decode(fifthArgument))
-        return;
-    typename RemoveReference<typename T::SixthArgumentType>::Type sixthArgument;
-    if (!arguments->decode(sixthArgument))
-        return;
-    typename RemoveReference<typename T::SeventhArgumentType>::Type seventhArgument;
-    if (!arguments->decode(seventhArgument))
-        return;
-    (object->*function)(firstArgument, secondArgument, thirdArgument, fourthArgument, fifthArgument, sixthArgument, seventhArgument);
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, args.argument5);
 }
-
-template<typename T, typename C, typename P1>
-void handleMessage(ArgumentDecoder* arguments, ArgumentEncoder* reply, C* object, void (C::*function)(P1))
-{
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-
-    (object->*function)(firstArgument);
-}
-
-template<typename T, typename C, typename P1, typename R1>
-void handleMessage(ArgumentDecoder* arguments, ArgumentEncoder* reply, C* object, void (C::*function)(P1, R1&))
-{
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-
-    typename RemoveReference<typename T::Reply::FirstArgumentType>::Type firstReplyArgument;
-    (object->*function)(firstArgument, firstReplyArgument);
-    reply->encode(firstReplyArgument);
-}
-
-template<typename T, typename C, typename P1, typename P2, typename P3, typename R1>
-void handleMessage(ArgumentDecoder* arguments, ArgumentEncoder* reply, C* object, void (C::*function)(P1, P2, P3, R1&))
-{
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
-        return;
-
-    typename RemoveReference<typename T::SecondArgumentType>::Type secondArgument;
-    if (!arguments->decode(secondArgument))
-        return;
     
-    typename RemoveReference<typename T::ThirdArgumentType>::Type thirdArgument;
-    if (!arguments->decode(thirdArgument))
-        return;
-    
-    typename RemoveReference<typename T::Reply::FirstArgumentType>::Type firstReplyArgument;
-    (object->*function)(firstArgument, secondArgument, thirdArgument, firstReplyArgument);
-    reply->encode(firstReplyArgument);
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
+void callMemberFunction(const Arguments6<P1, P2, P3, P4, P5, P6>& args, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, args.argument5, args.argument6);
 }
 
-template<typename T, typename C, typename P1, typename P2, typename R1>
-void handleMessage(ArgumentDecoder* arguments, ArgumentEncoder* reply, C* object, void (C::*function)(P1, P2, R1&))
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+void callMemberFunction(const Arguments7<P1, P2, P3, P4, P5, P6, P7>& args, C* object, MF function)
 {
-    typename RemoveReference<typename T::FirstArgumentType>::Type firstArgument;
-    if (!arguments->decode(firstArgument))
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, args.argument5, args.argument6, args.argument7);
+}
+
+// Dispatch functions with reply arguments.
+
+template<typename C, typename MF, typename R1>
+void callMemberFunction(const Arguments0&, Arguments1<R1>& replyArgs, C* object, MF function)
+{
+    (object->*function)(replyArgs.argument1);
+}
+
+template<typename C, typename MF, typename R1, typename R2>
+void callMemberFunction(const Arguments0&, Arguments2<R1, R2>& replyArgs, C* object, MF function)
+{
+    (object->*function)(replyArgs.argument1, replyArgs.argument2);
+}
+
+template<typename C, typename MF, typename P1>
+void callMemberFunction(const Arguments1<P1>& args, Arguments0&, C* object, MF function)
+{
+    (object->*function)(args.argument1);
+}
+
+template<typename C, typename MF, typename P1, typename R1>
+void callMemberFunction(const Arguments1<P1>& args, Arguments1<R1>& replyArgs, C* object, MF function)
+{
+    (object->*function)(args.argument1, replyArgs.argument1);
+}
+
+template<typename C, typename MF, typename P1, typename P2>
+void callMemberFunction(const Arguments2<P1, P2>& args, Arguments0&, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2);
+}
+
+template<typename C, typename MF, typename P1, typename P2, typename R1>
+void callMemberFunction(const Arguments2<P1, P2>& args, Arguments1<R1>& replyArgs, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, replyArgs.argument1);
+}
+
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename R1>
+void callMemberFunction(const Arguments3<P1, P2, P3>& args, Arguments1<R1>& replyArgs, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, replyArgs.argument1);
+}
+
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4, typename R1>
+void callMemberFunction(const Arguments4<P1, P2, P3, P4>& args, Arguments1<R1>& replyArgs, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, replyArgs.argument1);
+}
+
+// Variadic dispatch functions.
+
+template<typename C, typename MF>
+void callMemberFunction(const Arguments0&, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(argumentDecoder);
+}
+
+template<typename C, typename MF, typename P1>
+void callMemberFunction(const Arguments1<P1>& args, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(args.argument1, argumentDecoder);
+}
+
+template<typename C, typename MF, typename P1, typename P2>
+void callMemberFunction(const Arguments2<P1, P2>& args, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, argumentDecoder);
+}
+
+template<typename C, typename MF, typename P1, typename P2, typename P3>
+void callMemberFunction(const Arguments3<P1, P2, P3>& args, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, argumentDecoder);
+}
+
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4>
+void callMemberFunction(const Arguments4<P1, P2, P3, P4>& args, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, argumentDecoder);
+}
+
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4, typename P5>
+void callMemberFunction(const Arguments5<P1, P2, P3, P4, P5>& args, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, args.argument5, argumentDecoder);
+}
+    
+template<typename C, typename MF, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
+void callMemberFunction(const Arguments6<P1, P2, P3, P4, P5, P6>& args, ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    (object->*function)(args.argument1, args.argument2, args.argument3, args.argument4, args.argument5, args.argument6, argumentDecoder);
+}
+
+
+// Main dispatch functions
+
+template<typename T, typename C, typename MF>
+void handleMessage(ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    typename T::DecodeType::ValueType arguments;
+    if (!argumentDecoder->decode(arguments))
+        return;
+    callMemberFunction(arguments, object, function);
+}
+
+template<typename T, typename C, typename MF>
+void handleMessage(ArgumentDecoder* argumentDecoder, ArgumentEncoder* replyEncoder, C* object, MF function)
+{
+    typename T::DecodeType::ValueType arguments;
+    if (!argumentDecoder->decode(arguments))
         return;
 
-    typename RemoveReference<typename T::SecondArgumentType>::Type secondArgument;
-    if (!arguments->decode(secondArgument))
+    typename T::Reply::ValueType replyArguments;
+    callMemberFunction(arguments, replyArguments, object, function);
+    replyEncoder->encode(replyArguments);
+}
+
+template<typename T, typename C, typename MF>
+void handleMessageVariadic(ArgumentDecoder* argumentDecoder, C* object, MF function)
+{
+    typename T::DecodeType::ValueType arguments;
+    if (!argumentDecoder->decode(arguments))
         return;
-    
-    typename RemoveReference<typename T::Reply::FirstArgumentType>::Type firstReplyArgument;
-    (object->*function)(firstArgument, secondArgument, firstReplyArgument);
-    reply->encode(firstReplyArgument);
+    callMemberFunction(arguments, argumentDecoder, object, function);
 }
 
 } // namespace CoreIPC

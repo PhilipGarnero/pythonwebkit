@@ -29,7 +29,6 @@
 #include "AnimationList.h"
 #include "BorderData.h"
 #include "BorderValue.h"
-#include "CSSHelper.h"
 #include "CSSImageGeneratorValue.h"
 #include "CSSPrimitiveValue.h"
 #include "CSSPropertyNames.h"
@@ -179,7 +178,7 @@ protected:
                    (_force_backgrounds_to_white == other._force_backgrounds_to_white) &&
                    (_pointerEvents == other._pointerEvents) &&
                    (_insideLink == other._insideLink) &&
-                   (_blockFlow == other._blockFlow);
+                   (m_writingMode == other.m_writingMode);
         }
 
         bool operator!=(const InheritedFlags& other) const { return !(*this == other); }
@@ -207,7 +206,7 @@ protected:
         // 43 bits
 
         // CSS Text Layout Module Level 3: Vertical writing support
-        unsigned _blockFlow : 2; // EBlockFlowDirection
+        unsigned m_writingMode : 2; // WritingMode
         // 45 bits
     } inherited_flags;
 
@@ -284,7 +283,7 @@ protected:
         inherited_flags._force_backgrounds_to_white = false;
         inherited_flags._pointerEvents = initialPointerEvents();
         inherited_flags._insideLink = NotInsideLink;
-        inherited_flags._blockFlow = initialBlockFlow();
+        inherited_flags.m_writingMode = initialWritingMode();
 
         noninherited_flags._effectiveDisplay = noninherited_flags._originalDisplay = initialDisplay();
         noninherited_flags._overflowX = initialOverflowX();
@@ -307,10 +306,10 @@ protected:
     }
 
 private:
-    RenderStyle();
+    ALWAYS_INLINE RenderStyle();
     // used to create the default style.
-    RenderStyle(bool);
-    RenderStyle(const RenderStyle&);
+    ALWAYS_INLINE RenderStyle(bool);
+    ALWAYS_INLINE RenderStyle(const RenderStyle&);
 
 public:
     static PassRefPtr<RenderStyle> create();
@@ -638,6 +637,11 @@ public:
     }
 
     const ShadowData* textShadow() const { return rareInheritedData->textShadow; }
+    void getTextShadowExtent(int& top, int& right, int& bottom, int& left) const { getShadowExtent(textShadow(), top, right, bottom, left); }
+    void getTextShadowHorizontalExtent(int& left, int& right) const { getShadowHorizontalExtent(textShadow(), left, right); }
+    void getTextShadowVerticalExtent(int& top, int& bottom) const { getShadowVerticalExtent(textShadow(), top, bottom); }
+    void getTextShadowInlineDirectionExtent(int& logicalLeft, int& logicalRight) { getShadowInlineDirectionExtent(textShadow(), logicalLeft, logicalRight); }
+
     float textStrokeWidth() const { return rareInheritedData->textStrokeWidth; }
     ColorSpace colorSpace() const { return static_cast<ColorSpace>(rareInheritedData->colorSpace); }
     float opacity() const { return rareNonInheritedData->opacity; }
@@ -652,9 +656,10 @@ public:
     EBoxAlignment boxPack() const { return static_cast<EBoxAlignment>(rareNonInheritedData->flexibleBox->pack); }
 
     const ShadowData* boxShadow() const { return rareNonInheritedData->m_boxShadow.get(); }
-    void getBoxShadowExtent(int &top, int &right, int &bottom, int &left) const;
-    void getBoxShadowHorizontalExtent(int &left, int &right) const;
-    void getBoxShadowVerticalExtent(int &top, int &bottom) const;
+    void getBoxShadowExtent(int& top, int& right, int& bottom, int& left) const { getShadowExtent(boxShadow(), top, right, bottom, left); }
+    void getBoxShadowHorizontalExtent(int& left, int& right) const { getShadowHorizontalExtent(boxShadow(), left, right); }
+    void getBoxShadowVerticalExtent(int& top, int& bottom) const { getShadowVerticalExtent(boxShadow(), top, bottom); }
+    void getBoxShadowInlineDirectionExtent(int& logicalLeft, int& logicalRight) { getShadowInlineDirectionExtent(boxShadow(), logicalLeft, logicalRight); }
 
     StyleReflection* boxReflect() const { return rareNonInheritedData->m_boxReflect.get(); }
     EBoxSizing boxSizing() const { return m_box->boxSizing(); }
@@ -744,8 +749,8 @@ public:
     bool textSizeAdjust() const { return rareInheritedData->textSizeAdjust; }
     ETextSecurity textSecurity() const { return static_cast<ETextSecurity>(rareInheritedData->textSecurity); }
 
-    EBlockFlowDirection blockFlow() const { return static_cast<EBlockFlowDirection>(inherited_flags._blockFlow); }
-    bool isVerticalBlockFlow() const { return blockFlow() == TopToBottomBlockFlow || blockFlow() == BottomToTopBlockFlow; }
+    WritingMode writingMode() const { return static_cast<WritingMode>(inherited_flags.m_writingMode); }
+    bool isHorizontalWritingMode() const { return writingMode() == TopToBottomWritingMode || writingMode() == BottomToTopWritingMode; }
 
     ESpeak speak() { return static_cast<ESpeak>(rareInheritedData->speak); }
         
@@ -1125,7 +1130,7 @@ public:
                originalDisplay() == INLINE_BOX || originalDisplay() == INLINE_TABLE;
     }
 
-    void setBlockFlow(EBlockFlowDirection v) { inherited_flags._blockFlow = v; }
+    void setWritingMode(WritingMode v) { inherited_flags.m_writingMode = v; }
 
     // To tell if this style matched attribute selectors. This makes it impossible to share.
     bool affectedByAttributeSelectors() const { return m_affectedByAttributeSelectors; }
@@ -1166,7 +1171,7 @@ public:
     static ECaptionSide initialCaptionSide() { return CAPTOP; }
     static EClear initialClear() { return CNONE; }
     static TextDirection initialDirection() { return LTR; }
-    static EBlockFlowDirection initialBlockFlow() { return TopToBottomBlockFlow; }
+    static WritingMode initialWritingMode() { return TopToBottomWritingMode; }
     static EDisplay initialDisplay() { return INLINE; }
     static EEmptyCell initialEmptyCells() { return SHOW; }
     static EFloat initialFloating() { return FNONE; }
@@ -1264,6 +1269,14 @@ public:
 #endif
 
 private:
+    void getShadowExtent(const ShadowData*, int& top, int& right, int& bottom, int& left) const;
+    void getShadowHorizontalExtent(const ShadowData*, int& left, int& right) const;
+    void getShadowVerticalExtent(const ShadowData*, int& top, int& bottom) const;
+    void getShadowInlineDirectionExtent(const ShadowData* shadow, int& logicalLeft, int& logicalRight) const
+    {
+        return isHorizontalWritingMode() ? getShadowHorizontalExtent(shadow, logicalLeft, logicalRight) : getShadowVerticalExtent(shadow, logicalLeft, logicalRight);
+    }
+
     // Color accessors are all private to make sure callers use visitedDependentColor instead to access them.
     const Color& borderLeftColor() const { return surround->border.left().color(); }
     const Color& borderRightColor() const { return surround->border.right().color(); }

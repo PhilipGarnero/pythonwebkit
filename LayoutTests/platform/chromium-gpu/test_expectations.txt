@@ -40,10 +40,14 @@ WONTFIX SKIP : transitions = PASS FAIL
 WONTFIX SKIP : traversal = PASS FAIL
 WONTFIX SKIP : userscripts = PASS FAIL
 WONTFIX SKIP : webarchive = PASS FAIL
-WONTFIX SKIP : websocket = PASS FAIL
+WONTFIX SKIP : http/tests/websocket = PASS FAIL
 WONTFIX SKIP : wml = PASS FAIL
 
 // (These are the tests we actually run and expect to pass)
+// We need to explicitly list fast/canvas and canvas/philip because the
+// parent directories are otherwise SKIPPed. We list compositing for completeness.
+//
+// FIXME: remove the FAILs from the following three lines.
 BUGNONE : compositing = PASS FAIL
 BUGNONE : fast/canvas = PASS FAIL
 BUGNONE : canvas/philip = PASS FAIL
@@ -51,3 +55,28 @@ BUGNONE : canvas/philip = PASS FAIL
 //
 // Actual failure suppressions should go below this line
 //
+
+// All (?) video-related compositor tests are failing in
+// DumpRenderTree right now.
+BUGWK47231 SKIP : compositing/geometry/clipped-video-controller.html = TIMEOUT
+BUGWK47231 SKIP : compositing/geometry/video-fixed-scrolling.html = TIMEOUT
+BUGWK47231 SKIP : compositing/geometry/video-opacity-overlay.html = TIMEOUT
+BUGWK47231 SKIP : compositing/layers-inside-overflow-scroll.html = TIMEOUT
+BUGWK47231 SKIP : compositing/overflow/overflow-compositing-descendant.html = TIMEOUT
+BUGWK47231 SKIP : compositing/overflow/scroll-ancestor-update.html = TIMEOUT
+BUGWK47231 SKIP : compositing/reflections/load-video-in-reflection.html = TIMEOUT
+BUGWK47231 SKIP : compositing/self-painting-layers.html = TIMEOUT
+BUGWK47231 SKIP : compositing/self-painting-layers2.html = TIMEOUT
+BUGWK47231 SKIP : compositing/video/video-background-color.html = TIMEOUT
+BUGWK47231 SKIP : compositing/video/video-poster.html = TIMEOUT
+
+BUGWK47241 SKIP : fast/canvas/access-zero-sized-canvas.html = CRASH
+BUGWK47241 SKIP : fast/canvas/canvas-skia-excessive-size.html = CRASH
+BUGWK47241 SKIP : fast/canvas/toDataURL-noData.html = CRASH
+
+BUGWK47242 SKIP : fast/canvas/canvas-putImageData.html = CRASH
+
+// Need to investigate WebGL support in DRT.
+BUGWK47243 SKIP : fast/canvas/webgl/gl-object-get-calls.html = TIMEOUT
+BUGWK47243 SKIP : fast/canvas/webgl/tex-image-and-uniform-binding-bugs.html = TIMEOUT
+BUGWK47243 SKIP : fast/canvas/webgl/uniform-location.html = TIMEOUT

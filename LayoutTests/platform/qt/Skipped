@@ -170,8 +170,6 @@ http/tests/security/xss-DENIED-xsl-document.xml
 http/tests/security/cross-frame-access-callback-explicit-domain-ALLOW.html
 # - FAIL: Subframe did not finish loading.
 http/tests/security/dataURL/xss-DENIED-to-data-url-sub-frame-uppercase.html
-# missing console message
-http/tests/security/frameNavigation/not-opener.html
 # missing origin header
 http/tests/security/originHeader/origin-header-for-empty.html
 
@@ -181,9 +179,6 @@ http/tests/wml
 
 # https://bugs.webkit.org/show_bug.cgi?id=44282
 http/tests/incremental/slow-utf8-text.pl
-
-# webkit.org/b/41571
-http/tests/loading/redirect-methods.html
 
 # expected results need updating
 http/tests/loading/simple-subframe.html
@@ -199,9 +194,7 @@ http/tests/local/send-sliced-dragged-file.html
 # CONSOLE MESSAGE: line 72: TypeError: Result of expression 'eventSender.beginDragWithFiles' [undefined] is not a function.
 http/tests/local/blob/send-hybrid-blob.html
 http/tests/local/blob/send-sliced-data-blob.html
-http/tests/local/formdata/send-form-data.html
-http/tests/local/formdata/send-form-data-with-sliced-file.html
-http/tests/local/formdata/upload-events.html
+http/tests/local/formdata
 
 # --- Failing navigation tests
 #CONSOLE MESSAGE: line 1: ReferenceError: Can't find variable: fillTestForm
@@ -210,30 +203,9 @@ http/tests/navigation/javascriptlink-goback.html
 http/tests/navigation/metaredirect-goback.html
 http/tests/navigation/timerredirect-goback.html
 
-# new content not loaded from popup window
-http/tests/navigation/target-frame-from-window.html
-
 #CONSOLE MESSAGE: line 11: TypeError: Result of expression 'consoleWindow.log' [undefined] is not a function.
 http/tests/navigation/no-referrer-reset.html
 http/tests/navigation/no-referrer-target-blank.html
-
-#timeout
-http/tests/navigation/post-goback2.html
-http/tests/navigation/postredirect-goback2.html
-
-#new - no expected results
-http/tests/navigation/anchor-frames.html
-http/tests/navigation/error404-basic.html
-http/tests/navigation/error404-frames.html
-http/tests/navigation/error404-goback.html
-http/tests/navigation/error404-subframeload.html
-http/tests/navigation/javascriptlink-frames.html
-http/tests/navigation/post-basic.html
-http/tests/navigation/post-frames.html
-http/tests/navigation/post-goback1.html
-http/tests/navigation/postredirect-basic.html
-http/tests/navigation/postredirect-frames.html
-http/tests/navigation/postredirect-goback1.html
 
 # time out
 http/tests/multipart/invalid-image-data.html
@@ -414,10 +386,6 @@ http/tests/plugins/plugin-document-has-focus.html
 # =========================================================================== #
 #       Failing execCommand tests.                                            #
 # =========================================================================== #
-
-# It fails in DRT, but passes in QtLauncher
-# https://bugs.webkit.org/show_bug.cgi?id=35921
-editing/execCommand/move-selection-back-line.html
 
 # -- passes
 editing/execCommand/indent-paragraphs.html
@@ -808,6 +776,7 @@ fast/images/icon-0colors.html
 fast/images/icon-decoding.html
 
 # ------- missing ruby annotation support for japanese fonts
+fast/ruby/ruby-beforeafter.html
 fast/ruby/ruby-empty-rt.html
 fast/ruby/ruby-length.html
 fast/ruby/ruby-run-break.html
@@ -824,12 +793,6 @@ fast/ruby/rubyDOM-remove-rt1.html
 fast/ruby/rubyDOM-remove-rt2.html
 fast/ruby/rubyDOM-remove-text1.html
 fast/ruby/rubyDOM-remove-text2.html
-
-# ============================================================================= #
-# ------- failing editing/input tests
-# ============================================================================= #
-
-editing/input/emacs-ctrl-o.html
 
 # ============================================================================= #
 # Failing SVG tests
@@ -5215,9 +5178,6 @@ canvas/philip/tests/2d.composite.uncovered.pattern.source-out.html
 canvas/philip/tests/2d.drawImage.broken.html
 canvas/philip/tests/2d.drawImage.incomplete.html
 canvas/philip/tests/2d.drawImage.null.html
-canvas/philip/tests/2d.fillStyle.parse.current.basic.html
-canvas/philip/tests/2d.fillStyle.parse.current.changed.html
-canvas/philip/tests/2d.fillStyle.parse.current.removed.html
 canvas/philip/tests/2d.fillStyle.parse.system.html
 canvas/philip/tests/2d.gradient.radial.cone.behind.html
 canvas/philip/tests/2d.gradient.radial.cone.beside.html
@@ -5225,7 +5185,6 @@ canvas/philip/tests/2d.gradient.radial.cone.bottom.html
 canvas/philip/tests/2d.gradient.radial.cone.cylinder.html
 canvas/philip/tests/2d.gradient.radial.cone.shape2.html
 canvas/philip/tests/2d.gradient.radial.cone.top.html
-canvas/philip/tests/2d.gradient.radial.negative.html
 canvas/philip/tests/2d.gradient.radial.touch1.html
 canvas/philip/tests/2d.gradient.radial.touch2.html
 canvas/philip/tests/2d.gradient.radial.touch3.html
@@ -5321,6 +5280,7 @@ fast/dom/Geolocation/callback-to-remote-context2.html
 
 # Link prefetch is disabled by default
 fast/dom/HTMLLinkElement/prefetch.html
+http/tests/misc/prefetch-purpose.html
 
 # [Qt] Regression(r61749): inspector/debugger-pause-on-debugger-statement.html fails
 # https://bugs.webkit.org/show_bug.cgi?id=41147
@@ -5337,6 +5297,7 @@ inspector/debugger-step-in.html
 inspector/debugger-step-out.html
 inspector/debugger-step-over.html
 inspector/debugger-expand-scope.html
+inspector/debugger-eval-on-call-frame.html
 
 # [Qt] fast/text/bidi-explicit-embedding-past-end.html fails
 # https://bugs.webkit.org/show_bug.cgi?id=41241
@@ -5491,3 +5452,7 @@ media/video-delay-load-event.html
 # https://bugs.webkit.org/show_bug.cgi?id=46223
 # The WebKit plugin implementation does not support iframe shims.
 plugins/iframe-shims.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=46966
+# [Qt] fast/media/color-does-not-include-alpha.html fails
+fast/media/color-does-not-include-alpha.html

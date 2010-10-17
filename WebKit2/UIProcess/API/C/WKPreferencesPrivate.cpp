@@ -58,12 +58,12 @@ void WKPreferencesSetFontSmoothingLevel(WKPreferencesRef preferencesRef, WKFontS
             level = FontSmoothingLevelMedium;
             break;
     }
-    toWK(preferencesRef)->setFontSmoothingLevel(level);
+    toImpl(preferencesRef)->setFontSmoothingLevel(level);
 }
 
 WKFontSmoothingLevel WKPreferencesGetFontSmoothingLevel(WKPreferencesRef preferencesRef)
 {
-    FontSmoothingLevel level = toWK(preferencesRef)->fontSmoothingLevel();
+    FontSmoothingLevel level = toImpl(preferencesRef)->fontSmoothingLevel();
     switch (level) {
         case FontSmoothingLevelNoSubpixelAntiAliasing:
             return kWKFontSmoothingLevelNoSubpixelAntiAliasing;
@@ -83,3 +83,32 @@ WKFontSmoothingLevel WKPreferencesGetFontSmoothingLevel(WKPreferencesRef prefere
     return kWKFontSmoothingLevelMedium;
 }
 
+void WKPreferencesSetAcceleratedCompositingEnabled(WKPreferencesRef preferencesRef, bool flag)
+{
+    toImpl(preferencesRef)->setAcceleratedCompositingEnabled(flag);
+}
+
+bool WKPreferencesGetAcceleratedCompositingEnabled(WKPreferencesRef preferencesRef)
+{
+    return toImpl(preferencesRef)->acceleratedCompositingEnabled();
+}
+
+void WKPreferencesSetCompositingBordersVisible(WKPreferencesRef preferencesRef, bool flag)
+{
+    toImpl(preferencesRef)->setCompositingBordersVisible(flag);
+}
+
+bool WKPreferencesGetCompositingBordersVisible(WKPreferencesRef preferencesRef)
+{
+    return toImpl(preferencesRef)->compositingBordersVisible();
+}
+
+void WKPreferencesSetCompositingRepaintCountersVisible(WKPreferencesRef preferencesRef, bool flag)
+{
+    toImpl(preferencesRef)->setCompositingRepaintCountersVisible(flag);
+}
+
+bool WKPreferencesGetCompositingRepaintCountersVisible(WKPreferencesRef preferencesRef)
+{
+    return toImpl(preferencesRef)->compositingRepaintCountersVisible();
+}

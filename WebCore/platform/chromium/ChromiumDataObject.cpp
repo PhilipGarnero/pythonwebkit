@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2009, Google Inc. All rights reserved.
+ * Copyright (c) 2010, Google Inc. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,235 +31,189 @@
 #include "config.h"
 #include "ChromiumDataObject.h"
 
-#include "ChromiumBridge.h"
-#include "ClipboardMimeTypes.h"
-#include "Pasteboard.h"
-
 namespace WebCore {
 
-// Per RFC 2483, the line separator for "text/..." MIME types is CR-LF.
-static char const* const textMIMETypeLineSeparator = "\r\n";
+ChromiumDataObject::ChromiumDataObject(PassRefPtr<ChromiumDataObjectLegacy> data)
+    : RefCounted<ChromiumDataObject>()
+    , m_legacyData(data)
+{
+}
+
+ChromiumDataObject::ChromiumDataObject(PassRefPtr<ReadableDataObject> data)
+    : RefCounted<ChromiumDataObject>()
+    , m_readableData(data)
+{
+}
+
+ChromiumDataObject::ChromiumDataObject(PassRefPtr<WritableDataObject> data)
+    : RefCounted<ChromiumDataObject>()
+    , m_writableData(data)
+{
+}
+
+PassRefPtr<ChromiumDataObject> ChromiumDataObject::create(PassRefPtr<ChromiumDataObjectLegacy> data)
+{
+    return adoptRef(new ChromiumDataObject(data));
+}
+
+PassRefPtr<ChromiumDataObject> ChromiumDataObject::createReadable(Clipboard::ClipboardType clipboardType)
+{
+    return adoptRef(new ChromiumDataObject(ReadableDataObject::create(clipboardType)));
+}
+
+PassRefPtr<ChromiumDataObject> ChromiumDataObject::createWritable(Clipboard::ClipboardType clipboardType)
+{
+    return adoptRef(new ChromiumDataObject(WritableDataObject::create(clipboardType)));
+}
 
 void ChromiumDataObject::clearData(const String& type)
 {
-    if (type == mimeTypeTextPlain) {
-        m_plainText = "";
-        return;
-    }
-
-    if (type == mimeTypeURL || type == mimeTypeTextURIList) {
-        m_uriList.clear();
-        m_url = KURL();
-        m_urlTitle = "";
-        return;
-    }
-
-    if (type == mimeTypeTextHTML) {
-        m_textHtml = "";
-        m_htmlBaseUrl = KURL();
-        return;
-    }
-
-    if (type == mimeTypeDownloadURL) {
-        m_downloadMetadata = "";
-        return;
-    }
+    if (m_legacyData)
+        m_legacyData->clearData(type);
+    else
+        m_writableData->clearData(type);
 }
 
 void ChromiumDataObject::clearAll()
 {
-    clearAllExceptFiles();
-    m_filenames.clear();
+    if (m_legacyData)
+        m_legacyData->clearAll();
+    else
+        m_writableData->clearAll();
 }
 
 void ChromiumDataObject::clearAllExceptFiles()
 {
-    m_urlTitle = "";
-    m_url = KURL();
-    m_uriList.clear();
-    m_downloadMetadata = "";
-    m_fileExtension = "";
-    m_plainText = "";
-    m_textHtml = "";
-    m_htmlBaseUrl = KURL();
-    m_fileContentFilename = "";
-    if (m_fileContent)
-        m_fileContent->clear();
+    if (m_legacyData)
+        m_legacyData->clearAllExceptFiles();
+    else
+        m_writableData->clearAllExceptFiles();
 }
 
 bool ChromiumDataObject::hasData() const
 {
-    return !m_url.isEmpty()
-        || !m_uriList.isEmpty()
-        || !m_downloadMetadata.isEmpty()
-        || !m_fileExtension.isEmpty()
-        || !m_filenames.isEmpty()
-        || !m_plainText.isEmpty()
-        || !m_textHtml.isEmpty()
-        || m_fileContent;
+    if (m_legacyData)
+        return m_legacyData->hasData();
+    return m_readableData->hasData();
 }
 
 HashSet<String> ChromiumDataObject::types() const
 {
-    // This is currently broken for pasteboard events, and always has been.
-    HashSet<String> results;
-
-    if (!m_plainText.isEmpty()) {
-        results.add(mimeTypeText);
-        results.add(mimeTypeTextPlain);
-    }
-
-    if (!m_url.isEmpty()) {
-        results.add(mimeTypeURL);
-        results.add(mimeTypeTextURIList);
-    }
-
-    if (!m_textHtml.isEmpty())
-        results.add(mimeTypeTextHTML);
-
-    if (!m_filenames.isEmpty())
-        results.add("Files");
-
-    return results;
+    if (m_legacyData)
+        return m_legacyData->types();
+    return m_readableData->types();
 }
 
 String ChromiumDataObject::getData(const String& type, bool& success)
 {
-    if (type == mimeTypeTextPlain) {
-        if (m_clipboardType == Clipboard::CopyAndPaste) {
-            PasteboardPrivate::ClipboardBuffer buffer =
-                Pasteboard::generalPasteboard()->isSelectionMode() ?
-                PasteboardPrivate::SelectionBuffer :
-                PasteboardPrivate::StandardBuffer;
-            String text = ChromiumBridge::clipboardReadPlainText(buffer);
-            success = !text.isEmpty();
-            return text;
-        }
-        success = !m_plainText.isEmpty();
-        return m_plainText;
-    }
-
-    if (type == mimeTypeURL) {
-        ASSERT(m_url.isEmpty() == m_uriList.isEmpty());
-        success = !m_url.isEmpty();
-        return m_url.string();
-    }
-
-    if (type == mimeTypeTextURIList) {
-        ASSERT(m_url.isEmpty() == m_uriList.isEmpty());
-        if (m_uriList.isEmpty()) {
-            success = false;
-            return "";
-        }
-        String uriListString(m_uriList[0]);
-        for (size_t i = 1; i < m_uriList.size(); i++) {
-            uriListString.append(textMIMETypeLineSeparator);
-            uriListString.append(m_uriList[i]);
-        }
-        success = true;
-        return uriListString;
-    }
-
-    if (type == mimeTypeTextHTML) {
-        if (m_clipboardType == Clipboard::CopyAndPaste) {
-            PasteboardPrivate::ClipboardBuffer buffer =
-                Pasteboard::generalPasteboard()->isSelectionMode() ?
-                PasteboardPrivate::SelectionBuffer :
-                PasteboardPrivate::StandardBuffer;
-            String htmlText;
-            KURL sourceURL;
-            ChromiumBridge::clipboardReadHTML(buffer, &htmlText, &sourceURL);
-            success = !htmlText.isEmpty();
-            return htmlText;
-        }
-        success = !m_textHtml.isEmpty();
-        return m_textHtml;
-    }
-
-    if (type == mimeTypeDownloadURL) {
-        success = !m_downloadMetadata.isEmpty();
-        return m_downloadMetadata;
-    }
-
-    success = false;
-    return String();
+    if (m_legacyData)
+        return m_legacyData->getData(type, success);
+    return m_readableData->getData(type, success);
 }
 
 bool ChromiumDataObject::setData(const String& type, const String& data)
 {
-    if (type == mimeTypeTextPlain) {
-        m_plainText = data;
-        return true;
-    }
-
-    if (type == mimeTypeURL || type == mimeTypeTextURIList) {
-        m_url = KURL();
-        // Line separator is \r\n per RFC 2483 - however, for compatibility reasons
-        // we also allow just \n here.
-        data.split('\n', m_uriList);
-        // Strip white space on all lines, including trailing \r from above split.
-        // If this leaves a line empty, remove it completely.
-        //
-        // Also, copy the first valid URL into the 'url' member as well.
-        // In case no entry is a valid URL (i.e., remarks only), then we leave 'url' empty.
-        // I.e., in that case subsequent calls to getData("URL") will get an empty string.
-        // This is in line with the HTML5 spec (see "The DragEvent and DataTransfer interfaces").
-        for (size_t i = 0; i < m_uriList.size(); /**/) {
-            String& line = m_uriList[i];
-            line = line.stripWhiteSpace();
-            if (line.isEmpty()) {
-                m_uriList.remove(i);
-                continue;
-            }
-            ++i;
-            // Only copy the first valid URL.
-            if (m_url.isValid())
-                continue;
-            if (line[0] == '#')
-                continue;
-            KURL url = KURL(ParsedURLString, line);
-            if (url.isValid())
-                m_url = url;
-        }
-        ASSERT(m_url.isEmpty() == m_uriList.isEmpty());
-        return true;
-    }
-
-    if (type == mimeTypeTextHTML) {
-        m_textHtml = data;
-        m_htmlBaseUrl = KURL();
-        return true;
-    }
-
-    if (type == mimeTypeDownloadURL) {
-        m_downloadMetadata = data;
-        return true;
-    }
-
-    return false;
+    if (m_legacyData)
+        return m_legacyData->setData(type, data);
+    return m_writableData->setData(type, data);
 }
 
-ChromiumDataObject::ChromiumDataObject(Clipboard::ClipboardType clipboardType)
-    : m_clipboardType(clipboardType)
+String ChromiumDataObject::urlTitle() const
 {
+    if (m_legacyData)
+        return m_legacyData->urlTitle();
+    return m_readableData->urlTitle();
 }
 
-ChromiumDataObject::ChromiumDataObject(const ChromiumDataObject& other)
-    : RefCounted<ChromiumDataObject>()
-    , m_clipboardType(other.m_clipboardType)
-    , m_urlTitle(other.m_urlTitle)
-    , m_downloadMetadata(other.m_downloadMetadata)
-    , m_fileExtension(other.m_fileExtension)
-    , m_filenames(other.m_filenames)
-    , m_plainText(other.m_plainText)
-    , m_textHtml(other.m_textHtml)
-    , m_htmlBaseUrl(other.m_htmlBaseUrl)
-    , m_fileContentFilename(other.m_fileContentFilename)
-    , m_url(other.m_url)
-    , m_uriList(other.m_uriList)
+void ChromiumDataObject::setUrlTitle(const String& urlTitle)
 {
-    if (other.m_fileContent.get())
-        m_fileContent = other.m_fileContent->copy();
+    if (m_legacyData)
+        m_legacyData->setUrlTitle(urlTitle);
+    else
+        m_writableData->setUrlTitle(urlTitle);
 }
 
-} // namespace WebCore
+KURL ChromiumDataObject::htmlBaseUrl() const
+{
+    if (m_legacyData)
+        return m_legacyData->htmlBaseUrl();
+    return m_readableData->htmlBaseUrl();
+}
+
+void ChromiumDataObject::setHtmlBaseUrl(const KURL& url)
+{
+    if (m_legacyData)
+        m_legacyData->setHtmlBaseUrl(url);
+    else
+        m_writableData->setHtmlBaseUrl(url);
+}
+
+bool ChromiumDataObject::containsFilenames() const
+{
+    if (m_legacyData)
+        return m_legacyData->containsFilenames();
+    return m_readableData->containsFilenames();
+}
+
+Vector<String> ChromiumDataObject::filenames() const
+{
+    if (m_legacyData)
+        return m_legacyData->filenames();
+    return m_readableData->filenames();
+}
+
+void ChromiumDataObject::setFilenames(const Vector<String>& filenames)
+{
+    if (m_legacyData)
+        m_legacyData->setFilenames(filenames);
+    else
+        ASSERT_NOT_REACHED();
+}
+
+String ChromiumDataObject::fileExtension() const
+{
+    if (m_legacyData)
+        return m_legacyData->fileExtension();
+    return m_writableData->fileExtension();
+}
+
+void ChromiumDataObject::setFileExtension(const String& fileExtension)
+{
+    if (m_legacyData)
+        m_legacyData->setFileExtension(fileExtension);
+    else
+        m_writableData->setFileExtension(fileExtension);
+}
+
+String ChromiumDataObject::fileContentFilename() const
+{
+    if (m_legacyData)
+        return m_legacyData->fileContentFilename();
+    return m_writableData->fileContentFilename();
+}
+
+void ChromiumDataObject::setFileContentFilename(const String& fileContentFilename)
+{
+    if (m_legacyData)
+          m_legacyData->setFileContentFilename(fileContentFilename);
+    else
+          m_writableData->setFileContentFilename(fileContentFilename);
+}
+
+PassRefPtr<SharedBuffer> ChromiumDataObject::fileContent() const
+{
+    if (m_legacyData)
+        return m_legacyData->fileContent();
+    return m_writableData->fileContent();
+}
+
+void ChromiumDataObject::setFileContent(PassRefPtr<SharedBuffer> fileContent)
+{
+    if (m_legacyData)
+        m_legacyData->setFileContent(fileContent);
+    else
+        m_writableData->setFileContent(fileContent);
+}
+
+}
+

@@ -28,6 +28,7 @@
 
 #include <WebKit2/WKBase.h>
 #include <WebKit2/WKEvent.h>
+#include <WebKit2/WKGeometry.h>
 #include <WebKit2/WKNativeEvent.h>
 
 #ifndef __cplusplus
@@ -138,6 +139,10 @@ typedef void (*WKPageSetStatusTextCallback)(WKPageRef page, WKStringRef text, co
 typedef void (*WKPageMouseDidMoveOverElementCallback)(WKPageRef page, WKEventModifiers modifiers, WKTypeRef userData, const void *clientInfo);
 typedef void (*WKPageContentsSizeChangedCallback)(WKPageRef page, int width, int height, WKFrameRef frame, const void *clientInfo);
 typedef void (*WKPageDidNotHandleKeyEventCallback)(WKPageRef page, WKNativeEventPtr event, const void *clientInfo);
+typedef WKRect (*WKPageGetWindowFrameCallback)(WKPageRef page, const void *clientInfo);
+typedef void (*WKPageSetWindowFrameCallback)(WKPageRef page, WKRect frame, const void *clientInfo);
+typedef bool (*WKPageRunBeforeUnloadConfirmPanelCallback)(WKPageRef page, WKStringRef message, WKFrameRef frame, const void *clientInfo);
+typedef void (*WKPageDidDraw)(WKPageRef page, const void *clientInfo);
 
 struct WKPageUIClient {
     int                                                                 version;
@@ -152,8 +157,22 @@ struct WKPageUIClient {
     WKPageMouseDidMoveOverElementCallback                               mouseDidMoveOverElement;
     WKPageContentsSizeChangedCallback                                   contentsSizeChanged;
     WKPageDidNotHandleKeyEventCallback                                  didNotHandleKeyEvent;
+    WKPageGetWindowFrameCallback                                        getWindowFrame;
+    WKPageSetWindowFrameCallback                                        setWindowFrame;
+    WKPageRunBeforeUnloadConfirmPanelCallback                           runBeforeUnloadConfirmPanel;
+    WKPageDidDraw                                                       didDraw;
 };
 typedef struct WKPageUIClient WKPageUIClient;
+
+// Find client.
+typedef void (*WKPageDidCountStringMatchesCallback)(WKPageRef page, WKStringRef string, unsigned numMatches, const void* clientInfo);
+
+struct WKPageFindClient {
+    int                                                                 version;
+    const void *                                                        clientInfo;
+    WKPageDidCountStringMatchesCallback                                 didCountStringMatches;
+};
+typedef struct WKPageFindClient WKPageFindClient;
 
 WK_EXPORT WKTypeID WKPageGetTypeID();
 
@@ -188,7 +207,10 @@ WK_EXPORT void WKPageSetCustomUserAgent(WKPageRef page, WKStringRef userAgent);
 
 WK_EXPORT void WKPageTerminate(WKPageRef page);
 
-WK_EXPORT WKDataRef WKPageCopySessionState(WKPageRef page);
+WK_EXPORT WKStringRef WKPageGetSessionHistoryURLValueType(void);
+
+typedef bool (*WKPageSessionStateFilterCallback)(WKPageRef page, WKStringRef valueType, WKTypeRef value, void* context);
+WK_EXPORT WKDataRef WKPageCopySessionState(WKPageRef page, void* context, WKPageSessionStateFilterCallback urlAllowedCallback);
 WK_EXPORT void WKPageRestoreFromSessionState(WKPageRef page, WKDataRef sessionStateData);
 
 WK_EXPORT double WKPageGetTextZoomFactor(WKPageRef page);
@@ -197,10 +219,30 @@ WK_EXPORT double WKPageGetPageZoomFactor(WKPageRef page);
 WK_EXPORT void WKPageSetPageZoomFactor(WKPageRef page, double zoomFactor);
 WK_EXPORT void WKPageSetPageAndTextZoomFactors(WKPageRef page, double pageZoomFactor, double textZoomFactor);
 
+// Find.
+enum {
+    kWKFindDirectionForward,
+    kWKFindDirectionBackward
+};
+typedef uint32_t WKFindDirection;
+
+enum {
+    kWKFindOptionsCaseInsensitive = 1 << 0,
+    kWKFindOptionsWrapAround = 1 << 1,
+    kWKFindOptionsShowOverlay = 1 << 2,
+    kWKFindOptionsShowFindIndicator = 1 << 3
+};
+typedef uint32_t WKFindOptions;
+
+WK_EXPORT void WKPageFindString(WKPageRef page, WKStringRef string, WKFindDirection findDirection, WKFindOptions findOptions, unsigned maxNumMatches);
+WK_EXPORT void WKPageHideFindUI(WKPageRef page);
+WK_EXPORT void WKPageCountStringMatches(WKPageRef page, WKStringRef string, bool caseInsensitive, unsigned maxNumMatches);
+
 WK_EXPORT void WKPageSetPageLoaderClient(WKPageRef page, const WKPageLoaderClient* client);
 WK_EXPORT void WKPageSetPagePolicyClient(WKPageRef page, const WKPagePolicyClient* client);
 WK_EXPORT void WKPageSetPageFormClient(WKPageRef page, const WKPageFormClient* client);
 WK_EXPORT void WKPageSetPageUIClient(WKPageRef page, const WKPageUIClient* client);
+WK_EXPORT void WKPageSetPageFindClient(WKPageRef page, const WKPageFindClient* client);
 
 typedef void (*WKPageRunJavaScriptFunction)(WKStringRef, WKErrorRef, void*);
 WK_EXPORT void WKPageRunJavaScriptInMainFrame(WKPageRef page, WKStringRef script, void *context, WKPageRunJavaScriptFunction function);

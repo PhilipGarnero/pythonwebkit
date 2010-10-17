@@ -28,6 +28,7 @@
 
 #include "APIObject.h"
 #include "DrawingArea.h"
+#include "FindController.h"
 #include "InjectedBundlePageEditorClient.h"
 #include "InjectedBundlePageFormClient.h"
 #include "InjectedBundlePageLoaderClient.h"
@@ -63,11 +64,13 @@ namespace WebCore {
 namespace WebKit {
 
 class DrawingArea;
+class PageOverlay;
 class PluginView;
 class WebEvent;
 class WebFrame;
 class WebKeyboardEvent;
 class WebMouseEvent;
+class WebPopupMenu;
 class WebWheelEvent;
 #if ENABLE(TOUCH_EVENTS)
 class WebTouchEvent;
@@ -107,6 +110,8 @@ public:
     void addWebEditCommand(uint64_t, WebEditCommand*);
     void removeWebEditCommand(uint64_t);
     bool isInRedo() const { return m_isInRedo; }
+
+    void setActivePopupMenu(WebPopupMenu*);
 
     // -- Called from WebProcess.
     void didReceiveMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::ArgumentDecoder*);
@@ -156,7 +161,12 @@ public:
     HWND nativeWindow() const { return m_nativeWindow; }
 #endif
 
+    void installPageOverlay(PassOwnPtr<PageOverlay>);
+    void uninstallPageOverlay();
+
     static const WebEvent* currentEvent();
+
+    FindController& findController() { return m_findController; }
 
 private:
     WebPage(uint64_t pageID, const WebPageCreationParameters&);
@@ -199,8 +209,11 @@ private:
     void runJavaScriptInMainFrame(const String&, uint64_t callbackID);
     void getRenderTreeExternalRepresentation(uint64_t callbackID);
     void getSourceForFrame(uint64_t frameID, uint64_t callbackID);
+
     void preferencesDidChange(const WebPreferencesStore&);
     void platformPreferencesDidChange(const WebPreferencesStore&);
+    void updatePreferences(const WebPreferencesStore&);
+
     void didReceivePolicyDecision(uint64_t frameID, uint64_t listenerID, uint32_t policyAction);
     void setCustomUserAgent(const String&);
 
@@ -212,6 +225,12 @@ private:
     void unapplyEditCommand(uint64_t commandID);
     void reapplyEditCommand(uint64_t commandID);
     void didRemoveEditCommand(uint64_t commandID);
+
+    void findString(const String&, uint32_t findDirection, uint32_t findOptions, uint32_t maxNumMatches);
+    void hideFindUI();
+    void countStringMatches(const String&, bool caseInsensitive, uint32_t maxNumMatches);
+
+    void didChangeSelectedIndexForActivePopupMenu(int32_t newIndex);
 
     OwnPtr<WebCore::Page> m_page;
     RefPtr<WebFrame> m_mainFrame;
@@ -245,6 +264,11 @@ private:
     InjectedBundlePageFormClient m_formClient;
     InjectedBundlePageLoaderClient m_loaderClient;
     InjectedBundlePageUIClient m_uiClient;
+
+    FindController m_findController;
+    OwnPtr<PageOverlay> m_pageOverlay;
+
+    RefPtr<WebPopupMenu> m_activePopupMenu;
 
     uint64_t m_pageID;
 };

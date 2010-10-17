@@ -49,7 +49,6 @@ public:
     virtual void updateContents();
     virtual void draw();
     virtual bool drawsContent() { return m_owner && m_owner->drawsContent(); }
-    virtual void setLayerRenderer(LayerRendererChromium*);
 
     // Stores values that are shared between instances of this class that are
     // associated with the same LayerRendererChromium (and hence the same GL
@@ -64,6 +63,7 @@ public:
         int shaderMatrixLocation() const { return m_shaderMatrixLocation; }
         int shaderAlphaLocation() const { return m_shaderAlphaLocation; }
         int initialized() const { return m_initialized; }
+        bool npotSupported() const { return m_npotSupported; }
 
     private:
         GraphicsContext3D* m_context;
@@ -72,20 +72,28 @@ public:
         int m_shaderMatrixLocation;
         int m_shaderAlphaLocation;
         int m_initialized;
+        bool m_npotSupported;
     };
 
 protected:
     ContentLayerChromium(GraphicsLayerChromium* owner);
 
-    void updateTextureRect(void* pixels, const IntSize& bitmapSize, const IntSize& requiredTextureSize,
-                           const IntRect& updateRect, unsigned textureId);
+    enum MipmapUse {noMipmap, useMipmap};
 
-    void cleanupResources();
+    void updateTextureRect(void* pixels, const IntSize& bitmapSize, const IntSize& requiredTextureSize,
+                           const IntRect& updateRect, unsigned textureId, MipmapUse generateMipmap = noMipmap);
+
+    virtual void cleanupResources();
+    bool requiresClippedUpdateRect() const;
 
     unsigned m_contentsTexture;
     IntSize m_allocatedTextureSize;
     bool m_skipsDraw;
 
+private:
+    void calculateClippedUpdateRect(IntRect& dirtyRect, IntRect& drawRect) const;
+    IntRect m_largeLayerDrawRect;
+    IntRect m_largeLayerDirtyRect;
 };
 
 }

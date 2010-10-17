@@ -125,7 +125,6 @@ public:
 
     TriState selectionHasStyle(CSSStyleDeclaration*) const;
     String selectionStartCSSPropertyValue(int propertyID);
-    Element* elementForFormatBlockCommand() const;
     const SimpleFontData* fontForSelection(bool&) const;
     WritingDirection textDirectionForSelection(bool&) const;
     
@@ -379,6 +378,7 @@ private:
     OwnPtr<KillRing> m_killRing;
     RefPtr<Range> m_rangeToBeReplacedByCorrection;
     String m_stringToBeReplacedByCorrection;
+    String m_correctionReplacementString;
     Timer<Editor> m_correctionPanelTimer;
     VisibleSelection m_mark;
     bool m_areMarkedTextMatchesHighlighted;

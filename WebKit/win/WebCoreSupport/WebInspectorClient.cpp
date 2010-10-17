@@ -49,6 +49,7 @@
 
 #include <tchar.h>
 #include <wtf/RetainPtr.h>
+#include <wtf/text/StringConcatenate.h>
 
 using namespace WebCore;
 
@@ -273,7 +274,8 @@ void WebInspectorFrontendClient::attachWindow()
     if (m_attached)
         return;
 
-    m_inspectedWebView->page()->inspectorController()->setSetting(InspectorController::inspectorStartsAttachedSettingName(), "true");
+    // FIXME: This flag can be saved to the flags storage directly.
+    m_inspectedWebView->page()->inspectorController()->setInspectorStartsAttached(true);
 
     closeWindowWithoutNotifications();
     showWindowWithoutNotifications();
@@ -284,7 +286,8 @@ void WebInspectorFrontendClient::detachWindow()
     if (!m_attached)
         return;
 
-    m_inspectedWebView->page()->inspectorController()->setSetting(InspectorController::inspectorStartsAttachedSettingName(), "false");
+    // FIXME: This flag can be saved to the flags storage directly.
+    m_inspectedWebView->page()->inspectorController()->setInspectorStartsAttached(false);
 
     closeWindowWithoutNotifications();
     showWindowWithoutNotifications();
@@ -364,8 +367,8 @@ void WebInspectorFrontendClient::showWindowWithoutNotifications()
         shouldAttach = true;
     else {
         // If no preference is set - default to an attached window. This is important for inspector LayoutTests.
-        String shouldAttachPref = m_inspectedWebView->page()->inspectorController()->setting(InspectorController::inspectorStartsAttachedSettingName());
-        shouldAttach = shouldAttachPref != "false";
+        // FIXME: This flag can be fetched directly from the flags storage.
+        shouldAttach = m_inspectedWebView->page()->inspectorController()->inspectorStartsAttached();
 
         if (shouldAttach && !canAttachWindow())
             shouldAttach = false;
@@ -419,12 +422,7 @@ void WebInspectorFrontendClient::destroyInspectorView(bool notifyInspectorContro
 
 void WebInspectorFrontendClient::updateWindowTitle()
 {
-    // FIXME: The series of appends should be replaced with a call to String::format()
-    // when it can be figured out how to get the unicode em-dash to show up.
-    String title = "Web Inspector ";
-    title.append((UChar)0x2014); // em-dash
-    title.append(' ');
-    title.append(m_inspectedURL);
+    String title = makeString("Web Inspector ", static_cast<UChar>(0x2014), ' ', m_inspectedURL);
     ::SetWindowText(m_frontendHwnd, title.charactersWithNullTermination());
 }
 

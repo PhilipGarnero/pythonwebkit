@@ -56,7 +56,7 @@ IDBFactory::~IDBFactory()
 {
 }
 
-PassRefPtr<IDBRequest> IDBFactory::open(ScriptExecutionContext* context, const String& name, const String& description)
+PassRefPtr<IDBRequest> IDBFactory::open(ScriptExecutionContext* context, const String& name, const String& description, ExceptionCode& ec)
 {
     if (!context->isDocument()) {
         // FIXME: make this work with workers.
@@ -67,8 +67,12 @@ PassRefPtr<IDBRequest> IDBFactory::open(ScriptExecutionContext* context, const S
     if (!document->frame() || !document->page())
         return 0;
 
+
+    // FIXME: Raise a NON_TRANSIENT_ERR if the name is invalid.
+
     RefPtr<IDBRequest> request = IDBRequest::create(document, IDBAny::create(this), 0);
-    m_factoryBackend->open(name, description, request, document->securityOrigin(), document->frame(), document->page()->group().groupSettings()->indexedDBDatabasePath());
+    GroupSettings* groupSettings = document->page()->group().groupSettings();
+    m_factoryBackend->open(name, description, request, document->securityOrigin(), document->frame(), groupSettings->indexedDBDatabasePath(), groupSettings->indexedDBQuotaBytes());
     return request;
 }
 

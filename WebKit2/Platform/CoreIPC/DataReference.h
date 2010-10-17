@@ -26,6 +26,8 @@
 #ifndef DataReference_h
 #define DataReference_h
 
+#include <inttypes.h>
+
 namespace CoreIPC {
 
 class ArgumentDecoder;

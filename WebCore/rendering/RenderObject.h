@@ -291,7 +291,9 @@ public:
 
     bool isHTMLMarquee() const;
 
+    inline bool isBeforeContent() const;
     inline bool isAfterContent() const;
+    static inline bool isBeforeContent(const RenderObject* obj) { return obj && obj->isBeforeContent(); }
     static inline bool isAfterContent(const RenderObject* obj) { return obj && obj->isAfterContent(); }
 
     bool childrenInline() const { return m_childrenInline; }
@@ -314,7 +316,7 @@ public:
     virtual bool isSVGContainer() const { return false; }
     virtual bool isSVGGradientStop() const { return false; }
     virtual bool isSVGHiddenContainer() const { return false; }
-    virtual bool isRenderPath() const { return false; }
+    virtual bool isSVGPath() const { return false; }
     virtual bool isSVGText() const { return false; }
     virtual bool isSVGTextPath() const { return false; }
     virtual bool isSVGInline() const { return false; }
@@ -749,6 +751,7 @@ protected:
     // Overrides should call the superclass at the start
     virtual void styleDidChange(StyleDifference, const RenderStyle* oldStyle);
 
+    void paintFocusRing(GraphicsContext*, int tx, int ty, RenderStyle*);
     void paintOutline(GraphicsContext*, int tx, int ty, int w, int h);
     void addPDFURLRect(GraphicsContext*, const IntRect&);
 
@@ -859,6 +862,16 @@ private:
 inline bool RenderObject::documentBeingDestroyed() const
 {
     return !document()->renderer();
+}
+
+inline bool RenderObject::isBeforeContent() const
+{
+    if (style()->styleType() != BEFORE)
+        return false;
+    // Text nodes don't have their own styles, so ignore the style on a text node.
+    if (isText() && !isBR())
+        return false;
+    return true;
 }
 
 inline bool RenderObject::isAfterContent() const

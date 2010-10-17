@@ -30,7 +30,7 @@
 
 using namespace WebKit;
 
-CFArrayRef WKCertificateInfoGetPeerCertificates(WKCertificateInfoRef certificateInfoRef)
+CFArrayRef WKCertificateInfoGetCertificateChain(WKCertificateInfoRef certificateInfoRef)
 {
-    return toWK(certificateInfoRef)->platformCertificateInfo().peerCertificates();
+    return toImpl(certificateInfoRef)->platformCertificateInfo().certificateChain();
 }

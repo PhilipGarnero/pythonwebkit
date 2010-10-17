@@ -47,14 +47,13 @@ public:
 
     virtual PassRefPtr<IDBObjectStoreBackendInterface> objectStore(const String& name);
     virtual unsigned short mode() const { return m_mode; }
-    virtual bool scheduleTask(PassOwnPtr<ScriptExecutionContext::Task>);
+    virtual bool scheduleTask(PassOwnPtr<ScriptExecutionContext::Task> task, PassOwnPtr<ScriptExecutionContext::Task> abortTask);
     virtual void didCompleteTaskEvents();
     virtual void abort();
     virtual int id() const { return m_id; }
     virtual void setCallbacks(IDBTransactionCallbacks* callbacks) { m_callbacks = callbacks; }
 
     void run();
-    bool isFinished() const { return m_state == Finished; }
 
 private:
     IDBTransactionBackendImpl(DOMStringList* objectStores, unsigned short mode, unsigned long timeout, int id, IDBDatabaseBackendImpl*);
@@ -69,7 +68,8 @@ private:
     void start();
     void commit();
 
-    void timerFired(Timer<IDBTransactionBackendImpl>*);
+    void taskTimerFired(Timer<IDBTransactionBackendImpl>*);
+    void taskEventTimerFired(Timer<IDBTransactionBackendImpl>*);
 
     RefPtr<DOMStringList> m_objectStoreNames;
     unsigned short m_mode;
@@ -82,11 +82,13 @@ private:
 
     typedef Deque<OwnPtr<ScriptExecutionContext::Task> > TaskQueue;
     TaskQueue m_taskQueue;
+    TaskQueue m_abortTaskQueue;
 
     OwnPtr<SQLiteTransaction> m_transaction;
 
     // FIXME: delete the timer once we have threads instead.
-    Timer<IDBTransactionBackendImpl> m_timer;
+    Timer<IDBTransactionBackendImpl> m_taskTimer;
+    Timer<IDBTransactionBackendImpl> m_taskEventTimer;
     int m_pendingEvents;
 };
 

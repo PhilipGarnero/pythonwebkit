@@ -32,7 +32,6 @@
 
 module core {
     interface [Conditional=INSPECTOR] Inspector {
-        [notify] void addConsoleMessage(out Object messageObj);
         [notify] void addRecordToTimeline(out Object record);
         [notify] void addNodesToSearchResult(out Array nodeIds);
         [notify] void attributesUpdated(out long id, out Array attributes);
@@ -41,11 +40,12 @@ module core {
         [notify] void childNodeCountUpdated(out long id, out int newValue);
         [notify] void childNodeInserted(out long parentId, out long prevId, out Object node);
         [notify] void childNodeRemoved(out long parentId, out long id);
-        [notify] void consoleMessagesCleared();
         [notify] void didCommitLoad();
         [notify] void evaluateForTestInFrontend(out long testCallId, out String script);
         [notify] void disconnectFromBackend();
+        [notify] void domContentEventFired(out double time);
         [notify] void inspectedURLChanged(out String url);
+        [notify] void loadEventFired(out double time);
         [notify] void removeResource(out unsigned long identifier);
         [notify] void reset();
         [notify] void resetProfilesPanel();
@@ -55,8 +55,6 @@ module core {
         [notify] void showPanel(out String panel);
         [notify] void timelineProfilerWasStarted();
         [notify] void timelineProfilerWasStopped();
-        [notify] void updateConsoleMessageExpiredCount(out unsigned long count);
-        [notify] void updateConsoleMessageRepeatCount(out unsigned long count);
         [notify] void updateFocusedNode(out long nodeId);
         [notify] void updateResource(out Value resource);
 
@@ -108,7 +106,7 @@ module core {
         [handler=Controller] void setMonitoringXHREnabled(in boolean enable, out boolean newState);
 
         [handler=Controller] void setResourceTrackingEnabled(in boolean enabled, in boolean always, out boolean newState);
-        [handler=Controller] void getResourceContent(in unsigned long identifier, out String content);
+        [handler=Controller] void getResourceContent(in unsigned long identifier, in boolean encode, out String content);
         [handler=Controller] void reloadPage();
 
         [handler=Controller] void startTimelineProfiler();
@@ -135,8 +133,8 @@ module core {
         [handler=Debug] void editScriptSource(in String sourceID, in String newContent, out boolean success, out String result, out Value newCallFrames);
         [handler=Debug] void getScriptSource(in String sourceID, out String scriptSource);
 
-        [handler=Controller] void setNativeBreakpoint(in Object breakpoint, out unsigned int breakpointId);
-        [handler=Controller] void removeNativeBreakpoint(in unsigned int breakpointId);
+        [handler=Controller] void setNativeBreakpoint(in Object breakpoint, out String breakpointId);
+        [handler=Controller] void removeNativeBreakpoint(in String breakpointId);
 
         [handler=Controller] void enableProfiler(in boolean always);
         [handler=Controller] void disableProfiler(in boolean always);
@@ -171,10 +169,15 @@ module core {
         [handler=DOM] void performSearch(in String query, in boolean runSynchronously);
         [handler=DOM] void searchCanceled();
         [handler=DOM] void pushNodeByPathToFrontend(in String path, out long nodeId);
-        [handler=DOM] void setDOMBreakpoint(in long nodeId, in long type);
-        [handler=DOM] void removeDOMBreakpoint(in long nodeId, in long type);
+
+        [handler=Controller] void setConsoleMessagesEnabled(in boolean enabled, out boolean newState);
+        [notify] void addConsoleMessage(out Object messageObj);
+        [notify] void updateConsoleMessageExpiredCount(out unsigned long count);
+        [notify] void updateConsoleMessageRepeatCount(out unsigned long count);
 
         [handler=Controller] void clearConsoleMessages();
+        [notify] void consoleMessagesCleared();
+
         [handler=Controller] void highlightDOMNode(in long nodeId);
         [handler=Controller] void hideDOMNodeHighlight();
         [handler=Controller] void openInInspectedWindow(in String url);

@@ -25,10 +25,17 @@
 
 #include "InjectedBundleNodeHandle.h"
 
+#include <JavaScriptCore/APICast.h>
+#include <WebCore/HTMLInputElement.h>
+#include <WebCore/HTMLTableCellElement.h>
+#include <WebCore/JSNode.h>
 #include <WebCore/Node.h>
+#include <WebCore/HTMLNames.h>
 #include <wtf/HashMap.h>
+#include <wtf/text/WTFString.h>
 
 using namespace WebCore;
+using namespace HTMLNames;
 
 namespace WebKit {
 
@@ -38,6 +45,12 @@ static DOMHandleCache& domHandleCache()
 {
     DEFINE_STATIC_LOCAL(DOMHandleCache, cache, ());
     return cache;
+}
+
+PassRefPtr<InjectedBundleNodeHandle> InjectedBundleNodeHandle::getOrCreate(JSContextRef, JSObjectRef object)
+{
+    Node* node = toNode(toJS(object));
+    return getOrCreate(node);
 }
 
 PassRefPtr<InjectedBundleNodeHandle> InjectedBundleNodeHandle::getOrCreate(Node* node)
@@ -72,6 +85,33 @@ InjectedBundleNodeHandle::~InjectedBundleNodeHandle()
 Node* InjectedBundleNodeHandle::coreNode() const
 {
     return m_node.get();
+}
+
+// Additional DOM Operations
+// Note: These should only be operations that are not exposed to JavaScript.
+
+void InjectedBundleNodeHandle::setHTMLInputElementValueForUser(const String& value)
+{
+    if (!m_node->hasTagName(inputTag))
+        return;
+
+    static_cast<HTMLInputElement*>(m_node.get())->setValueForUser(value);
+}
+
+void InjectedBundleNodeHandle::setHTMLInputElementAutofilled(bool filled)
+{
+    if (!m_node->hasTagName(inputTag))
+        return;
+
+    static_cast<HTMLInputElement*>(m_node.get())->setAutofilled(filled);
+}
+
+PassRefPtr<InjectedBundleNodeHandle> InjectedBundleNodeHandle::copyHTMLTableCellElementCellAbove()
+{
+    if (!m_node->hasTagName(tdTag))
+        return 0;
+
+    return getOrCreate(static_cast<HTMLTableCellElement*>(m_node.get())->cellAbove());
 }
 
 } // namespace WebKit

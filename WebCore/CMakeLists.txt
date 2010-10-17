@@ -725,7 +725,6 @@ SET(WebCore_SOURCES
     css/CSSFontSelector.cpp
     css/CSSFunctionValue.cpp
     css/CSSGradientValue.cpp
-    css/CSSHelper.cpp
     css/CSSImageGeneratorValue.cpp
     css/CSSImageValue.cpp
     css/CSSImportRule.cpp
@@ -883,6 +882,7 @@ SET(WebCore_SOURCES
     dom/default/PlatformMessagePortChannel.cpp
 
     editing/AppendNodeCommand.cpp
+    editing/ApplyBlockElementCommand.cpp
     editing/ApplyStyleCommand.cpp
     editing/BreakBlockquoteCommand.cpp
     editing/CompositeEditCommand.cpp
@@ -904,6 +904,7 @@ SET(WebCore_SOURCES
     editing/InsertParagraphSeparatorCommand.cpp
     editing/InsertTextCommand.cpp
     editing/JoinTextNodesCommand.cpp
+    editing/MarkupAccumulator.cpp
     editing/MergeIdenticalElementsCommand.cpp
     editing/ModifySelectionListLevel.cpp
     editing/MoveSelectionCommand.cpp
@@ -944,6 +945,7 @@ SET(WebCore_SOURCES
     history/PageCache.cpp
 
     html/AsyncImageResizer.cpp
+    html/BaseDateAndTimeInputType.cpp
     html/BaseTextInputType.cpp
     html/ButtonInputType.cpp
     html/CheckboxInputType.cpp
@@ -1098,6 +1100,7 @@ SET(WebCore_SOURCES
     inspector/InjectedScriptHost.cpp
     inspector/InspectorApplicationCacheAgent.cpp
     inspector/InspectorBackend.cpp
+    inspector/InspectorCSSAgent.cpp
     inspector/InspectorCSSStore.cpp
     inspector/InspectorController.cpp
     inspector/InspectorDOMAgent.cpp
@@ -1109,7 +1112,10 @@ SET(WebCore_SOURCES
     inspector/InspectorInstrumentation.cpp
     inspector/InspectorProfilerAgent.cpp
     inspector/InspectorResource.cpp
+    inspector/InspectorResourceAgent.cpp
+    inspector/InspectorStyleSheet.cpp
     inspector/InspectorValues.cpp
+    inspector/InspectorState.cpp
     inspector/InspectorStorageAgent.cpp
     inspector/InspectorTimelineAgent.cpp
     inspector/ScriptBreakpoint.cpp
@@ -1145,7 +1151,7 @@ SET(WebCore_SOURCES
     loader/PolicyCallback.cpp
     loader/PolicyChecker.cpp
     loader/ProgressTracker.cpp
-    loader/RedirectScheduler.cpp
+    loader/NavigationScheduler.cpp
     loader/Request.cpp
     loader/ResourceLoadNotifier.cpp
     loader/ResourceLoader.cpp
@@ -1257,6 +1263,7 @@ SET(WebCore_SOURCES
 
     platform/graphics/BitmapImage.cpp
     platform/graphics/Color.cpp
+    platform/graphics/ContextShadow.cpp
     platform/graphics/FloatPoint.cpp
     platform/graphics/FloatPoint3D.cpp
     platform/graphics/FloatQuad.cpp
@@ -1337,6 +1344,7 @@ SET(WebCore_SOURCES
     platform/network/BlobRegistryImpl.cpp
     platform/network/BlobResourceHandle.cpp
     platform/network/Credential.cpp
+    platform/network/DataURL.cpp
     platform/network/FormDataBuilder.cpp
     platform/network/FormData.cpp
     platform/network/HTTPHeaderMap.cpp
@@ -1356,7 +1364,6 @@ SET(WebCore_SOURCES
     platform/text/RegularExpression.cpp
     platform/text/SegmentedString.cpp
     platform/text/String.cpp
-    platform/text/StringBuilder.cpp
     platform/text/TextBoundaries.cpp
     platform/text/TextCodec.cpp
     platform/text/TextCodecLatin1.cpp
@@ -1613,17 +1620,41 @@ IF (ENABLE_MATHML)
     )
 ENDIF ()
 
+IF (ENABLE_NETSCAPE_PLUGIN_API)
+    LIST(APPEND WebCore_SOURCES
+        plugins/PluginDebug.cpp
+        plugins/PluginStream.cpp
+        plugins/PluginPackage.cpp
+        plugins/PluginView.cpp
+        plugins/npapi.cpp
+    )
+ELSE ()
+    LIST(APPEND WebCore_SOURCES
+        plugins/PluginPackageNone.cpp
+        plugins/PluginViewNone.cpp
+    )
+ENDIF ()
+
 if (ENABLE_FILE_SYSTEM)
     LIST(APPEND WebCore_SOURCES
         bindings/js/JSDirectoryEntryCustom.cpp
+        bindings/js/JSDirectoryEntrySyncCustom.cpp
         bindings/js/JSEntryCustom.cpp
+        bindings/js/JSEntrySyncCustom.cpp
         fileapi/DirectoryEntry.cpp
+        fileapi/DirectoryEntrySync.cpp
         fileapi/DirectoryReader.cpp
+        fileapi/DirectoryReaderSync.cpp
         fileapi/DOMFilePath.cpp
         fileapi/DOMFileSystem.cpp
+        fileapi/DOMFileSystemBase.cpp
+        fileapi/DOMFileSystemSync.cpp
         fileapi/Entry.cpp
         fileapi/EntryArray.cpp
+        fileapi/EntryArraySync.cpp
+        fileapi/EntrySync.cpp
         fileapi/FileEntry.cpp
+        fileapi/FileEntrySync.cpp
         fileapi/FileSystemCallbacks.cpp
         fileapi/FileWriter.cpp
         fileapi/LocalFileSystem.cpp
@@ -1631,15 +1662,21 @@ if (ENABLE_FILE_SYSTEM)
     )
     LIST(APPEND WebCore_IDL_FILES
         fileapi/DirectoryEntry.idl
+        fileapi/DirectoryEntrySync.idl
         fileapi/DirectoryReader.idl
+        fileapi/DirectoryReaderSync.idl
         fileapi/DOMFileSystem.idl
+        fileapi/DOMFileSystemSync.idl
         fileapi/EntriesCallback.idl
         fileapi/Entry.idl
+        fileapi/EntrySync.idl
         fileapi/EntryArray.idl
+        fileapi/EntryArraySync.idl
         fileapi/EntryCallback.idl
         fileapi/ErrorCallback.idl
         fileapi/FileCallback.idl
         fileapi/FileEntry.idl
+        fileapi/FileEntrySync.idl
         fileapi/FileSystemCallback.idl
         fileapi/FileWriterCallback.idl
         fileapi/FileWriter.idl
@@ -1661,14 +1698,11 @@ IF (ENABLE_SVG)
         css/SVGCSSStyleSelector.cpp
         rendering/PointerEventsHitRules.cpp
         rendering/RenderForeignObject.cpp
-        rendering/RenderPath.cpp
         rendering/RenderSVGBlock.cpp
         rendering/RenderSVGContainer.cpp
         rendering/RenderSVGGradientStop.cpp
         rendering/RenderSVGHiddenContainer.cpp
         rendering/RenderSVGImage.cpp
-        rendering/RenderSVGInline.cpp
-        rendering/RenderSVGInlineText.cpp
         rendering/RenderSVGModelObject.cpp
         rendering/RenderSVGResource.cpp
         rendering/RenderSVGResourceClipper.cpp
@@ -1684,31 +1718,36 @@ IF (ENABLE_SVG)
         rendering/RenderSVGResourceSolidColor.cpp
         rendering/RenderSVGRoot.cpp
         rendering/RenderSVGShadowTreeRootContainer.cpp
-        rendering/RenderSVGTSpan.cpp
-        rendering/RenderSVGText.cpp
-        rendering/RenderSVGTextPath.cpp
         rendering/RenderSVGTransformableContainer.cpp
         rendering/RenderSVGViewportContainer.cpp
-        rendering/SVGCharacterData.cpp
-        rendering/SVGCharacterLayoutInfo.cpp
         rendering/SVGImageBufferTools.cpp
-        rendering/SVGInlineFlowBox.cpp
-        rendering/SVGInlineTextBox.cpp
         rendering/SVGMarkerLayoutInfo.cpp
         rendering/SVGRenderSupport.cpp
         rendering/SVGRenderTreeAsText.cpp
         rendering/SVGResources.cpp
         rendering/SVGResourcesCache.cpp
         rendering/SVGResourcesCycleSolver.cpp
-        rendering/SVGRootInlineBox.cpp
         rendering/SVGShadowTreeElements.cpp
-        rendering/SVGTextChunkLayoutInfo.cpp
-        rendering/SVGTextLayoutUtilities.cpp
-        rendering/SVGTextQuery.cpp
         rendering/style/SVGRenderStyle.cpp
         rendering/style/SVGRenderStyleDefs.cpp
+        rendering/svg/RenderSVGInline.cpp
+        rendering/svg/RenderSVGInlineText.cpp
+        rendering/svg/RenderSVGPath.cpp
+        rendering/svg/RenderSVGTSpan.cpp
+        rendering/svg/RenderSVGText.cpp
+        rendering/svg/RenderSVGTextPath.cpp
+        rendering/svg/SVGInlineFlowBox.cpp
+        rendering/svg/SVGInlineTextBox.cpp
+        rendering/svg/SVGRootInlineBox.cpp
+        rendering/svg/SVGTextChunk.cpp
+        rendering/svg/SVGTextChunkBuilder.cpp
         rendering/svg/SVGTextLayoutAttributes.cpp
-        rendering/svg/SVGTextLayoutBuilder.cpp
+        rendering/svg/SVGTextLayoutAttributesBuilder.cpp
+        rendering/svg/SVGTextLayoutEngine.cpp
+        rendering/svg/SVGTextLayoutEngineBaseline.cpp
+        rendering/svg/SVGTextLayoutEngineSpacing.cpp
+        rendering/svg/SVGTextMetrics.cpp
+        rendering/svg/SVGTextQuery.cpp
         svg/ColorDistance.cpp
         svg/SVGAElement.cpp
         svg/SVGAltGlyphElement.cpp

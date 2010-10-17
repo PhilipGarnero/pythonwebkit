@@ -53,7 +53,7 @@
 #include "Frame.h"
 #include "FrameView.h"
 #include "HTMLNames.h"
-#include "InspectorTimelineAgent.h"
+#include "InspectorInstrumentation.h"
 #include "KeyboardEvent.h"
 #include "LabelsNodeList.h"
 #include "Logging.h"
@@ -72,7 +72,6 @@
 #include "ScriptController.h"
 #include "SelectorNodeList.h"
 #include "StaticNodeList.h"
-#include "StringBuilder.h"
 #include "TagNodeList.h"
 #include "Text.h"
 #include "TextEvent.h"
@@ -88,6 +87,7 @@
 #include <wtf/RefCountedLeakCounter.h>
 #include <wtf/UnusedParam.h>
 #include <wtf/text/CString.h>
+#include <wtf/text/StringBuilder.h>
 
 #if ENABLE(DOM_STORAGE)
 #include "StorageEvent.h"
@@ -724,11 +724,21 @@ inline void Node::setStyleChange(StyleChangeType changeType)
 
 inline void Node::markAncestorsWithChildNeedsStyleRecalc()
 {
-    for (Node* p = parentNode(); p && !p->childNeedsStyleRecalc(); p = p->parentNode())
+    for (ContainerNode* p = parentNode(); p && !p->childNeedsStyleRecalc(); p = p->parentNode())
         p->setChildNeedsStyleRecalc();
     
     if (document()->childNeedsStyleRecalc())
         document()->scheduleStyleRecalc();
+}
+
+void Node::refEventTarget()
+{
+    ref();
+}
+
+void Node::derefEventTarget()
+{
+    deref();
 }
 
 void Node::setNeedsStyleRecalc(StyleChangeType changeType)
@@ -1156,7 +1166,7 @@ bool Node::isDescendantOf(const Node *other) const
     // Return true if other is an ancestor of this, otherwise false
     if (!other)
         return false;
-    for (const Node *n = parentNode(); n; n = n->parentNode()) {
+    for (const ContainerNode* n = parentNode(); n; n = n->parentNode()) {
         if (n == other)
             return true;
     }
@@ -1323,7 +1333,7 @@ void Node::createRendererIfNeeded()
 
     ASSERT(!renderer());
     
-    Node* parent = parentNode();    
+    ContainerNode* parent = parentNode();    
     ASSERT(parent);
     
     RenderObject* parentRenderer = parent->renderer();
@@ -1913,55 +1923,57 @@ String Node::lookupNamespacePrefix(const AtomicString &_namespaceURI, const Elem
     return String();
 }
 
-void Node::appendTextContent(bool convertBRsToNewlines, StringBuilder& content) const
+static void appendTextContent(const Node* node, bool convertBRsToNewlines, bool& isNullString, StringBuilder& content)
 {
-    switch (nodeType()) {
-        case TEXT_NODE:
-        case CDATA_SECTION_NODE:
-        case COMMENT_NODE:
-            content.append(static_cast<const CharacterData*>(this)->data());
-            break;
+    switch (node->nodeType()) {
+    case Node::TEXT_NODE:
+    case Node::CDATA_SECTION_NODE:
+    case Node::COMMENT_NODE:
+        isNullString = false;
+        content.append(static_cast<const CharacterData*>(node)->data());
+        break;
 
-        case PROCESSING_INSTRUCTION_NODE:
-            content.append(static_cast<const ProcessingInstruction*>(this)->data());
+    case Node::PROCESSING_INSTRUCTION_NODE:
+        isNullString = false;
+        content.append(static_cast<const ProcessingInstruction*>(node)->data());
+        break;
+    
+    case Node::ELEMENT_NODE:
+        if (node->hasTagName(brTag) && convertBRsToNewlines) {
+            isNullString = false;
+            content.append('\n');
             break;
-        
-        case ELEMENT_NODE:
-            if (hasTagName(brTag) && convertBRsToNewlines) {
-                content.append('\n');
-                break;
         }
-        // Fall through.
-        case ATTRIBUTE_NODE:
-        case ENTITY_NODE:
-        case ENTITY_REFERENCE_NODE:
-        case DOCUMENT_FRAGMENT_NODE:
-            content.setNonNull();
+    // Fall through.
+    case Node::ATTRIBUTE_NODE:
+    case Node::ENTITY_NODE:
+    case Node::ENTITY_REFERENCE_NODE:
+    case Node::DOCUMENT_FRAGMENT_NODE:
+        isNullString = false;
+        for (Node* child = node->firstChild(); child; child = child->nextSibling()) {
+            if (child->nodeType() == Node::COMMENT_NODE || child->nodeType() == Node::PROCESSING_INSTRUCTION_NODE)
+                continue;
+            appendTextContent(child, convertBRsToNewlines, isNullString, content);
+        }
+        break;
 
-            for (Node *child = firstChild(); child; child = child->nextSibling()) {
-                if (child->nodeType() == COMMENT_NODE || child->nodeType() == PROCESSING_INSTRUCTION_NODE)
-                    continue;
-            
-                child->appendTextContent(convertBRsToNewlines, content);
-            }
-            break;
-
-        case DOCUMENT_NODE:
-        case DOCUMENT_TYPE_NODE:
-        case NOTATION_NODE:
-        case XPATH_NAMESPACE_NODE:
-            break;
+    case Node::DOCUMENT_NODE:
+    case Node::DOCUMENT_TYPE_NODE:
+    case Node::NOTATION_NODE:
+    case Node::XPATH_NAMESPACE_NODE:
+        break;
     }
 }
 
 String Node::textContent(bool convertBRsToNewlines) const
 {
     StringBuilder content;
-    appendTextContent(convertBRsToNewlines, content);
-    return content.toString();
+    bool isNullString = true;
+    appendTextContent(this, convertBRsToNewlines, isNullString, content);
+    return isNullString ? String() : content.toString();
 }
 
-void Node::setTextContent(const String &text, ExceptionCode& ec)
+void Node::setTextContent(const String& text, ExceptionCode& ec)
 {           
     switch (nodeType()) {
         case TEXT_NODE:
@@ -1969,33 +1981,32 @@ void Node::setTextContent(const String &text, ExceptionCode& ec)
         case COMMENT_NODE:
         case PROCESSING_INSTRUCTION_NODE:
             setNodeValue(text, ec);
-            break;
+            return;
         case ELEMENT_NODE:
         case ATTRIBUTE_NODE:
         case ENTITY_NODE:
         case ENTITY_REFERENCE_NODE:
         case DOCUMENT_FRAGMENT_NODE: {
-            ContainerNode *container = static_cast<ContainerNode *>(this);
-            
+            ContainerNode* container = toContainerNode(this);
             container->removeChildren();
-            
             if (!text.isEmpty())
-                appendChild(document()->createTextNode(text), ec);
-            break;
+                container->appendChild(document()->createTextNode(text), ec);
+            return;
         }
         case DOCUMENT_NODE:
         case DOCUMENT_TYPE_NODE:
         case NOTATION_NODE:
-        default:
-            // Do nothing
-            break;
+        case XPATH_NAMESPACE_NODE:
+            // Do nothing.
+            return;
     }
+    ASSERT_NOT_REACHED();
 }
 
 Element* Node::ancestorElement() const
 {
     // In theory, there can be EntityReference nodes between elements, but this is currently not supported.
-    for (Node* n = parentNode(); n; n = n->parentNode()) {
+    for (ContainerNode* n = parentNode(); n; n = n->parentNode()) {
         if (n->isElementNode())
             return static_cast<Element*>(n);
     }
@@ -2577,23 +2588,6 @@ bool Node::dispatchEvent(PassRefPtr<Event> prpEvent)
     return dispatchGenericEvent(event.release());
 }
 
-static bool eventHasListeners(const AtomicString& eventType, DOMWindow* window, Node* node, Vector<RefPtr<ContainerNode> >& ancestors)
-{
-    if (window && window->hasEventListeners(eventType))
-        return true;
-
-    if (node->hasEventListeners(eventType))
-        return true;
-
-    for (size_t i = 0; i < ancestors.size(); i++) {
-        ContainerNode* ancestor = ancestors[i].get();
-        if (ancestor->hasEventListeners(eventType))
-            return true;
-    }
-
-   return false;    
-}
-
 bool Node::dispatchGenericEvent(PassRefPtr<Event> prpEvent)
 {
     RefPtr<Event> event(prpEvent);
@@ -2619,15 +2613,7 @@ bool Node::dispatchGenericEvent(PassRefPtr<Event> prpEvent)
             targetForWindowEvents = static_cast<Document*>(topLevelContainer)->domWindow();
     }
 
-#if ENABLE(INSPECTOR)
-    Page* inspectedPage = InspectorTimelineAgent::instanceCount() ? document()->page() : 0;
-    if (inspectedPage) {
-        if (InspectorTimelineAgent* timelineAgent = eventHasListeners(event->type(), targetForWindowEvents, this, ancestors) ? inspectedPage->inspectorTimelineAgent() : 0)
-            timelineAgent->willDispatchEvent(*event);
-        else
-            inspectedPage = 0;
-    }
-#endif
+    InspectorInstrumentationCookie cookie = InspectorInstrumentation::willDispatchEvent(document(), *event, targetForWindowEvents, this, ancestors);
 
     // Give the target node a chance to do some work before DOM event handlers get a crack.
     void* data = preDispatchEventHandler(event.get());
@@ -2709,11 +2695,8 @@ doneDispatching:
     }
 
 doneWithDefault:
-#if ENABLE(INSPECTOR)
-    if (inspectedPage)
-        if (InspectorTimelineAgent* timelineAgent = inspectedPage->inspectorTimelineAgent())
-            timelineAgent->didDispatchEvent();
-#endif
+
+    InspectorInstrumentation::didDispatchEvent(cookie);
 
     return !event->defaultPrevented();
 }

@@ -35,6 +35,7 @@
 #include <WebCore/IntRect.h>
 #include <WebCore/PluginData.h>
 #include <WebCore/ResourceRequest.h>
+#include <WebCore/ViewportArguments.h>
 #include <limits>
 
 namespace CoreIPC {
@@ -42,6 +43,11 @@ namespace CoreIPC {
 template<> struct ArgumentCoder<WebCore::IntPoint> : SimpleArgumentCoder<WebCore::IntPoint> { };
 template<> struct ArgumentCoder<WebCore::IntSize> : SimpleArgumentCoder<WebCore::IntSize> { };
 template<> struct ArgumentCoder<WebCore::IntRect> : SimpleArgumentCoder<WebCore::IntRect> { };
+template<> struct ArgumentCoder<WebCore::ViewportArguments> : SimpleArgumentCoder<WebCore::ViewportArguments> { };
+
+template<> struct ArgumentCoder<WebCore::FloatPoint> : SimpleArgumentCoder<WebCore::FloatPoint> { };
+template<> struct ArgumentCoder<WebCore::FloatSize> : SimpleArgumentCoder<WebCore::FloatSize> { };
+template<> struct ArgumentCoder<WebCore::FloatRect> : SimpleArgumentCoder<WebCore::FloatRect> { };
 
 template<> struct ArgumentCoder<WebCore::MimeClassInfo> {
     static void encode(ArgumentEncoder* encoder, const WebCore::MimeClassInfo& mimeClassInfo)

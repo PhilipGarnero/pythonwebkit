@@ -30,6 +30,7 @@
 #include "InjectedBundle.h"
 #include "MessageID.h"
 #include "NetscapePlugin.h"
+#include "PageOverlay.h"
 #include "PluginProcessConnection.h"
 #include "PluginProcessConnectionManager.h"
 #include "PluginProxy.h"
@@ -46,10 +47,11 @@
 #include "WebFrame.h"
 #include "WebInspectorClient.h"
 #include "WebPageCreationParameters.h"
-#include "WebPageProxyMessageKinds.h"
-#include "WebProcessProxyMessageKinds.h"
+#include "WebPageProxyMessages.h"
+#include "WebPopupMenu.h"
 #include "WebPreferencesStore.h"
 #include "WebProcess.h"
+#include "WebProcessProxyMessageKinds.h"
 #include <WebCore/EventHandler.h>
 #include <WebCore/FocusController.h>
 #include <WebCore/Frame.h>
@@ -104,6 +106,7 @@ WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
 #elif PLATFORM(WIN)
     , m_nativeWindow(parameters.nativeWindow)
 #endif
+    , m_findController(this)
     , m_pageID(pageID)
 {
     ASSERT(m_pageID);
@@ -117,24 +120,7 @@ WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
     pageClients.backForwardControllerClient = new WebBackForwardControllerClient(this);
     m_page = adoptPtr(new Page(pageClients));
 
-    m_page->settings()->setJavaScriptEnabled(parameters.store.javaScriptEnabled);
-    m_page->settings()->setLoadsImagesAutomatically(parameters.store.loadsImagesAutomatically);
-    m_page->settings()->setPluginsEnabled(parameters.store.pluginsEnabled);
-    m_page->settings()->setOfflineWebApplicationCacheEnabled(parameters.store.offlineWebApplicationCacheEnabled);
-    m_page->settings()->setLocalStorageEnabled(parameters.store.localStorageEnabled);
-    m_page->settings()->setXSSAuditorEnabled(parameters.store.xssAuditorEnabled);
-    m_page->settings()->setFrameFlatteningEnabled(parameters.store.frameFlatteningEnabled);
-    m_page->settings()->setMinimumFontSize(parameters.store.minimumFontSize);
-    m_page->settings()->setMinimumLogicalFontSize(parameters.store.minimumLogicalFontSize);
-    m_page->settings()->setDefaultFontSize(parameters.store.defaultFontSize);
-    m_page->settings()->setDefaultFixedFontSize(parameters.store.defaultFixedFontSize);
-    m_page->settings()->setStandardFontFamily(parameters.store.standardFontFamily);
-    m_page->settings()->setCursiveFontFamily(parameters.store.cursiveFontFamily);
-    m_page->settings()->setFantasyFontFamily(parameters.store.fantasyFontFamily);
-    m_page->settings()->setFixedFontFamily(parameters.store.fixedFontFamily);
-    m_page->settings()->setSansSerifFontFamily(parameters.store.sansSerifFontFamily);
-    m_page->settings()->setSerifFontFamily(parameters.store.serifFontFamily);
-    m_page->settings()->setJavaScriptCanOpenWindowsAutomatically(true);
+    updatePreferences(parameters.store);
 
     m_page->setGroupName("WebKit2Group");
     
@@ -142,7 +128,7 @@ WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
     Settings::setMinDOMTimerInterval(0.004);
 
     m_mainFrame = WebFrame::createMainFrame(this);
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidCreateMainFrame, m_pageID, CoreIPC::In(m_mainFrame->frameID()));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidCreateMainFrame(m_mainFrame->frameID()), m_pageID);
 
 #ifndef NDEBUG
     webPageCounter.increment();
@@ -246,10 +232,10 @@ void WebPage::changeAcceleratedCompositingMode(WebCore::GraphicsLayer* layer)
     // Tell the UI process that accelerated compositing changed. It may respond by changing
     // drawing area types.
     DrawingArea::DrawingAreaInfo newDrawingAreaInfo;
-    WebProcess::shared().connection()->sendSync(WebPageProxyMessage::DidChangeAcceleratedCompositing,
-                                                m_pageID, CoreIPC::In(compositing),
-                                                CoreIPC::Out(newDrawingAreaInfo),
-                                                CoreIPC::Connection::NoTimeout);
+
+    WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::DidChangeAcceleratedCompositing(compositing),
+        Messages::WebPageProxy::DidChangeAcceleratedCompositing::Reply(newDrawingAreaInfo),
+        m_pageID, CoreIPC::Connection::NoTimeout);
     
     if (newDrawingAreaInfo.type != drawingArea()->info().type) {
         m_drawingArea = 0;
@@ -263,10 +249,7 @@ void WebPage::changeAcceleratedCompositingMode(WebCore::GraphicsLayer* layer)
 void WebPage::enterAcceleratedCompositingMode(GraphicsLayer* layer)
 {
     changeAcceleratedCompositingMode(layer);
-    
-#if USE(ACCELERATED_COMPOSITING)
     m_drawingArea->setRootCompositingLayer(layer);
-#endif
 }
 
 void WebPage::exitAcceleratedCompositingMode()
@@ -280,8 +263,12 @@ void WebPage::close()
     if (WebProcess::shared().injectedBundle())
         WebProcess::shared().injectedBundle()->willDestroyPage(this);
 
-    m_mainFrame->coreFrame()->loader()->detachFromParent();
+    if (m_activePopupMenu) {
+        m_activePopupMenu->disconnectFromPage();
+        m_activePopupMenu = 0;
+    }
 
+    m_mainFrame->coreFrame()->loader()->detachFromParent();
     m_page.clear();
 
     WebProcess::shared().removeWebPage(m_pageID);
@@ -297,7 +284,7 @@ void WebPage::tryClose()
 
 void WebPage::sendClose()
 {
-    WebProcess::shared().connection()->send(WebPageProxyMessage::ClosePage, m_pageID, CoreIPC::In());
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::ClosePage(), m_pageID);
 }
 
 void WebPage::loadURL(const String& url)
@@ -384,6 +371,13 @@ void WebPage::drawRect(GraphicsContext& graphicsContext, const IntRect& rect)
     graphicsContext.clip(rect);
     m_mainFrame->coreFrame()->view()->paint(&graphicsContext, rect);
     graphicsContext.restore();
+
+    if (m_pageOverlay) {
+        graphicsContext.save();
+        graphicsContext.clip(rect);
+        m_pageOverlay->drawRect(graphicsContext, rect);
+        graphicsContext.restore();
+    }
 }
 
 double WebPage::textZoomFactor() const
@@ -424,6 +418,18 @@ void WebPage::setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFa
     if (!frame)
         return;
     return frame->setPageAndTextZoomFactors(static_cast<float>(pageZoomFactor), static_cast<float>(textZoomFactor));
+}
+
+void WebPage::installPageOverlay(PassOwnPtr<PageOverlay> pageOverlay)
+{
+    m_pageOverlay = pageOverlay;
+    m_pageOverlay->setPage(this);
+}
+
+void WebPage::uninstallPageOverlay()
+{
+    m_pageOverlay = 0;
+    m_drawingArea->setNeedsDisplay(IntRect(IntPoint(0, 0), m_viewSize));
 }
 
 // Events 
@@ -481,8 +487,7 @@ void WebPage::mouseEvent(const WebMouseEvent& mouseEvent)
     CurrentEvent currentEvent(mouseEvent);
 
     bool handled = handleMouseEvent(mouseEvent, m_page.get());
-
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(mouseEvent.type()), handled));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidReceiveEvent(static_cast<uint32_t>(mouseEvent.type()), handled), m_pageID);
 }
 
 static bool handleWheelEvent(const WebWheelEvent& wheelEvent, Page* page)
@@ -500,7 +505,7 @@ void WebPage::wheelEvent(const WebWheelEvent& wheelEvent)
     CurrentEvent currentEvent(wheelEvent);
 
     bool handled = handleWheelEvent(wheelEvent, m_page.get());
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(wheelEvent.type()), handled));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidReceiveEvent(static_cast<uint32_t>(wheelEvent.type()), handled), m_pageID);
 }
 
 static bool handleKeyEvent(const WebKeyboardEvent& keyboardEvent, Page* page)
@@ -519,21 +524,21 @@ void WebPage::keyEvent(const WebKeyboardEvent& keyboardEvent)
     if (!handled)
         handled = performDefaultBehaviorForKeyEvent(keyboardEvent);
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(keyboardEvent.type()), handled));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidReceiveEvent(static_cast<uint32_t>(keyboardEvent.type()), handled), m_pageID);
 }
 
 void WebPage::validateMenuItem(const String& commandName)
 {
     bool isEnabled = false;
-    int state = 0;
+    int32_t state = 0;
     Frame* frame = m_page->focusController()->focusedOrMainFrame();
     if (frame) {
         Editor::Command command = frame->editor()->command(commandName);
         state = command.state();
         isEnabled = command.isSupported() && command.isEnabled();
     }
-    
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidValidateMenuItem, m_pageID, CoreIPC::In(commandName, isEnabled, state));
+
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidValidateMenuItem(commandName, isEnabled, state), m_pageID);
 }
 
 void WebPage::executeEditCommand(const String& commandName)
@@ -557,7 +562,7 @@ void WebPage::touchEvent(const WebTouchEvent& touchEvent)
 
     bool handled = handleTouchEvent(touchEvent, m_page.get());
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidReceiveEvent, m_pageID, CoreIPC::In(static_cast<uint32_t>(touchEvent.type()), handled));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidReceiveEvent(static_cast<uint32_t>(touchEvent.type()), handled), m_pageID);
 }
 #endif
 
@@ -612,7 +617,7 @@ void WebPage::didReceivePolicyDecision(uint64_t frameID, uint64_t listenerID, ui
 
 void WebPage::show()
 {
-    WebProcess::shared().connection()->send(WebPageProxyMessage::ShowPage, m_pageID, CoreIPC::In());
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::ShowPage(), m_pageID);
 }
 
 void WebPage::setCustomUserAgent(const String& customUserAgent)
@@ -653,13 +658,13 @@ void WebPage::runJavaScriptInMainFrame(const String& script, uint64_t callbackID
     JSValue resultValue = m_mainFrame->coreFrame()->script()->executeScript(script, true).jsValue();
     String resultString = ustringToString(resultValue.toString(m_mainFrame->coreFrame()->script()->globalObject(mainThreadNormalWorld())->globalExec()));
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidRunJavaScriptInMainFrame, m_pageID, CoreIPC::In(resultString, callbackID));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidRunJavaScriptInMainFrame(resultString, callbackID), m_pageID);
 }
 
 void WebPage::getRenderTreeExternalRepresentation(uint64_t callbackID)
 {
     String resultString = renderTreeExternalRepresentation();
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidGetRenderTreeExternalRepresentation, m_pageID, CoreIPC::In(resultString, callbackID));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidGetRenderTreeExternalRepresentation(resultString, callbackID), m_pageID);
 }
 
 void WebPage::getSourceForFrame(uint64_t frameID, uint64_t callbackID)
@@ -667,27 +672,43 @@ void WebPage::getSourceForFrame(uint64_t frameID, uint64_t callbackID)
     String resultString;
     if (WebFrame* frame = WebProcess::shared().webFrame(frameID))
        resultString = frame->source();
-    WebProcess::shared().connection()->send(WebPageProxyMessage::DidGetSourceForFrame, m_pageID, CoreIPC::In(resultString, callbackID));
+
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidGetSourceForFrame(resultString, callbackID), m_pageID);
 }
 
 void WebPage::preferencesDidChange(const WebPreferencesStore& store)
 {
     WebPreferencesStore::removeTestRunnerOverrides();
+    updatePreferences(store);
+}
 
-    m_page->settings()->setJavaScriptEnabled(store.javaScriptEnabled);
-    m_page->settings()->setLoadsImagesAutomatically(store.loadsImagesAutomatically);
-    m_page->settings()->setPluginsEnabled(store.pluginsEnabled);
-    m_page->settings()->setOfflineWebApplicationCacheEnabled(store.offlineWebApplicationCacheEnabled);
-    m_page->settings()->setLocalStorageEnabled(store.localStorageEnabled);
-    m_page->settings()->setXSSAuditorEnabled(store.xssAuditorEnabled);
-    m_page->settings()->setFrameFlatteningEnabled(store.frameFlatteningEnabled);
-    m_page->settings()->setStandardFontFamily(store.standardFontFamily);
-    m_page->settings()->setCursiveFontFamily(store.cursiveFontFamily);
-    m_page->settings()->setFantasyFontFamily(store.fantasyFontFamily);
-    m_page->settings()->setFixedFontFamily(store.fixedFontFamily);
-    m_page->settings()->setSansSerifFontFamily(store.sansSerifFontFamily);
-    m_page->settings()->setSerifFontFamily(store.serifFontFamily);
+void WebPage::updatePreferences(const WebPreferencesStore& store)
+{
+    Settings* settings = m_page->settings();
+    
+    settings->setJavaScriptEnabled(store.javaScriptEnabled);
+    settings->setLoadsImagesAutomatically(store.loadsImagesAutomatically);
+    settings->setPluginsEnabled(store.pluginsEnabled);
+    settings->setOfflineWebApplicationCacheEnabled(store.offlineWebApplicationCacheEnabled);
+    settings->setLocalStorageEnabled(store.localStorageEnabled);
+    settings->setXSSAuditorEnabled(store.xssAuditorEnabled);
+    settings->setFrameFlatteningEnabled(store.frameFlatteningEnabled);
+    settings->setMinimumFontSize(store.minimumFontSize);
+    settings->setMinimumLogicalFontSize(store.minimumLogicalFontSize);
+    settings->setDefaultFontSize(store.defaultFontSize);
+    settings->setDefaultFixedFontSize(store.defaultFixedFontSize);
+    settings->setStandardFontFamily(store.standardFontFamily);
+    settings->setCursiveFontFamily(store.cursiveFontFamily);
+    settings->setFantasyFontFamily(store.fantasyFontFamily);
+    settings->setFixedFontFamily(store.fixedFontFamily);
+    settings->setSansSerifFontFamily(store.sansSerifFontFamily);
+    settings->setSerifFontFamily(store.serifFontFamily);
+    settings->setJavaScriptCanOpenWindowsAutomatically(true);
 
+    settings->setAcceleratedCompositingEnabled(store.acceleratedCompositingEnabled);
+    settings->setShowDebugBorders(store.compositingBordersVisible);
+    settings->setShowRepaintCounter(store.compositingRepaintCountersVisible);
+    
     platformPreferencesDidChange(store);
 }
 
@@ -760,6 +781,39 @@ void WebPage::didRemoveEditCommand(uint64_t commandID)
 {
     removeWebEditCommand(commandID);
 }
+
+void WebPage::setActivePopupMenu(WebPopupMenu* menu)
+{
+    m_activePopupMenu = menu;
+}
+
+void WebPage::findString(const String& string, uint32_t findDirection, uint32_t findOptions, uint32_t maxNumMatches)
+{
+    m_findController.findString(string, static_cast<FindDirection>(findDirection), static_cast<FindOptions>(findOptions), maxNumMatches);
+}
+
+void WebPage::hideFindUI()
+{
+    m_findController.hideFindUI();
+}
+
+void WebPage::countStringMatches(const String& string, bool caseInsensitive, uint32_t maxNumMatches)
+{
+    unsigned numMatches = m_page->markAllMatchesForText(string, caseInsensitive ? TextCaseInsensitive : TextCaseSensitive, false, maxNumMatches);
+    m_page->unmarkAllTextMatches();
+
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidCountStringMatches(string, numMatches), m_pageID);
+}
+
+void WebPage::didChangeSelectedIndexForActivePopupMenu(int32_t newIndex)
+{
+    if (!m_activePopupMenu)
+        return;
+
+    m_activePopupMenu->didChangeSelectedIndex(newIndex);
+    m_activePopupMenu = 0;
+}
+
 
 #if PLATFORM(MAC)
 void WebPage::addPluginView(PluginView* pluginView)

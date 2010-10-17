@@ -25,6 +25,10 @@
 
 #import "WKView.h"
 
+namespace WebKit {
+    class FindIndicator;
+}
+
 @interface WKView (Internal)
 - (void)_processDidExit;
 - (void)_processDidRevive;
@@ -32,6 +36,11 @@
 - (void)_toolTipChangedFrom:(NSString *)oldToolTip to:(NSString *)newToolTip;
 - (void)_setCursor:(NSCursor *)cursor;
 - (void)_setUserInterfaceItemState:(NSString *)commandName enabled:(BOOL)isEnabled state:(int)newState;
+
+- (NSRect)_convertToDeviceSpace:(NSRect)rect;
+- (NSRect)_convertToUserSpace:(NSRect)rect;
+
+- (void)_setFindIndicator:(PassRefPtr<WebKit::FindIndicator>)findIndicator fadeOut:(BOOL)fadeOut;
 
 #if USE(ACCELERATED_COMPOSITING)
 - (void)_startAcceleratedCompositing:(CALayer *)rootLayer;

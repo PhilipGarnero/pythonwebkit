@@ -13,7 +13,7 @@ QT_END_NAMESPACE
 
 class QGraphicsWKViewPrivate;
 
-WKStringRef WKStringCreateWithQString(QString qString);
+WKStringRef WKStringCreateWithQString(const QString& qString);
 QString WKStringCopyQString(WKStringRef stringRef);
 
 class QWEBKIT_EXPORT QGraphicsWKView : public QGraphicsWidget {
@@ -75,6 +75,9 @@ protected:
     virtual void hoverMoveEvent(QGraphicsSceneHoverEvent*);
 
     Q_SLOT void updateCursor(const QCursor&);
+
+    virtual void focusInEvent(QFocusEvent*);
+    virtual void focusOutEvent(QFocusEvent*);
 
 private:
     QGraphicsWKViewPrivate* d;

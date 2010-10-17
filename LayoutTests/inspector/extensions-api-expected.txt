@@ -59,6 +59,8 @@ RUNNING TEST: extension_testAPI
         }
         getAll : <function>
         get : <function>
+        getPageTimings : <function>
+        getContent : <function>
     }
     onReset : {
         addListener : <function>

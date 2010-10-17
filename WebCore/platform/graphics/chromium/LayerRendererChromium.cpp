@@ -73,7 +73,7 @@ static inline bool compareLayerZ(const LayerChromium* a, const LayerChromium* b)
     return transformA.m43() < transformB.m43();
 }
 
-PassRefPtr<LayerRendererChromium> LayerRendererChromium::create(PassOwnPtr<GraphicsContext3D> context)
+PassRefPtr<LayerRendererChromium> LayerRendererChromium::create(PassRefPtr<GraphicsContext3D> context)
 {
     if (!context)
         return 0;
@@ -85,7 +85,7 @@ PassRefPtr<LayerRendererChromium> LayerRendererChromium::create(PassOwnPtr<Graph
     return layerRenderer.release();
 }
 
-LayerRendererChromium::LayerRendererChromium(PassOwnPtr<GraphicsContext3D> context)
+LayerRendererChromium::LayerRendererChromium(PassRefPtr<GraphicsContext3D> context)
     : m_rootLayerTextureId(0)
     , m_rootLayerTextureWidth(0)
     , m_rootLayerTextureHeight(0)
@@ -127,7 +127,6 @@ void LayerRendererChromium::setRootLayerCanvasSize(const IntSize& size)
     // the old ones.
     m_rootLayerCanvas = new skia::PlatformCanvas(size.width(), size.height(), false);
     m_rootLayerSkiaContext = new PlatformContextSkia(m_rootLayerCanvas.get());
-    m_rootLayerSkiaContext->setDrawingToImageBuffer(true);
     m_rootLayerGraphicsContext = new GraphicsContext(reinterpret_cast<PlatformGraphicsContext*>(m_rootLayerSkiaContext.get()));
 #elif PLATFORM(CG)
     // Release the previous CGBitmapContext before reallocating the backing store as a precaution.
@@ -204,6 +203,8 @@ void LayerRendererChromium::prepareToDrawLayers(const IntRect& visibleRect, cons
     GLC(m_context, m_context->disable(GraphicsContext3D::CULL_FACE));
     GLC(m_context, m_context->depthFunc(GraphicsContext3D::LEQUAL));
     GLC(m_context, m_context->clearStencil(0));
+    // Blending disabled by default. Root layer alpha channel on Windows is incorrect when Skia uses ClearType. 
+    GLC(m_context, m_context->disable(GraphicsContext3D::BLEND)); 
 
     if (m_scrollPosition == IntPoint(-1, -1)) {
         m_scrollPosition = scrollPosition;
@@ -284,11 +285,15 @@ void LayerRendererChromium::drawLayers(const IntRect& visibleRect, const IntRect
     const ContentLayerChromium::SharedValues* contentLayerValues = contentLayerSharedValues();
     useShader(contentLayerValues->contentShaderProgram());
     GLC(m_context, m_context->uniform1i(contentLayerValues->shaderSamplerLocation(), 0));
+    // Mask out writes to alpha channel: ClearType via Skia results in invalid
+    // zero alpha values on text glyphs. The root layer is always opaque.
+    GLC(m_context, m_context->colorMask(true, true, true, false));
     TransformationMatrix layerMatrix;
     layerMatrix.translate3d(visibleRect.width() * 0.5f, visibleRect.height() * 0.5f, 0);
     LayerChromium::drawTexturedQuad(m_context.get(), m_projectionMatrix, layerMatrix,
                                     visibleRect.width(), visibleRect.height(), 1,
                                     contentLayerValues->shaderMatrixLocation(), contentLayerValues->shaderAlphaLocation());
+    GLC(m_context, m_context->colorMask(true, true, true, true));
 
     // If culling is enabled then we will cull the backface.
     GLC(m_context, m_context->cullFace(GraphicsContext3D::BACK));
@@ -302,8 +307,9 @@ void LayerRendererChromium::drawLayers(const IntRect& visibleRect, const IntRect
     GLC(m_context, m_context->enable(GraphicsContext3D::BLEND));
     GLC(m_context, m_context->blendFunc(GraphicsContext3D::ONE, GraphicsContext3D::ONE_MINUS_SRC_ALPHA));
 
-    // Set the rootVisibleRect --- used by subsequent drawLayers calls
+    // Set the root visible/content rects --- used by subsequent drawLayers calls.
     m_rootVisibleRect = visibleRect;
+    m_rootContentRect = contentRect;
 
     // Traverse the layer tree and update the layer transforms.
     float opacity = 1;
@@ -331,6 +337,7 @@ void LayerRendererChromium::drawLayers(const IntRect& visibleRect, const IntRect
         drawLayersRecursive(sublayers[i].get(), scissorRect);
 
     GLC(m_context, m_context->disable(GraphicsContext3D::SCISSOR_TEST));
+    GLC(m_context, m_context->disable(GraphicsContext3D::BLEND));
 }
 
 void LayerRendererChromium::finish()

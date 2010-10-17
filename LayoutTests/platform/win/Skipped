@@ -307,19 +307,25 @@ editing/selection/drag-in-iframe.html
 fast/events/dragging-mouse-moves.html
 
 # Crash beneath SocketStream::readStreamCallback http://webkit.org/b/44138
-websocket/tests/workers/worker-handshake-challenge-randomness.html
+http/tests/websocket/tests/workers/worker-handshake-challenge-randomness.html
 
 # http://webkit.org/b/46911
 accessibility/aria-hidden-update.html
 
-# Crash in AccessibilityUIElement::addSelection http://webkit.org/b/46913
-platform/win/accessibility/selection-and-focus.html
+# Causes next test to time out http://webkit.org/b/46975
+http/tests/xmlhttprequest/xmlhttprequest-sync-vs-async-assertion-failure.html
 
-# http://webkit.org/b/46914
-platform/win/accessibility/img-alt-attribute.html
+# Failing in Release builds http://webkit.org/b/46976
+fast/js/sputnik/Conformance/11_Expressions/11.7_Bitwise_Shift_Operators/11.7.3_The_Unsigned_Right_Shift_Operator/S11.7.3_A2.3_T1.html
 
-# http://webkit.org/b/46919
-svg/custom/clip-path-referencing-use2.svg
+# Timing out http://webkit.org/b/46977
+inspector/debugger-pause-on-breakpoint.html
+
+# Sometimes fails http://webkit.org/b/46998
+svg/dom/SVGScriptElement/script-load-and-error-events.svg
+
+# Times out in Release builds http://webkit.org/b/47091
+http/tests/misc/copy-resolves-urls.html
 
 ################################################################################
 ####################### No bugs filed about the below yet#######################
@@ -707,9 +713,7 @@ fast/forms/input-selectedoption.html
 http/tests/local/send-dragged-file.html
 http/tests/local/send-sliced-dragged-file.html
 http/tests/local/blob/send-hybrid-blob.html
-http/tests/local/formdata/send-form-data.html
-http/tests/local/formdata/send-form-data-with-sliced-file.html
-http/tests/local/formdata/upload-events.html
+http/tests/local/formdata
 
 # Need Blob.slice support
 http/tests/local/blob/send-sliced-data-blob.html
@@ -770,9 +774,6 @@ http/tests/security/xss-DENIED-getSVGDocument-object.html
 http/tests/navigation/dynamic-iframe-dynamic-form-back-entry.html
 http/tests/navigation/parsed-iframe-dynamic-form-back-entry.html
 
-# Shows subtle 0.0 vs -0.0 difference in path debug string, see https://bugs.webkit.org/show_bug.cgi?id=17393
-svg/custom/use-on-symbol-inside-pattern.svg
-
 # Crashes debug slave, see https://bugs.webkit.org/show_bug.cgi?id=33155
 fast/frames/iframe-onload-remove-self-no-crash.html
 
@@ -812,8 +813,8 @@ media/video-display-aspect-ratio.html
 http/tests/misc/image-checks-for-accept.html
 
 # Tests timeout: https://bugs.webkit.org/show_bug.cgi?id=35041
-websocket/tests/frame-lengths.html
-websocket/tests/simple-stress.html
+http/tests/websocket/tests/frame-lengths.html
+http/tests/websocket/tests/simple-stress.html
 
 # Needs platform specific API implemented in DRT, maybe not relevant for non-Mac and non-Windows ports
 fast/loader/api-test-new-window-data-load-base-url.html
@@ -912,6 +913,7 @@ fast/dom/Window/window-properties-device-orientation.html
 
 # Link prefetch is disabled by default
 fast/dom/HTMLLinkElement/prefetch.html
+http/tests/misc/prefetch-purpose.html
 
 # LayoutTestController::pageProperty is not implemented for WIN yet.
 printing/page-rule-selection.html
@@ -1034,3 +1036,6 @@ fast/dom/nodesFromRect-basic.html
 # https://bugs.webkit.org/show_bug.cgi?id=46223
 # The WebKit plugin implementation does not support iframe shims.
 plugins/iframe-shims.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=22261
+fast/events/click-focus-control.html

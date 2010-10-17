@@ -310,28 +310,29 @@ global_cppflags += \
 endif
 
 webkitgtk_static_h_api += \
+	$(srcdir)/WebCore/platform/network/soup/cache/webkit/soup-cache.h \
 	$(srcdir)/WebKit/gtk/webkit/webkit.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitdefines.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitdownload.h \
 	$(srcdir)/WebKit/gtk/webkit/webkiterror.h \
+	$(srcdir)/WebKit/gtk/webkit/webkitgeolocationpolicydecision.h \
 	$(srcdir)/WebKit/gtk/webkit/webkithittestresult.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitnetworkrequest.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitnetworkresponse.h \
+	$(srcdir)/WebKit/gtk/webkit/webkitsecurityorigin.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitsoupauthdialog.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebbackforwardlist.h \
+	$(srcdir)/WebKit/gtk/webkit/webkitwebdatabase.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebdatasource.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebframe.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebhistoryitem.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebinspector.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebnavigationaction.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebpolicydecision.h \
-	$(srcdir)/WebKit/gtk/webkit/webkitgeolocationpolicydecision.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebresource.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebsettings.h \
 	$(srcdir)/WebKit/gtk/webkit/webkitwebwindowfeatures.h \
-	$(srcdir)/WebKit/gtk/webkit/webkitwebview.h \
-	$(srcdir)/WebKit/gtk/webkit/webkitwebdatabase.h \
-	$(srcdir)/WebKit/gtk/webkit/webkitsecurityorigin.h
+	$(srcdir)/WebKit/gtk/webkit/webkitwebview.h
 
 webkitgtk_built_h_api += \
 	WebKit/gtk/webkit/webkitversion.h
@@ -433,15 +434,19 @@ $(WEBKIT_GIRSOURCES): $(G_IR_SCANNER) $(JSCORE_GIRSOURCES) libwebkitgtk-@WEBKITG
 	     --output=$@ \
 	     --add-include-path=$(top_srcdir)/WebKit/gtk \
 	     --add-include-path=$(builddir) \
+	     -I$(top_srcdir)/WebCore/platform/network/soup/cache \
 	     -I$(top_srcdir)/WebKit/gtk \
 	     -I$(top_builddir)/WebKit/gtk \
 	     -I$(top_builddir)/DerivedSources \
 	     -I$(top_builddir)/DerivedSources/webkit \
 	     -I$(top_builddir)/DerivedSources/python \
+	     -I$(top_builddir)/WebKit/gtk/webkit \
 	     -I$(top_srcdir)/JavaScriptCore/ForwardingHeaders \
 	     -I$(top_srcdir) \
+	     $(top_builddir)/WebKit/gtk/webkit/webkitenumtypes.h \
 	     $(webkitgtk_h_api) \
-	     $(top_srcdir)/WebKit/gtk/webkit/*.cpp
+	     $(top_srcdir)/WebKit/gtk/webkit/*.cpp \
+	     $(top_srcdir)/WebKit/gtk/webkit/*.c
 
 girdir = $(datadir)/gir-1.0
 gir_DATA = $(WEBKIT_GIRSOURCES) $(JSCORE_GIRSOURCES)
@@ -570,6 +575,7 @@ noinst_PROGRAMS += $(TEST_PROGS)
 webkit_tests_cflags = \
 	-fno-strict-aliasing \
 	-I$(srcdir)/JavaScriptCore/ForwardingHeaders \
+	-I$(srcdir)/WebCore/platform/network/soup/cache \
 	-I$(srcdir)/WebKit/gtk \
 	-I$(top_builddir)/WebKit/gtk \
 	-I$(top_builddir)/DerivedSources \

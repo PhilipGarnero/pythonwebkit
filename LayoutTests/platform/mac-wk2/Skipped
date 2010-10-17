@@ -78,6 +78,7 @@ compositing/tiling/huge-layer-resize.html
 compositing/tiling/huge-layer-with-layer-children-resize.html
 compositing/tiling/huge-layer-with-layer-children.html
 compositing/tiling/huge-layer.html
+compositing/tiling/huge-layer-img.html
 compositing/video/video-poster.html
 
 # Uncategorized editing failures
@@ -486,9 +487,7 @@ http/tests/local/blob/send-data-blob.html
 http/tests/local/blob/send-hybrid-blob.html
 http/tests/local/blob/send-sliced-data-blob.html
 http/tests/local/drag-over-remote-content.html
-http/tests/local/formdata/send-form-data-with-sliced-file.html
-http/tests/local/formdata/send-form-data.html
-http/tests/local/formdata/upload-events.html
+http/tests/local/formdata
 http/tests/local/send-dragged-file.html
 http/tests/local/send-sliced-dragged-file.html
 http/tests/misc/bubble-drag-events.html
@@ -513,6 +512,10 @@ platform/mac/editing/deleting/backward-delete.html
 platform/mac/editing/pasteboard/dataTransfer-set-data-file-url.html
 platform/mac/editing/selection/doubleclick-should-not-expand-across-lines.html
 platform/mac/editing/selection/word-thai.html
+platform/mac/editing/spelling/autocorrection-delete.html
+platform/mac/editing/spelling/autocorrection-removing-underline-after-paste.html
+platform/mac/editing/spelling/autocorrection-removing-underline.html
+platform/mac/editing/spelling/autocorrection-simple.html
 platform/mac/fast/forms/input-appearance-spinbutton-up.html
 platform/mac/fast/forms/input-number-click.html
 platform/mac/fast/forms/listbox-scrollbar-hit-test.html

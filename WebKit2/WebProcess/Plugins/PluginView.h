@@ -98,6 +98,7 @@ private:
     virtual PlatformLayer* platformLayer() const;
 #endif
     virtual JSC::JSObject* scriptObject(JSC::JSGlobalObject*);
+    virtual void privateBrowsingStateChanged(bool);
     
     // WebCore::Widget
     virtual void setFrameRect(const WebCore::IntRect&);
@@ -127,6 +128,10 @@ private:
 #if PLATFORM(WIN)
     virtual HWND nativeParentWindow();
 #endif
+    virtual String proxiesForURL(const String&);
+    virtual String cookiesForURL(const String&);
+    virtual void setCookiesForURL(const String& urlString, const String& cookieString);
+    virtual bool isPrivateBrowsingEnabled();
 
     // WebFrame::LoadListener
     virtual void didFinishLoad(WebFrame*);

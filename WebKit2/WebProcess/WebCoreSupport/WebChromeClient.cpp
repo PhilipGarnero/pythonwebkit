@@ -36,7 +36,7 @@
 #include "WebFrameLoaderClient.h"
 #include "WebPage.h"
 #include "WebPageCreationParameters.h"
-#include "WebPageProxyMessageKinds.h"
+#include "WebPageProxyMessages.h"
 #include "WebPopupMenu.h"
 #include "WebPreferencesStore.h"
 #include "WebProcess.h"
@@ -57,15 +57,21 @@ void WebChromeClient::chromeDestroyed()
     delete this;
 }
 
-void WebChromeClient::setWindowRect(const FloatRect&)
+void WebChromeClient::setWindowRect(const FloatRect& windowFrame)
 {
-    notImplemented();
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::SetWindowFrame(windowFrame), m_page->pageID());
 }
 
 FloatRect WebChromeClient::windowRect()
 {
-    notImplemented();
-    return FloatRect();
+    FloatRect newWindowFrame;
+
+    if (!WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::GetWindowFrame(),
+            Messages::WebPageProxy::GetWindowFrame::Reply(newWindowFrame),
+            m_page->pageID(), CoreIPC::Connection::NoTimeout))
+        return FloatRect();
+
+    return newWindowFrame;
 }
 
 FloatRect WebChromeClient::pageRect()
@@ -98,8 +104,7 @@ bool WebChromeClient::canTakeFocus(FocusDirection)
 
 void WebChromeClient::takeFocus(FocusDirection direction)
 {
-    WebProcess::shared().connection()->send(WebPageProxyMessage::TakeFocus, m_page->pageID(),
-                                            direction == FocusDirectionForward ? true : false);
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::TakeFocus(direction == FocusDirectionForward ? true : false), m_page->pageID());
 }
 
 void WebChromeClient::focusedNodeChanged(Node*)
@@ -111,18 +116,17 @@ Page* WebChromeClient::createWindow(Frame*, const FrameLoadRequest&, const Windo
 {
     uint64_t newPageID = 0;
     WebPageCreationParameters parameters;
-    if (!WebProcess::shared().connection()->sendSync(WebPageProxyMessage::CreateNewPage,
-                                                     m_page->pageID(), CoreIPC::In(),
-                                                     CoreIPC::Out(newPageID, parameters),
-                                                     CoreIPC::Connection::NoTimeout)) {
+    if (!WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::CreateNewPage(),
+            Messages::WebPageProxy::CreateNewPage::Reply(newPageID, parameters),
+            m_page->pageID(), CoreIPC::Connection::NoTimeout)) {
         return 0;
     }
 
     if (!newPageID)
         return 0;
 
-    WebPage* newWebPage = WebProcess::shared().createWebPage(newPageID, parameters);
-    return newWebPage->corePage();
+    WebProcess::shared().createWebPage(newPageID, parameters);
+    return WebProcess::shared().webPage(newPageID)->corePage();
 }
 
 void WebChromeClient::show()
@@ -200,14 +204,26 @@ void WebChromeClient::addMessageToConsole(MessageSource, MessageType, MessageLev
 
 bool WebChromeClient::canRunBeforeUnloadConfirmPanel()
 {
-    notImplemented();
-    return false;
+    bool canRun = false;
+    if (!WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::CanRunBeforeUnloadConfirmPanel(),
+            Messages::WebPageProxy::CanRunBeforeUnloadConfirmPanel::Reply(canRun),
+            m_page->pageID(), CoreIPC::Connection::NoTimeout))
+        return false;
+
+    return canRun;
 }
 
 bool WebChromeClient::runBeforeUnloadConfirmPanel(const String& message, Frame* frame)
 {
-    notImplemented();
-    return false;
+    WebFrame* webFrame =  static_cast<WebFrameLoaderClient*>(frame->loader()->client())->webFrame();
+
+    bool shouldClose = false;
+    if (!WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::RunBeforeUnloadConfirmPanel(message, webFrame->frameID()),
+            Messages::WebPageProxy::RunBeforeUnloadConfirmPanel::Reply(shouldClose),
+            m_page->pageID(), CoreIPC::Connection::NoTimeout))
+        return false;
+
+    return shouldClose;
 }
 
 void WebChromeClient::closeWindowSoon()
@@ -236,10 +252,8 @@ void WebChromeClient::runJavaScriptAlert(Frame* frame, const String& alertText)
     // Notify the bundle client.
     m_page->injectedBundleUIClient().willRunJavaScriptAlert(m_page, alertText, webFrame);
 
-    WebProcess::shared().connection()->sendSync(WebPageProxyMessage::RunJavaScriptAlert, m_page->pageID(),
-                                                CoreIPC::In(webFrame->frameID(), alertText),
-                                                CoreIPC::Out(),
-                                                CoreIPC::Connection::NoTimeout);
+    WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::RunJavaScriptAlert(webFrame->frameID(), alertText),
+        Messages::WebPageProxy::RunJavaScriptAlert::Reply(), m_page->pageID(), CoreIPC::Connection::NoTimeout);
 }
 
 bool WebChromeClient::runJavaScriptConfirm(Frame* frame, const String& message)
@@ -250,12 +264,9 @@ bool WebChromeClient::runJavaScriptConfirm(Frame* frame, const String& message)
     m_page->injectedBundleUIClient().willRunJavaScriptConfirm(m_page, message, webFrame);
 
     bool result = false;
-    if (!WebProcess::shared().connection()->sendSync(WebPageProxyMessage::RunJavaScriptConfirm, m_page->pageID(),
-                                                     CoreIPC::In(webFrame->frameID(), message),
-                                                     CoreIPC::Out(result),
-                                                     CoreIPC::Connection::NoTimeout)) {
+    if (!WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::RunJavaScriptConfirm(webFrame->frameID(), message),
+             Messages::WebPageProxy::RunJavaScriptConfirm::Reply(result), m_page->pageID(), CoreIPC::Connection::NoTimeout))
         return false;
-    }
 
     return result;
 }
@@ -267,12 +278,9 @@ bool WebChromeClient::runJavaScriptPrompt(Frame* frame, const String& message, c
     // Notify the bundle client.
     m_page->injectedBundleUIClient().willRunJavaScriptPrompt(m_page, message, defaultValue, webFrame);
 
-    if (!WebProcess::shared().connection()->sendSync(WebPageProxyMessage::RunJavaScriptPrompt, m_page->pageID(),
-                                                     CoreIPC::In(webFrame->frameID(), message, defaultValue),
-                                                     CoreIPC::Out(result),
-                                                     CoreIPC::Connection::NoTimeout)) {
+    if (!WebProcess::shared().connection()->sendSync(Messages::WebPageProxy::RunJavaScriptPrompt(webFrame->frameID(), message, defaultValue),
+             Messages::WebPageProxy::RunJavaScriptPrompt::Reply(result), m_page->pageID(), CoreIPC::Connection::NoTimeout))
         return false;
-    }
 
     return !result.isNull();
 }
@@ -282,7 +290,7 @@ void WebChromeClient::setStatusbarText(const String& statusbarText)
     // Notify the bundle client.
     m_page->injectedBundleUIClient().willSetStatusbarText(m_page, statusbarText);
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::SetStatusText, m_page->pageID(), statusbarText);
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::SetStatusText(statusbarText), m_page->pageID());
 }
 
 bool WebChromeClient::shouldInterruptJavaScript()
@@ -314,11 +322,17 @@ void WebChromeClient::invalidateContentsAndWindow(const IntRect& rect, bool imme
 
 void WebChromeClient::invalidateContentsForSlowScroll(const IntRect& rect, bool immediate)
 {
+    // Hide the find indicator.
+    m_page->findController().hideFindIndicator();
+
     m_page->drawingArea()->invalidateContentsForSlowScroll(rect, immediate);
 }
 
 void WebChromeClient::scroll(const IntSize& scrollDelta, const IntRect& rectToScroll, const IntRect& clipRect)
 {
+    // Hide the find indicator.
+    m_page->findController().hideFindIndicator();
+
     m_page->drawingArea()->scroll(scrollDelta, rectToScroll, clipRect);
 }
 
@@ -343,8 +357,8 @@ PlatformPageClient WebChromeClient::platformPageClient() const
 void WebChromeClient::contentsSizeChanged(Frame* frame, const IntSize& size) const
 {
     WebFrame* webFrame =  static_cast<WebFrameLoaderClient*>(frame->loader()->client())->webFrame();
-    WebProcess::shared().connection()->send(WebPageProxyMessage::ContentsSizeChanged, m_page->pageID(),
-                                            CoreIPC::In(webFrame->frameID(), size));
+
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::ContentsSizeChanged(webFrame->frameID(), size), m_page->pageID());
 }
 
 void WebChromeClient::scrollRectIntoView(const IntRect&, const ScrollView*) const
@@ -365,7 +379,7 @@ void WebChromeClient::mouseDidMoveOverElement(const HitTestResult& hitTestResult
     m_page->injectedBundleUIClient().mouseDidMoveOverElement(m_page, hitTestResult, static_cast<WebEvent::Modifiers>(modifierFlags), userData);
 
     // Notify the UIProcess.
-    WebProcess::shared().connection()->send(WebPageProxyMessage::MouseDidMoveOverElement, m_page->pageID(), CoreIPC::In(modifierFlags, InjectedBundleUserMessageEncoder(userData.get())));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::MouseDidMoveOverElement(modifierFlags, InjectedBundleUserMessageEncoder(userData.get())), m_page->pageID());
 }
 
 void WebChromeClient::setToolTip(const String& toolTip, TextDirection)
@@ -376,7 +390,7 @@ void WebChromeClient::setToolTip(const String& toolTip, TextDirection)
         return;
     m_cachedToolTip = toolTip;
 
-    WebProcess::shared().connection()->send(WebPageProxyMessage::SetToolTip, m_page->pageID(), CoreIPC::In(m_cachedToolTip));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::SetToolTip(m_cachedToolTip), m_page->pageID());
 }
 
 void WebChromeClient::print(Frame*)
@@ -476,7 +490,7 @@ void WebChromeClient::chooseIconForFiles(const Vector<String>&, FileChooser*)
 void WebChromeClient::setCursor(const Cursor& cursor)
 {
 #if USE(LAZY_NATIVE_CURSOR)
-    WebProcess::shared().connection()->send(WebPageProxyMessage::SetCursor, m_page->pageID(), CoreIPC::In(cursor));
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::SetCursor(cursor), m_page->pageID());
 #endif
 }
 
@@ -502,12 +516,12 @@ bool WebChromeClient::selectItemWritingDirectionIsNatural()
 
 PassRefPtr<WebCore::PopupMenu> WebChromeClient::createPopupMenu(WebCore::PopupMenuClient* client) const
 {
-    return WebPopupMenu::create(client);
+    return WebPopupMenu::create(m_page, client);
 }
 
 PassRefPtr<WebCore::SearchPopupMenu> WebChromeClient::createSearchPopupMenu(WebCore::PopupMenuClient* client) const
 {
-    return WebSearchPopupMenu::create(client);
+    return WebSearchPopupMenu::create(m_page, client);
 }
 
 PassOwnPtr<HTMLParserQuirks> WebChromeClient::createHTMLParserQuirks()
@@ -556,5 +570,9 @@ void WebChromeClient::setLastSetCursorToCurrentCursor()
 }
 #endif
 
+void WebChromeClient::dispatchViewportDataDidChange(const ViewportArguments& args) const
+{
+    WebProcess::shared().connection()->send(Messages::WebPageProxy::DidChangeViewportData(args), m_page->pageID());
+}
 
 } // namespace WebKit

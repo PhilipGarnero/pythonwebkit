@@ -334,8 +334,6 @@ void RenderFlexibleBox::layoutHorizontalBox(bool relayoutChildren)
     bool haveFlex = false;
     gatherFlexChildrenInfo(iterator, relayoutChildren, highestFlexGroup, lowestFlexGroup, haveFlex);
 
-    bool paginated = view()->layoutState()->isPaginated();
-
     RenderBox* child;
 
     RenderBlock::startDelayUpdateScrollInfo();
@@ -366,11 +364,8 @@ void RenderFlexibleBox::layoutHorizontalBox(bool relayoutChildren)
             // Compute the child's vertical margins.
             child->computeBlockDirectionMargins(this);
     
-            if (!child->needsLayout() && paginated && view()->layoutState()->m_pageHeight) {
-                RenderBlock* childRenderBlock = child->isRenderBlock() ? toRenderBlock(child) : 0;
-                if (childRenderBlock && view()->layoutState()->pageY(child->y()) != childRenderBlock->pageY())
-                    childRenderBlock->markForPaginationRelayout();
-            }
+            if (!child->needsLayout())
+                child->markForPaginationRelayoutIfNeeded();
 
             // Now do the layout.
             child->layoutIfNeeded();
@@ -440,11 +435,8 @@ void RenderFlexibleBox::layoutHorizontalBox(bool relayoutChildren)
             if (oldChildHeight != child->height())
                 child->setChildNeedsLayout(true, false);
                 
-            if (!child->needsLayout() && paginated && view()->layoutState()->m_pageHeight) {
-                RenderBlock* childRenderBlock = child->isRenderBlock() ? toRenderBlock(child) : 0;
-                if (childRenderBlock && view()->layoutState()->pageY(child->y()) != childRenderBlock->pageY())
-                    childRenderBlock->markForPaginationRelayout();
-            }
+            if (!child->needsLayout())
+                child->markForPaginationRelayoutIfNeeded();
 
             child->layoutIfNeeded();
     
@@ -659,8 +651,6 @@ void RenderFlexibleBox::layoutVerticalBox(bool relayoutChildren)
     bool haveFlex = false;
     gatherFlexChildrenInfo(iterator, relayoutChildren, highestFlexGroup, lowestFlexGroup, haveFlex);
 
-    bool paginated = view()->layoutState()->isPaginated();
-
     RenderBox* child;
 
     // We confine the line clamp ugliness to vertical flexible boxes (thus keeping it out of
@@ -710,11 +700,8 @@ void RenderFlexibleBox::layoutVerticalBox(bool relayoutChildren)
             // Add in the child's marginTop to our height.
             setHeight(height() + child->marginTop());
     
-            if (!child->needsLayout() && paginated && view()->layoutState()->m_pageHeight) {
-                RenderBlock* childRenderBlock = child->isRenderBlock() ? toRenderBlock(child) : 0;
-                if (childRenderBlock && view()->layoutState()->pageY(child->y()) != childRenderBlock->pageY())
-                    childRenderBlock->markForPaginationRelayout();
-            }
+            if (!child->needsLayout())
+                child->markForPaginationRelayoutIfNeeded();
 
             // Now do a layout.
             child->layoutIfNeeded();
@@ -926,103 +913,102 @@ void RenderFlexibleBox::layoutVerticalBox(bool relayoutChildren)
 void RenderFlexibleBox::applyLineClamp(FlexBoxIterator& iterator, bool relayoutChildren)
 {
     int maxLineCount = 0;
-    RenderBox* child = iterator.first();
-    while (child) {
-        if (!child->isPositioned()) {
-            if (relayoutChildren || (child->isReplaced() && (child->style()->width().isPercent() || child->style()->height().isPercent())) ||
-                (child->style()->height().isAuto() && child->isBlockFlow() && !child->needsLayout())) {
-                child->setChildNeedsLayout(true, false);
-                
-                // Dirty all the positioned objects.
-                if (child->isRenderBlock()) {
-                    toRenderBlock(child)->markPositionedObjectsForLayout();
-                    toRenderBlock(child)->clearTruncation();
-                }
+    for (RenderBox* child = iterator.first(); child; child = iterator.next()) {
+        if (child->isPositioned())
+            continue;
+
+        if (relayoutChildren || (child->isReplaced() && (child->style()->width().isPercent() || child->style()->height().isPercent()))
+            || (child->style()->height().isAuto() && child->isBlockFlow() && !child->needsLayout())) {
+            child->setChildNeedsLayout(true, false);
+
+            // Dirty all the positioned objects.
+            if (child->isRenderBlock()) {
+                toRenderBlock(child)->markPositionedObjectsForLayout();
+                toRenderBlock(child)->clearTruncation();
             }
-            child->layoutIfNeeded();
-            if (child->style()->height().isAuto() && child->isBlockFlow())
-                maxLineCount = max(maxLineCount, toRenderBlock(child)->lineCount());
         }
-        child = iterator.next();
+        child->layoutIfNeeded();
+        if (child->style()->height().isAuto() && child->isBlockFlow())
+            maxLineCount = max(maxLineCount, toRenderBlock(child)->lineCount());
     }
-    
-    // Get the # of lines and then alter all block flow children with auto height to use the
+
+    // Get the number of lines and then alter all block flow children with auto height to use the
     // specified height. We always try to leave room for at least one line.
     LineClampValue lineClamp = style()->lineClamp();
     int numVisibleLines = lineClamp.isPercentage() ? max(1, (maxLineCount + 1) * lineClamp.value() / 100) : lineClamp.value();
-    if (numVisibleLines < maxLineCount) {
-        for (child = iterator.first(); child; child = iterator.next()) {
-            if (child->isPositioned() || !child->style()->height().isAuto() || !child->isBlockFlow())
-                continue;
-            
-            RenderBlock* blockChild = toRenderBlock(child);
-            int lineCount = blockChild->lineCount();
-            if (lineCount <= numVisibleLines)
-                continue;
-            
-            int newHeight = blockChild->heightForLineCount(numVisibleLines);
-            if (newHeight == child->height())
-                continue;
-            
-            child->setChildNeedsLayout(true, false);
-            child->setOverrideSize(newHeight);
-            m_flexingChildren = true;
-            child->layoutIfNeeded();
-            m_flexingChildren = false;
-            child->setOverrideSize(-1);
-            
-            // FIXME: For now don't support RTL.
-            if (style()->direction() != LTR)
-                continue;
-            
-            // Get the last line
-            RootInlineBox* lastLine = blockChild->lineAtIndex(lineCount-1);
-            if (!lastLine)
-                continue;
-            
-            RootInlineBox* lastVisibleLine = blockChild->lineAtIndex(numVisibleLines-1);
-            if (!lastVisibleLine)
-                continue;
-            
-            const UChar ellipsisAndSpace[2] = { horizontalEllipsis, ' ' };
-            DEFINE_STATIC_LOCAL(AtomicString, ellipsisAndSpaceStr, (ellipsisAndSpace, 2));
-            DEFINE_STATIC_LOCAL(AtomicString, ellipsisStr, (&horizontalEllipsis, 1));
-            const Font& font = style(numVisibleLines == 1)->font();
-            
-            // Get ellipsis width, and if the last child is an anchor, it will go after the ellipsis, so add in a space and the anchor width too 
-            int totalWidth;
-            InlineBox* anchorBox = lastLine->lastChild();
-            if (anchorBox && anchorBox->renderer()->node() && anchorBox->renderer()->node()->isLink())
-                totalWidth = anchorBox->logicalWidth() + font.width(TextRun(ellipsisAndSpace, 2));
-            else {
-                anchorBox = 0;
-                totalWidth = font.width(TextRun(&horizontalEllipsis, 1));
-            }
-            
-            // See if this width can be accommodated on the last visible line
-            RenderBlock* destBlock = toRenderBlock(lastVisibleLine->renderer());
-            RenderBlock* srcBlock = toRenderBlock(lastLine->renderer());
-            
-            // FIXME: Directions of src/destBlock could be different from our direction and from one another.
-            if (srcBlock->style()->direction() != LTR)
-                continue;
-            if (destBlock->style()->direction() != LTR)
-                continue;
-            int ltr = true;
-            
-            int blockRightEdge = destBlock->logicalRightOffsetForLine(lastVisibleLine->y(), false);
-            int blockLeftEdge = destBlock->logicalLeftOffsetForLine(lastVisibleLine->y(), false);
-            
-            int blockEdge = ltr ? blockRightEdge : blockLeftEdge;
-            if (!lastVisibleLine->canAccommodateEllipsis(ltr, blockEdge,
-                                                         lastVisibleLine->x() + lastVisibleLine->logicalWidth(),
-                                                         totalWidth))
-                continue;
-            
-            // Let the truncation code kick in.
-            lastVisibleLine->placeEllipsis(anchorBox ? ellipsisAndSpaceStr : ellipsisStr, ltr, blockLeftEdge, blockRightEdge, totalWidth, anchorBox);
-            destBlock->setHasMarkupTruncation(true);
+    if (numVisibleLines >= maxLineCount)
+        return;
+
+    for (RenderBox* child = iterator.first(); child; child = iterator.next()) {
+        if (child->isPositioned() || !child->style()->height().isAuto() || !child->isBlockFlow())
+            continue;
+        
+        RenderBlock* blockChild = toRenderBlock(child);
+        int lineCount = blockChild->lineCount();
+        if (lineCount <= numVisibleLines)
+            continue;
+        
+        int newHeight = blockChild->heightForLineCount(numVisibleLines);
+        if (newHeight == child->height())
+            continue;
+        
+        child->setChildNeedsLayout(true, false);
+        child->setOverrideSize(newHeight);
+        m_flexingChildren = true;
+        child->layoutIfNeeded();
+        m_flexingChildren = false;
+        child->setOverrideSize(-1);
+
+        // FIXME: For now don't support RTL.
+        if (style()->direction() != LTR)
+            continue;
+
+        // Get the last line
+        RootInlineBox* lastLine = blockChild->lineAtIndex(lineCount-1);
+        if (!lastLine)
+            continue;
+
+        RootInlineBox* lastVisibleLine = blockChild->lineAtIndex(numVisibleLines-1);
+        if (!lastVisibleLine)
+            continue;
+
+        const UChar ellipsisAndSpace[2] = { horizontalEllipsis, ' ' };
+        DEFINE_STATIC_LOCAL(AtomicString, ellipsisAndSpaceStr, (ellipsisAndSpace, 2));
+        DEFINE_STATIC_LOCAL(AtomicString, ellipsisStr, (&horizontalEllipsis, 1));
+        const Font& font = style(numVisibleLines == 1)->font();
+
+        // Get ellipsis width, and if the last child is an anchor, it will go after the ellipsis, so add in a space and the anchor width too 
+        int totalWidth;
+        InlineBox* anchorBox = lastLine->lastChild();
+        if (anchorBox && anchorBox->renderer()->node() && anchorBox->renderer()->node()->isLink())
+            totalWidth = anchorBox->logicalWidth() + font.width(TextRun(ellipsisAndSpace, 2));
+        else {
+            anchorBox = 0;
+            totalWidth = font.width(TextRun(&horizontalEllipsis, 1));
         }
+
+        // See if this width can be accommodated on the last visible line
+        RenderBlock* destBlock = toRenderBlock(lastVisibleLine->renderer());
+        RenderBlock* srcBlock = toRenderBlock(lastLine->renderer());
+        
+        // FIXME: Directions of src/destBlock could be different from our direction and from one another.
+        if (!srcBlock->style()->isLeftToRightDirection())
+            continue;
+
+        bool leftToRight = destBlock->style()->isLeftToRightDirection();
+        if (!leftToRight)
+            continue;
+
+        int blockRightEdge = destBlock->logicalRightOffsetForLine(lastVisibleLine->y(), false);
+        int blockLeftEdge = destBlock->logicalLeftOffsetForLine(lastVisibleLine->y(), false);
+
+        int blockEdge = leftToRight ? blockRightEdge : blockLeftEdge;
+        if (!lastVisibleLine->canAccommodateEllipsis(leftToRight, blockEdge, lastVisibleLine->x() + lastVisibleLine->logicalWidth(), totalWidth))
+            continue;
+
+        // Let the truncation code kick in.
+        lastVisibleLine->placeEllipsis(anchorBox ? ellipsisAndSpaceStr : ellipsisStr, leftToRight, blockLeftEdge, blockRightEdge, totalWidth, anchorBox);
+        destBlock->setHasMarkupTruncation(true);
     }
 }
 

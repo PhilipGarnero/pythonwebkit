@@ -237,40 +237,8 @@ void PluginView::paintUsingImageSurfaceExtension(QPainter* painter, const IntRec
 }
 #endif
 
-void PluginView::paint(GraphicsContext* context, const IntRect& rect)
+void PluginView::paintUsingXPixmap(QPainter* painter, const QRect &exposedRect)
 {
-    if (!m_isStarted) {
-        paintMissingPluginIcon(context, rect);
-        return;
-    }
-
-    if (context->paintingDisabled())
-        return;
-
-    setNPWindowIfNeeded();
-
-    if (m_isWindowed)
-        return;
-
-    if (!m_drawable
-#if defined(MOZ_PLATFORM_MAEMO) && (MOZ_PLATFORM_MAEMO >= 5)
-        && m_image.isNull()
-#endif
-       )
-        return;
-
-    QPainter* painter = context->platformContext();
-    IntRect exposedRect(rect);
-    exposedRect.intersect(frameRect());
-    exposedRect.move(-frameRect().x(), -frameRect().y());
-
-#if defined(MOZ_PLATFORM_MAEMO) && (MOZ_PLATFORM_MAEMO >= 5)
-    if (!m_image.isNull()) {
-        paintUsingImageSurfaceExtension(painter, exposedRect);
-        return;
-    }
-#endif
-
     QPixmap qtDrawable = QPixmap::fromX11Pixmap(m_drawable, QPixmap::ExplicitlyShared);
     const int drawableDepth = ((NPSetWindowCallbackStruct*)m_npWindow.ws_info)->depth;
     ASSERT(drawableDepth == qtDrawable.depth());
@@ -328,8 +296,46 @@ void PluginView::paint(GraphicsContext* context, const IntRect& rect)
     if (syncX)
         XSync(m_pluginDisplay, false); // sync changes by plugin
 
-    painter->drawPixmap(QPoint(frameRect().x() + exposedRect.x(), frameRect().y() + exposedRect.y()), qtDrawable,
-                        exposedRect);
+    painter->drawPixmap(QPoint(exposedRect.x(), exposedRect.y()), qtDrawable, exposedRect);
+}
+
+void PluginView::paint(GraphicsContext* context, const IntRect& rect)
+{
+    if (!m_isStarted) {
+        paintMissingPluginIcon(context, rect);
+        return;
+    }
+
+    if (context->paintingDisabled())
+        return;
+
+    setNPWindowIfNeeded();
+
+    if (m_isWindowed)
+        return;
+
+    if (!m_drawable
+#if defined(MOZ_PLATFORM_MAEMO) && (MOZ_PLATFORM_MAEMO >= 5)
+        && m_image.isNull()
+#endif
+       )
+        return;
+
+    QPainter* painter = context->platformContext();
+    IntRect exposedRect(rect);
+    exposedRect.intersect(frameRect());
+    exposedRect.move(-frameRect().x(), -frameRect().y());
+
+#if defined(MOZ_PLATFORM_MAEMO) && (MOZ_PLATFORM_MAEMO >= 5)
+    if (!m_image.isNull()) {
+        paintUsingImageSurfaceExtension(painter, exposedRect);
+        return;
+    }
+#endif
+
+    painter->translate(frameRect().x(), frameRect().y());
+    paintUsingXPixmap(painter, exposedRect);
+    painter->translate(-frameRect().x(), -frameRect().y());
 }
 
 // TODO: Unify across ports.
@@ -372,19 +378,21 @@ void PluginView::initXEvent(XEvent* xEvent)
 
 void setXKeyEventSpecificFields(XEvent* xEvent, KeyboardEvent* event)
 {
-    QKeyEvent* qKeyEvent = event->keyEvent()->qtEvent();
+    const PlatformKeyboardEvent* keyEvent = event->keyEvent();
 
     xEvent->type = (event->type() == eventNames().keydownEvent) ? 2 : 3; // ints as Qt unsets KeyPress and KeyRelease
     xEvent->xkey.root = QX11Info::appRootWindow();
     xEvent->xkey.subwindow = 0; // we have no child window
     xEvent->xkey.time = event->timeStamp();
-    xEvent->xkey.state = qKeyEvent->nativeModifiers();
-    xEvent->xkey.keycode = qKeyEvent->nativeScanCode();
+    xEvent->xkey.state = keyEvent->nativeModifiers();
+    xEvent->xkey.keycode = keyEvent->nativeScanCode();
 
     // We may not have a nativeScanCode() if the key event is from DRT's eventsender. In that
     // case just populate the XEvent's keycode with the Qt platform-independent keycode. The only
     // place this keycode will be used is in webkit_test_plugin_handle_event().
     if (QWebPagePrivate::drtRun && !xEvent->xkey.keycode) {
+        QKeyEvent* qKeyEvent = keyEvent->qtEvent();
+        ASSERT(qKeyEvent);
         if (!qKeyEvent->text().isEmpty())
             xEvent->xkey.keycode = int(qKeyEvent->text().at(0).unicode() + qKeyEvent->modifiers());
         else if (qKeyEvent->key() && (qKeyEvent->key() != Qt::Key_unknown))
@@ -497,6 +505,9 @@ static void setXCrossingEventSpecificFields(XEvent* xEvent, MouseEvent* event, c
 void PluginView::handleMouseEvent(MouseEvent* event)
 {
     if (m_isWindowed)
+        return;
+
+    if (event->button() == RightButton && m_plugin->quirks().contains(PluginQuirkIgnoreRightClickInWindowlessMode))
         return;
 
     if (event->type() == eventNames().mousedownEvent) {

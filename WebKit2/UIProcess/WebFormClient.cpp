@@ -45,7 +45,7 @@ void WebFormClient::initialize(const WKPageFormClient* client)
         memset(&m_pageFormClient, 0, sizeof(m_pageFormClient));
 }
 
-bool WebFormClient::willSubmitForm(WebPageProxy* page, WebFrameProxy* frame, WebFrameProxy* sourceFrame, Vector<std::pair<String, String> >& textFieldValues, APIObject* userData, WebFormSubmissionListenerProxy* listener)
+bool WebFormClient::willSubmitForm(WebPageProxy* page, WebFrameProxy* frame, WebFrameProxy* sourceFrame, const Vector<std::pair<String, String> >& textFieldValues, APIObject* userData, WebFormSubmissionListenerProxy* listener)
 {
     if (!m_pageFormClient.willSubmitForm)
         return false;
@@ -55,7 +55,7 @@ bool WebFormClient::willSubmitForm(WebPageProxy* page, WebFrameProxy* frame, Web
         map.set(textFieldValues[i].first, WebString::create(textFieldValues[i].second));
     RefPtr<ImmutableDictionary> textFieldsMap = ImmutableDictionary::adopt(map);
 
-    m_pageFormClient.willSubmitForm(toRef(page), toRef(frame), toRef(sourceFrame), toRef(textFieldsMap.get()), toRef(userData), toRef(listener), m_pageFormClient.clientInfo);
+    m_pageFormClient.willSubmitForm(toAPI(page), toAPI(frame), toAPI(sourceFrame), toAPI(textFieldsMap.get()), toAPI(userData), toAPI(listener), m_pageFormClient.clientInfo);
     return true;
 }
 

@@ -90,7 +90,6 @@
 #include "SchemeRegistry.h"
 #include "ScriptController.h"
 #include "ScriptSourceCode.h"
-#include "ScriptString.h"
 #include "SecurityOrigin.h"
 #include "SegmentedString.h"
 #include "SerializedScriptValue.h"
@@ -101,6 +100,7 @@
 #include <wtf/CurrentTime.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/CString.h>
+#include <wtf/text/StringConcatenate.h>
 
 #if ENABLE(SHARED_WORKERS)
 #include "SharedWorkerRepository.h"
@@ -254,7 +254,7 @@ void FrameLoader::setDefersLoading(bool defers)
         m_policyDocumentLoader->setDefersLoading(defers);
 
     if (!defers) {
-        m_frame->redirectScheduler()->startTimer();
+        m_frame->navigationScheduler()->startTimer();
         startCheckCompleteTimer();
     }
 }
@@ -264,27 +264,27 @@ bool FrameLoader::canHandleRequest(const ResourceRequest& request)
     return m_client->canHandleRequest(request);
 }
 
-void FrameLoader::changeLocation(const KURL& url, const String& referrer, bool lockHistory, bool lockBackForwardList, bool userGesture, bool refresh)
+void FrameLoader::changeLocation(const KURL& url, const String& referrer, bool lockHistory, bool lockBackForwardList, bool refresh)
 {
     RefPtr<Frame> protect(m_frame);
 
     ResourceRequest request(url, referrer, refresh ? ReloadIgnoringCacheData : UseProtocolCachePolicy);
     
-    urlSelected(request, "_self", 0, lockHistory, lockBackForwardList, userGesture, SendReferrer, ReplaceDocumentIfJavaScriptURL);
+    urlSelected(request, "_self", 0, lockHistory, lockBackForwardList, SendReferrer, ReplaceDocumentIfJavaScriptURL);
 }
 
-void FrameLoader::urlSelected(const KURL& url, const String& passedTarget, PassRefPtr<Event> triggeringEvent, bool lockHistory, bool lockBackForwardList, bool userGesture, ReferrerPolicy referrerPolicy)
+void FrameLoader::urlSelected(const KURL& url, const String& passedTarget, PassRefPtr<Event> triggeringEvent, bool lockHistory, bool lockBackForwardList, ReferrerPolicy referrerPolicy)
 {
-    urlSelected(ResourceRequest(url), passedTarget, triggeringEvent, lockHistory, lockBackForwardList, userGesture, referrerPolicy, DoNotReplaceDocumentIfJavaScriptURL);
+    urlSelected(ResourceRequest(url), passedTarget, triggeringEvent, lockHistory, lockBackForwardList, referrerPolicy, DoNotReplaceDocumentIfJavaScriptURL);
 }
 
 // The shouldReplaceDocumentIfJavaScriptURL parameter will go away when the FIXME to eliminate the
 // corresponding parameter from ScriptController::executeIfJavaScriptURL() is addressed.
-void FrameLoader::urlSelected(const ResourceRequest& request, const String& passedTarget, PassRefPtr<Event> triggeringEvent, bool lockHistory, bool lockBackForwardList, bool userGesture, ReferrerPolicy referrerPolicy, ShouldReplaceDocumentIfJavaScriptURL shouldReplaceDocumentIfJavaScriptURL)
+void FrameLoader::urlSelected(const ResourceRequest& request, const String& passedTarget, PassRefPtr<Event> triggeringEvent, bool lockHistory, bool lockBackForwardList, ReferrerPolicy referrerPolicy, ShouldReplaceDocumentIfJavaScriptURL shouldReplaceDocumentIfJavaScriptURL)
 {
     ASSERT(!m_suppressOpenerInNewFrame);
 
-    if (m_frame->script()->executeIfJavaScriptURL(request.url(), userGesture, shouldReplaceDocumentIfJavaScriptURL))
+    if (m_frame->script()->executeIfJavaScriptURL(request.url(), shouldReplaceDocumentIfJavaScriptURL))
         return;
 
     String target = passedTarget;
@@ -324,7 +324,7 @@ void FrameLoader::submitForm(PassRefPtr<FormSubmission> submission)
 
     if (protocolIsJavaScript(submission->action())) {
         m_isExecutingJavaScriptFormAction = true;
-        m_frame->script()->executeIfJavaScriptURL(submission->action(), false, DoNotReplaceDocumentIfJavaScriptURL);
+        m_frame->script()->executeIfJavaScriptURL(submission->action(), DoNotReplaceDocumentIfJavaScriptURL);
         m_isExecutingJavaScriptFormAction = false;
         return;
     }
@@ -365,7 +365,7 @@ void FrameLoader::submitForm(PassRefPtr<FormSubmission> submission)
     submission->setReferrer(m_outgoingReferrer);
     submission->setOrigin(outgoingOrigin());
 
-    targetFrame->redirectScheduler()->scheduleFormSubmission(submission);
+    targetFrame->navigationScheduler()->scheduleFormSubmission(submission);
 }
 
 void FrameLoader::stopLoading(UnloadEventPolicy unloadEventPolicy, DatabasePolicy databasePolicy)
@@ -441,7 +441,7 @@ void FrameLoader::stopLoading(UnloadEventPolicy unloadEventPolicy, DatabasePolic
     }
 
     // FIXME: This will cancel redirection timer, which really needs to be restarted when restoring the frame from b/f cache.
-    m_frame->redirectScheduler()->cancel();
+    m_frame->navigationScheduler()->cancel();
 }
 
 void FrameLoader::stop()
@@ -496,13 +496,13 @@ KURL FrameLoader::iconURL()
 
 bool FrameLoader::didOpenURL(const KURL& url)
 {
-    if (m_frame->redirectScheduler()->redirectScheduledDuringLoad()) {
+    if (m_frame->navigationScheduler()->redirectScheduledDuringLoad()) {
         // A redirect was scheduled before the document was created.
         // This can happen when one frame changes another frame's location.
         return false;
     }
 
-    m_frame->redirectScheduler()->cancel();
+    m_frame->navigationScheduler()->cancel();
     m_frame->editor()->clearLastEditCommand();
 
     m_isComplete = false;
@@ -541,7 +541,7 @@ void FrameLoader::didExplicitOpen()
     // from a subsequent window.document.open / window.document.write call. 
     // Canceling redirection here works for all cases because document.open 
     // implicitly precedes document.write.
-    m_frame->redirectScheduler()->cancel(); 
+    m_frame->navigationScheduler()->cancel(); 
     if (m_frame->document()->url() != blankURL())
         m_URL = m_frame->document()->url();
 }
@@ -549,7 +549,7 @@ void FrameLoader::didExplicitOpen()
 
 void FrameLoader::cancelAndClear()
 {
-    m_frame->redirectScheduler()->cancel();
+    m_frame->navigationScheduler()->cancel();
 
     if (!m_isComplete)
         closeURL();
@@ -598,7 +598,7 @@ void FrameLoader::clear(bool clearWindowProperties, bool clearScriptObjects, boo
     if (clearScriptObjects)
         m_frame->script()->clearScriptObjects();
 
-    m_frame->redirectScheduler()->clear();
+    m_frame->navigationScheduler()->clear();
 
     m_checkTimer.stop();
     m_shouldCallCheckCompleted = false;
@@ -611,6 +611,7 @@ void FrameLoader::clear(bool clearWindowProperties, bool clearScriptObjects, boo
 void FrameLoader::receivedFirstData()
 {
     writer()->begin(m_workingURL, false);
+    writer()->setDocumentWasLoadedAsPartOfNavigation();
 
     dispatchDidCommitLoad();
     dispatchDidClearWindowObjectsInAllWorlds();
@@ -638,7 +639,7 @@ void FrameLoader::receivedFirstData()
     else
         url = m_frame->document()->completeURL(url).string();
 
-    m_frame->redirectScheduler()->scheduleRedirect(delay, url);
+    m_frame->navigationScheduler()->scheduleRedirect(delay, url);
 }
 
 void FrameLoader::setURL(const KURL& url)
@@ -657,6 +658,7 @@ void FrameLoader::didBeginDocument(bool dispatch)
     m_isComplete = false;
     m_didCallImplicitClose = false;
     m_isLoadingMainResource = true;
+    m_frame->document()->setReadyState(Document::Loading);
 
     if (m_pendingStateObject) {
         m_frame->document()->statePopped(m_pendingStateObject.get());
@@ -847,7 +849,7 @@ void FrameLoader::checkCompleted()
     RefPtr<Frame> protect(m_frame);
     checkCallImplicitClose(); // if we didn't do it before
 
-    m_frame->redirectScheduler()->startTimer();
+    m_frame->navigationScheduler()->startTimer();
 
     completed();
     if (m_frame->page())
@@ -1015,8 +1017,7 @@ void FrameLoader::checkIfDisplayInsecureContent(SecurityOrigin* context, const K
     if (!isMixedContent(context, url))
         return;
 
-    String message = String::format("The page at %s displayed insecure content from %s.\n",
-        m_URL.string().utf8().data(), url.string().utf8().data());
+    String message = makeString("The page at ", m_URL.string(), " displayed insecure content from ", url.string(), ".\n");
     m_frame->domWindow()->console()->addMessage(HTMLMessageSource, LogMessageType, WarningMessageLevel, message, 1, String());
 
     m_client->didDisplayInsecureContent();
@@ -1027,8 +1028,7 @@ void FrameLoader::checkIfRunInsecureContent(SecurityOrigin* context, const KURL&
     if (!isMixedContent(context, url))
         return;
 
-    String message = String::format("The page at %s ran insecure content from %s.\n",
-        m_URL.string().utf8().data(), url.string().utf8().data());
+    String message = makeString("The page at ", m_URL.string(), " ran insecure content from ", url.string(), ".\n");
     m_frame->domWindow()->console()->addMessage(HTMLMessageSource, LogMessageType, WarningMessageLevel, message, 1, String());
 
     m_client->didRunInsecureContent(context);
@@ -1066,7 +1066,7 @@ void FrameLoader::provisionalLoadStarted()
 {
     if (m_stateMachine.firstLayoutDone())
         m_stateMachine.advanceTo(FrameLoaderStateMachine::CommittedFirstRealLoad);
-    m_frame->redirectScheduler()->cancel(true);
+    m_frame->navigationScheduler()->cancel(true);
     m_client->provisionalLoadStarted();
 }
 
@@ -1194,7 +1194,7 @@ void FrameLoader::completed()
     RefPtr<Frame> protect(m_frame);
 
     for (Frame* descendant = m_frame->tree()->traverseNext(m_frame); descendant; descendant = descendant->tree()->traverseNext(m_frame))
-        descendant->redirectScheduler()->startTimer();
+        descendant->navigationScheduler()->startTimer();
     
     if (Frame* parent = m_frame->tree()->parent())
         parent->loader()->checkCompleted();
@@ -1665,8 +1665,8 @@ bool FrameLoader::shouldAllowNavigation(Frame* targetFrame) const
     if (settings && !settings->privateBrowsingEnabled()) {
         Document* targetDocument = targetFrame->document();
         // FIXME: this error message should contain more specifics of why the navigation change is not allowed.
-        String message = String::format("Unsafe JavaScript attempt to initiate a navigation change for frame with URL %s from frame with URL %s.\n",
-            targetDocument->url().string().utf8().data(), activeDocument->url().string().utf8().data());
+        String message = makeString("Unsafe JavaScript attempt to initiate a navigation change for frame with URL ",
+                                    targetDocument->url().string(), " from frame with URL ", activeDocument->url().string(), ".\n");
 
         // FIXME: should we print to the console of the activeFrame as well?
         targetFrame->domWindow()->console()->addMessage(JSMessageSource, LogMessageType, ErrorMessageLevel, message, 1, String());
@@ -2078,7 +2078,7 @@ void FrameLoader::prepareForCachedPageRestore()
     ASSERT(m_frame->page());
     ASSERT(m_frame->page()->mainFrame() == m_frame);
 
-    m_frame->redirectScheduler()->cancel();
+    m_frame->navigationScheduler()->cancel();
 
     // We still have to close the previous part page.
     closeURL();

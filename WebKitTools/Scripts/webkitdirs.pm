@@ -1461,6 +1461,9 @@ sub buildCMakeProject($@)
 
         print "Calling '$make $makeArgs' in " . $dir . "\n\n";
         $result = system "$make $makeArgs";
+        if ($result ne 0) {
+            die "Failed to build $port port\n";
+        }
 
         chdir ".." or die;
     }
@@ -1530,6 +1533,7 @@ sub buildQMakeProject($@)
     my @subdirs = ("JavaScriptCore", "WebCore", "WebKit/qt/Api");
     if (grep { $_ eq "CONFIG+=webkit2"} @buildArgs) {
         push @subdirs, "WebKit2";
+        push @subdirs, "WebKitTools/WebKitTestRunner";
     }
 
     for my $subdir (@subdirs) {
@@ -1826,6 +1830,24 @@ sub debugWebKitTestRunner
         my @architectureFlags = ("-arch", architecture()) if !isTiger();
         exec $gdbPath, @architectureFlags, $webKitTestRunnerPath or die;
         return;
+    }
+
+    return 1;
+}
+
+sub runTestWebKitAPI
+{
+    if (isAppleMacWebKit()) {
+        my $productDir = productDir();
+        print "Starting TestWebKitAPI with DYLD_FRAMEWORK_PATH set to point to $productDir.\n";
+        $ENV{DYLD_FRAMEWORK_PATH} = $productDir;
+        $ENV{WEBKIT_UNSET_DYLD_FRAMEWORK_PATH} = "YES";
+        my $testWebKitAPIPath = "$productDir/TestWebKitAPI";
+        if (!isTiger() && architecture()) {
+            return system "arch", "-" . architecture(), $testWebKitAPIPath, @ARGV;
+        } else {
+            return system $testWebKitAPIPath, @ARGV;
+        }
     }
 
     return 1;

@@ -28,20 +28,23 @@
 #include "ImmutableArray.h"
 #include "InjectedBundleMessageKinds.h"
 #include "RunLoop.h"
+#include "WKContextPrivate.h"
 #include "WebContextMessageKinds.h"
 #include "WebContextUserMessageCoders.h"
 #include "WebCoreArgumentCoders.h"
 #include "WebPageNamespace.h"
 #include "WebPreferences.h"
+#include "WebProcessCreationParameters.h"
 #include "WebProcessManager.h"
-#include "WebProcessMessageKinds.h"
+#include "WebProcessMessages.h"
 #include "WebProcessProxy.h"
+#include <WebCore/LinkHash.h>
 #include <wtf/OwnArrayPtr.h>
 #include <wtf/PassOwnArrayPtr.h>
 
-#include "WKContextPrivate.h"
-
-#include <WebCore/LinkHash.h>
+#if ENABLE(WEB_PROCESS_SANDBOX)
+#include <sandbox.h>
+#endif
 
 #ifndef NDEBUG
 #include <wtf/RefCountedLeakCounter.h>
@@ -79,6 +82,7 @@ WebContext::WebContext(ProcessModel processModel, const String& injectedBundlePa
     : m_processModel(processModel)
     , m_injectedBundlePath(injectedBundlePath)
     , m_visitedLinkProvider(this)
+    , m_cacheModel(CacheModelDocumentViewer)
 #if PLATFORM(WIN)
     , m_shouldPaintNativeControls(true)
 #endif
@@ -115,7 +119,7 @@ void WebContext::initializeHistoryClient(const WKContextHistoryClient* client)
     if (!hasValidProcess())
         return;
         
-    m_process->send(WebProcessMessage::SetShouldTrackVisitedLinks, 0, CoreIPC::In(m_historyClient.shouldTrackVisitedLinks()));
+    m_process->send(Messages::WebProcess::SetShouldTrackVisitedLinks(m_historyClient.shouldTrackVisitedLinks()), 0);
 }
 
 void WebContext::ensureWebProcess()
@@ -125,18 +129,42 @@ void WebContext::ensureWebProcess()
 
     m_process = WebProcessManager::shared().getWebProcess(this);
 
-    m_process->send(WebProcessMessage::SetShouldTrackVisitedLinks, 0, CoreIPC::In(m_historyClient.shouldTrackVisitedLinks()));
+    WebProcessCreationParameters parameters;
 
-    for (HashSet<String>::iterator it = m_schemesToRegisterAsEmptyDocument.begin(), end = m_schemesToRegisterAsEmptyDocument.end(); it != end; ++it)
-        m_process->send(WebProcessMessage::RegisterURLSchemeAsEmptyDocument, 0, CoreIPC::In(*it));
+    parameters.applicationCacheDirectory = applicationCacheDirectory();
+
+    if (!injectedBundlePath().isEmpty()) {
+        parameters.injectedBundlePath = injectedBundlePath();
+
+#if ENABLE(WEB_PROCESS_SANDBOX)
+        char* sandboxBundleTokenUTF8 = 0;
+        CString injectedBundlePathUTF8 = injectedBundlePath().utf8();
+        sandbox_issue_extension(injectedBundlePathUTF8.data(), &sandboxBundleTokenUTF8);
+        String sandboxBundleToken = String::fromUTF8(sandboxBundleTokenUTF8);
+        if (sandboxBundleTokenUTF8)
+            free(sandboxBundleTokenUTF8);
+
+        parameters.injectedBundlePathToken = sandboxBundleToken;
+#endif
+    }
+
+    parameters.shouldTrackVisitedLinks = m_historyClient.shouldTrackVisitedLinks();
+    parameters.cacheModel = m_cacheModel;
+    
+    copyToVector(m_schemesToRegisterAsEmptyDocument, parameters.urlSchemesRegistererdAsEmptyDocument);
+    copyToVector(m_schemesToRegisterAsSecure, parameters.urlSchemesRegisteredAsSecure);
+    copyToVector(m_schemesToSetDomainRelaxationForbiddenFor, parameters.urlSchemesForWhichDomainRelaxationIsForbidden);
+
+    // Add any platform specific parameters
+    platformInitializeWebProcess(parameters);
+
+    m_process->send(Messages::WebProcess::InitializeWebProcess(parameters), 0);
 
     for (size_t i = 0; i != m_pendingMessagesToPostToInjectedBundle.size(); ++i) {
         pair<String, RefPtr<APIObject> >* message = &m_pendingMessagesToPostToInjectedBundle[i];
         m_process->send(InjectedBundleMessage::PostMessage, 0, CoreIPC::In(message->first, WebContextUserMessageEncoder(message->second.get())));
     }
     m_pendingMessagesToPostToInjectedBundle.clear();
-
-    platformSetUpWebProcess();
 }
 
 void WebContext::processDidFinishLaunching(WebProcessProxy* process)
@@ -281,7 +309,27 @@ void WebContext::registerURLSchemeAsEmptyDocument(const String& urlScheme)
     if (!hasValidProcess())
         return;
 
-    m_process->send(WebProcessMessage::RegisterURLSchemeAsEmptyDocument, 0, CoreIPC::In(urlScheme));
+    m_process->send(Messages::WebProcess::RegisterURLSchemeAsEmptyDocument(urlScheme), 0);
+}
+
+void WebContext::registerURLSchemeAsSecure(const String& urlScheme)
+{
+    m_schemesToRegisterAsSecure.add(urlScheme);
+
+    if (!hasValidProcess())
+        return;
+
+    m_process->send(Messages::WebProcess::RegisterURLSchemeAsSecure(urlScheme), 0);
+}
+
+void WebContext::setDomainRelaxationForbiddenForURLScheme(const String& urlScheme)
+{
+    m_schemesToSetDomainRelaxationForbiddenFor.add(urlScheme);
+
+    if (!hasValidProcess())
+        return;
+
+    m_process->send(Messages::WebProcess::SetDomainRelaxationForbiddenForURLScheme(urlScheme), 0);
 }
 
 void WebContext::addVisitedLink(const String& visitedURL)
@@ -297,7 +345,16 @@ void WebContext::addVisitedLink(LinkHash linkHash)
 {
     m_visitedLinkProvider.addVisitedLink(linkHash);
 }
-        
+
+void WebContext::setCacheModel(CacheModel cacheModel)
+{
+    m_cacheModel = cacheModel;
+
+    if (!hasValidProcess())
+        return;
+    m_process->send(Messages::WebProcess::SetCacheModel(static_cast<uint32_t>(m_cacheModel)), 0);
+}
+
 void WebContext::didReceiveMessage(CoreIPC::Connection*, CoreIPC::MessageID messageID, CoreIPC::ArgumentDecoder* arguments)
 {
     switch (messageID.get<WebContextMessage::Kind>()) {

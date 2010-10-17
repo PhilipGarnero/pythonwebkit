@@ -261,6 +261,12 @@ static void frameContentAsPlainText(size_t maxChars, Frame* frame,
     }
 }
 
+static long long generateFrameIdentifier()
+{
+    static long long next = 0;
+    return ++next;
+}
+
 WebPluginContainerImpl* WebFrameImpl::pluginContainerFromFrame(Frame* frame)
 {
     if (!frame)
@@ -486,6 +492,11 @@ WebString WebFrameImpl::name() const
 void WebFrameImpl::setName(const WebString& name)
 {
     m_frame->tree()->setName(name);
+}
+
+long long WebFrameImpl::identifier() const
+{
+    return m_identifier;
 }
 
 WebURL WebFrameImpl::url() const
@@ -1759,6 +1770,13 @@ bool WebFrameImpl::pauseSVGAnimation(const WebString& animationId, double time, 
 #endif
 }
 
+WebString WebFrameImpl::layerTreeAsText() const
+{
+    if (!m_frame)
+        return WebString();
+    return WebString(m_frame->layerTreeAsText());
+}
+
 // WebFrameImpl public ---------------------------------------------------------
 
 PassRefPtr<WebFrameImpl> WebFrameImpl::create(WebFrameClient* client)
@@ -1779,6 +1797,7 @@ WebFrameImpl::WebFrameImpl(WebFrameClient* client)
     , m_scopingComplete(false)
     , m_nextInvalidateAfter(0)
     , m_animationController(this)
+    , m_identifier(generateFrameIdentifier())
 {
     ChromiumBridge::incrementStatsCounter(webFrameActiveCount);
     frameCount++;
@@ -2242,7 +2261,7 @@ void WebFrameImpl::loadJavaScriptURL(const KURL& url)
     if (!result.getString(scriptResult))
         return;
 
-    if (!m_frame->redirectScheduler()->locationChangePending())
+    if (!m_frame->navigationScheduler()->locationChangePending())
         m_frame->loader()->writer()->replaceDocument(scriptResult);
 }
 

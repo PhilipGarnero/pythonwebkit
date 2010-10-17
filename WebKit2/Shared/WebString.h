@@ -27,8 +27,10 @@
 #define WebString_h
 
 #include "APIObject.h"
+#include <JavaScriptCore/JSStringRef.h>
 #include <wtf/PassRefPtr.h>
 #include <wtf/text/WTFString.h>
+#include <wtf/unicode/UTF8.h>
 
 namespace WebKit {
 
@@ -43,10 +45,39 @@ public:
         return adoptRef(new WebString(string));
     }
 
+    static PassRefPtr<WebString> create(JSStringRef jsStringRef)
+    {
+        return adoptRef(new WebString(String(JSStringGetCharactersPtr(jsStringRef), JSStringGetLength(jsStringRef))));
+    }
+
+    static PassRefPtr<WebString> createFromUTF8String(const char* string)
+    {
+        return adoptRef(new WebString(String::fromUTF8(string)));
+    }
+
     bool isNull() const { return m_string.isNull(); }
     bool isEmpty() const { return m_string.isEmpty(); }
 
+    size_t maximumUTF8CStringSize() const { return m_string.length() * 3 + 1; }
+    size_t getUTF8CString(char* buffer, size_t bufferSize)
+    {
+        if (!bufferSize)
+            return 0;
+        char* p = buffer;
+        const UChar* d = m_string.characters();
+        WTF::Unicode::ConversionResult result = WTF::Unicode::convertUTF16ToUTF8(&d, d + m_string.length(), &p, p + bufferSize - 1, /* strict */ true);
+        *p++ = '\0';
+        if (result != WTF::Unicode::conversionOK && result != WTF::Unicode::targetExhausted)
+            return 0;
+        return p - buffer;
+    }
+
+    bool equal(WebString* other) { return m_string == other->m_string; }
+    bool equalToUTF8String(const char* other) { return m_string == String::fromUTF8(other); }
+
     const String& string() const { return m_string; }
+
+    JSStringRef createJSString() const { return JSStringCreateWithCharacters(m_string.characters(), m_string.length()); }
 
 private:
     WebString(const String& string)

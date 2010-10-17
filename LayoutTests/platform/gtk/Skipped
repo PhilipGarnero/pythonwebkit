@@ -616,48 +616,10 @@ css2.1/t170602-bdr-conflct-w-99-d.html
 
 # Tests in editing/ directory
 #   Tests failing
-editing/deleting/5546763.html
-editing/deleting/delete-all-text-in-text-field-assertion.html
-editing/deleting/delete-ligature-001.html
-editing/deleting/delete-ligature-002.html
-editing/deleting/delete-ligature-003.html
-editing/deleting/pruning-after-merge-1.html
-editing/deleting/skip-virama-001.html
 editing/inserting/5994480-2.html
-editing/inserting/insert-thai-characters-001.html
-editing/inserting/space-after-removeformat.html
-editing/pasteboard/4744008.html
-editing/pasteboard/5368833.html
-editing/pasteboard/5780697-2.html
-editing/pasteboard/copy-in-password-field.html
-editing/pasteboard/file-input-files-access.html
-editing/pasteboard/paste-into-anchor-text.html
-editing/pasteboard/paste-plaintext-user-select-none.html
-editing/pasteboard/paste-table-002.html
-editing/pasteboard/paste-text-013.html
-editing/selection/after-line-break.html
-editing/selection/anchor-focus1.html
-editing/selection/anchor-focus2.html
-editing/selection/anchor-focus3.html
-editing/selection/click-before-and-after-table.html
-editing/selection/click-in-margins-inside-editable-div.html
-editing/selection/click-in-padding-with-multiple-line-boxes.html
 editing/selection/doubleclick-whitespace.html
-editing/selection/extend-selection-bidi.html
-editing/selection/getRangeAt.html
-# home-end.html and extended-selection.html have some potential breakage, commenting for now: https://bugs.webkit.org/show_bug.cgi?id=30208
-editing/selection/home-end.html
-editing/selection/legal-positions.html
-editing/selection/move-begin-end.html
-editing/selection/removeAllRanges.html
-editing/selection/select-all-textarea.html
-editing/selection/skip-non-editable-1.html
-editing/selection/skip-non-editable-2.html
-editing/selection/toString-1.html
-editing/selection/toString.html
-editing/style/apply-through-end-of-document.html
-editing/style/remove-underline-from-stylesheet.html
 editing/text-iterator/basic-iteration.html
+
 #   Tests generating new results
 editing/deleting/4845371.html
 editing/deleting/5144139-2.html
@@ -2988,15 +2950,6 @@ fast/xsl/xslt-missing-namespace-in-xslt.xml
 fast/xsl/xslt-relative-path.xml
 fast/xsl/xslt_unicode.xml
 
-# Tests in fonts/ directory
-#   Tests generating new results
-fonts/cursive.html
-fonts/default.html
-fonts/fantasy.html
-fonts/monospace.html
-fonts/sans-serif.html
-fonts/serif.html
-
 # Tests in http/ directory
 #   Tests failing
 http/tests/appcache/crash-when-navigating-away-then-back.html
@@ -3039,9 +2992,6 @@ http/tests/loading/text-content-type-with-binary-extension.html
 http/tests/local/blob/send-data-blob.html
 http/tests/local/blob/send-hybrid-blob.html
 http/tests/local/blob/send-sliced-data-blob.html
-http/tests/local/formdata/send-form-data.html
-http/tests/local/formdata/send-form-data-with-sliced-file.html
-http/tests/local/formdata/upload-events.html
 # File API is not supported yet
 fast/files
 http/tests/media/video-play-stall-seek.html
@@ -3052,6 +3002,7 @@ http/tests/mime/standard-mode-loads-stylesheet-with-text-css-and-invalid-type.ht
 http/tests/misc/acid3.html
 http/tests/misc/isindex-formdata.html
 http/tests/misc/policy-delegate-called-twice.html
+http/tests/misc/prefetch-purpose.html
 http/tests/misc/redirect-to-external-url.html
 http/tests/misc/slow-preload-cancel.html
 http/tests/misc/window-dot-stop.html
@@ -4962,6 +4913,38 @@ editing/execCommand/switch-list-type.html
 editing/execCommand/unlink.html
 editing/selection/4947387.html
 editing/selection/5195166-2.html
+editing/selection/legal-positions.html
+editing/deleting/5546763.html
+editing/deleting/delete-all-text-in-text-field-assertion.html
+editing/deleting/delete-ligature-001.html
+editing/deleting/delete-ligature-002.html
+editing/deleting/delete-ligature-003.html
+editing/deleting/pruning-after-merge-1.html
+editing/deleting/skip-virama-001.html
+editing/inserting/insert-thai-characters-001.html
+editing/inserting/space-after-removeformat.html
+editing/pasteboard/4744008.html
+editing/pasteboard/5368833.html
+editing/pasteboard/copy-in-password-field.html
+editing/pasteboard/paste-into-anchor-text.html
+editing/pasteboard/paste-plaintext-user-select-none.html
+editing/pasteboard/paste-table-002.html
+editing/pasteboard/paste-text-013.html
+editing/selection/after-line-break.html
+editing/selection/anchor-focus1.html
+editing/selection/anchor-focus2.html
+editing/selection/anchor-focus3.html
+editing/selection/click-before-and-after-table.html
+editing/selection/extend-selection-bidi.html
+editing/selection/getRangeAt.html
+editing/selection/move-begin-end.html
+editing/selection/removeAllRanges.html
+editing/selection/select-all-textarea.html
+editing/selection/skip-non-editable-1.html
+editing/selection/skip-non-editable-2.html
+editing/selection/toString-1.html
+editing/selection/toString.html
+editing/style/remove-underline-from-stylesheet.html
 
 # Requires expected results that we don't have atm
 editing/inserting/break-blockquote-after-delete.html
@@ -5016,18 +4999,6 @@ svg/filters/subRegion-in-userSpace.svg
 # ------------------
 # Tests with bugs attached : Enable these tests again once these bugs are fixed.
 # ------------------
-
-# Height not honored for <input> and <button> elements.
-# See Bug #33936 - https://bugs.webkit.org/show_bug.cgi?id=33936
-fast/css/button-height.html
-
-# See Bug #27638 - https://bugs.webkit.org/show_bug.cgi?id=27638
-fast/dom/Window/window-screen-properties.html
-fast/forms/textarea-metrics.html
-# These two tests seem to fail on and off, skip them for now
-transitions/change-values-during-transition.html
-transitions/zero-duration-with-non-zero-delay-end.html
-
 # See Bug #27905 - http://bugs.webkit.org/show_bug.cgi?id=27905
 # Missing resource load callback ability in DRT
 http/tests/loading/redirect-methods.html
@@ -5036,7 +5007,8 @@ http/tests/misc/favicon-loads-with-images-disabled.html
 # See Bug #28668 - https://bugs.webkit.org/show_bug.cgi?id=28668
 http/tests/appcache/auth.html
 
-# This port doesn't support isolated worlds yet.
+# New test infrastructure required -- need isolated worlds
+# See https://bugs.webkit.org/show_bug.cgi?id=31508
 http/tests/security/isolatedWorld
 
 # Missing DRT ability return a null request for willSendRequest redirect calls
@@ -5050,23 +5022,8 @@ http/tests/xmlhttprequest/logout.html
 http/tests/xmlhttprequest/re-login-async.html
 http/tests/xmlhttprequest/re-login.html
 
-# https://bugs.webkit.org/show_bug.cgi?id=28088 -- document.activeElement does not work
-editing/selection/find-in-text-control.html
-
 # https://bugs.webkit.org/show_bug.cgi?id=30577
 editing/selection/move-left-right.html
-
-# Missing DRT ability to override 'standard' preferences.
-editing/selection/doubleclick-beside-cr-span.html
-fast/dom/Window/timer-resume-on-navigation-back.html
-fast/loader/input-element-page-cache-crash.html
-loader/go-back-to-different-window-size.html
-
-# https://bugs.webkit.org/show_bug.cgi?id=30583
-fast/forms/textarea-appearance-wrap.html
-
-# https://bugs.webkit.org/show_bug.cgi?id=30584
-svg/custom/font-face-not-in-document.svg
 
 # Probably related to https://bugs.webkit.org/show_bug.cgi?id=27637
 http/tests/security/mixedContent/insecure-plugin-in-iframe.html
@@ -5130,6 +5087,7 @@ fast/dom/Window/slow-unload-handler-only-frame-is-stopped.html
 http/tests/globalhistory
 
 # Ruby tests
+fast/ruby/ruby-beforeafter.html
 fast/ruby/ruby-empty-rt.html
 fast/ruby/ruby-inline-table.html
 fast/ruby/ruby-length.html
@@ -5159,7 +5117,6 @@ accessibility/aria-list-and-listitem.html
 accessibility/aria-presentational-role.html
 accessibility/aria-checkbox-checked.html
 accessibility/dimensions-include-descendants.html
-fast/overflow/line-clamp.html
 fast/overflow/scrollbar-restored.html
 fast/css/color-correction-on-box-shadow.html
 fast/css/color-correction-on-text-shadow.html
@@ -5174,10 +5131,6 @@ plugins/document-open.html
 # Tests failing once in a while
 fast/events/overflow-events.html
 http/tests/xmlhttprequest/interactive-state.html
-
-# New test infrastructure required
-# See https://bugs.webkit.org/show_bug.cgi?id=31508
-http/tests/security/isolatedWorld/didClearWindowObject.html
 
 # Need to add functionality to DumpRenderTree to handle error pages
 fast/history/back-forward-reset-after-error-handling.html
@@ -5251,16 +5204,11 @@ scrollbars/scrollbar-middleclick-nopaste.html
 # Relies on WebKit API [WebView _loadBackForwardListFromOtherView:]
 fast/loader/crash-copying-backforwardlist.html
 
-# Skip frame flattening tests until it can be tested by this DRT (bug 32717)
-# https://bugs.webkit.org/show_bug.cgi?id=38650
-fast/frames/flattening/
+# https://bugs.webkit.org/show_bug.cgi?id=47587
 fast/events/spatial-navigation/snav-iframe-flattening-simple.html
 
 # Implement LayoutTestController::callShouldCloseOnWebView()
 fast/events/onbeforeunload-focused-iframe.html
-
-# Crashes on release/debug bots, see https://bugs.webkit.org/show_bug.cgi?id=35080
-fast/css/font-face-opentype.html
 
 # Crashes on debug bots, see https://bugs.webkit.org/show_bug.cgi?id=35085
 plugins/iframe-shims.html
@@ -5483,7 +5431,8 @@ http/tests/xmlhttprequest/basic-auth-default.html
 http/tests/inspector/resource-har-conversion.html
 http/tests/inspector/resource-parameters.html
 
-# Some results are one pixel off on the 64-bit bot
+# Some results are one pixel off on the 64-bit bot or
+# have other rounding errors.
 # https://bugs.webkit.org/show_bug.cgi?id=39022
 css1/box_properties/acid_test.html
 fast/css/zoom-body-scroll.html
@@ -5494,6 +5443,14 @@ mathml/presentation/sub.xhtml
 mathml/presentation/sup.xhtml
 mathml/presentation/tables.xhtml
 svg/custom/recursive-filter.svg
+fast/repaint/moving-shadow-on-container.html
+fast/repaint/moving-shadow-on-path.html
+svg/css/composite-shadow-example.html
+svg/css/composite-shadow-with-opacity.html
+svg/css/stars-with-shadow.html
+svg/custom/gradient-with-1d-boundingbox.svg
+svg/custom/relative-sized-inner-svg.xhtml
+svg/custom/relative-sized-use-without-attributes-on-symbol.xhtml
 
 # New test needs enhanced frameloader delegate logging in DRT
 # Discussed in https://bugs.webkit.org/show_bug.cgi?id=38928
@@ -5506,6 +5463,7 @@ accessibility/aria-controls-with-tabs.html
 # Need to dump context menu items on eventSender.contextClick(true).
 # https://bugs.webkit.org/show_bug.cgi?id=39102
 editing/spelling/context-menu-suggestions.html
+editing/selection/context-menu-on-text.html
 
 # IndexedDB is not yet enabled.
 storage/indexeddb
@@ -5602,15 +5560,11 @@ canvas/philip/tests/2d.composite.uncovered.pattern.source-out.html
 canvas/philip/tests/2d.drawImage.broken.html
 canvas/philip/tests/2d.drawImage.incomplete.html
 canvas/philip/tests/2d.drawImage.null.html
-canvas/philip/tests/2d.fillStyle.parse.current.basic.html
-canvas/philip/tests/2d.fillStyle.parse.current.changed.html
-canvas/philip/tests/2d.fillStyle.parse.current.removed.html
 canvas/philip/tests/2d.fillStyle.parse.system.html
 canvas/philip/tests/2d.gradient.radial.cone.front.html
 canvas/philip/tests/2d.gradient.radial.cone.top.html
 canvas/philip/tests/2d.gradient.radial.inside2.html
 canvas/philip/tests/2d.gradient.radial.inside3.html
-canvas/philip/tests/2d.gradient.radial.negative.html
 canvas/philip/tests/2d.gradient.radial.outside1.html
 canvas/philip/tests/2d.imageData.create1.type.html
 canvas/philip/tests/2d.imageData.create2.type.html
@@ -5694,6 +5648,8 @@ canvas/philip/tests/toDataURL.jpeg.quality.basic.html
 # on form elements: https://bugs.webkit.org/show_bug.cgi?id=40855
 fast/forms/basic-selects.html
 fast/forms/basic-textareas-quirks.html
+fast/forms/textarea-metrics.html
+editing/pasteboard/5780697-2.html
 
 # Fake italics do not work: https://bugs.webkit.org/show_bug.cgi?id=40856
 fast/text/fake-italic.html
@@ -5790,6 +5746,8 @@ fast/events/prevent-drag-to-navigate.html
 fast/dom/Window/window-postmessage-clone.html
 fast/dom/Window/window-postmessage-clone-frames.html
 http/tests/security/clipboard/clipboard-file-access.html
+http/tests/local/formdata
+editing/pasteboard/file-input-files-access.html
 
 # Still failing, looks like a bug in the EventSender drag-and-drop
 fast/css/user-drag-none.html
@@ -5813,6 +5771,7 @@ http/tests/security/dataTransfer-set-data-file-url.html
 fast/events/ondragenter.html
 editing/pasteboard/smart-drag-drop.html
 editing/selection/drag-start-event-client-x-y.html
+editing/selection/doubleclick-beside-cr-span.html
 
 # Tests that require editing delegate dumps.
 editing/pasteboard/drop-link.html
@@ -5931,3 +5890,17 @@ fast/text/large-text-composed-char-dos.html
 
 # LayoutTestController::addUserScript not implemented for gtk
 plugins/plugin-document-load-prevented-userscript.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=46942
+http/tests/websocket/tests/bad-sub-protocol-control-chars.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=47244
+editing/pasteboard/dataTransfer-setData-getData.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=47564
+platform/gtk/accessibility/aria-table-hierarchy.html
+
+# https://bugs.webkit.org/show_bug.cgi?id=47727
+mathml/presentation/fenced.xhtml
+mathml/presentation/roots.xhtml
+mathml/presentation/subsup.xhtml

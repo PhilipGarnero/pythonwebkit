@@ -738,13 +738,14 @@ namespace JSC {
         void emit_op_get_callee(Instruction*);
         void emit_op_create_this(Instruction*);
         void emit_op_convert_this(Instruction*);
+        void emit_op_convert_this_strict(Instruction*);
         void emit_op_create_arguments(Instruction*);
         void emit_op_debug(Instruction*);
         void emit_op_del_by_id(Instruction*);
         void emit_op_div(Instruction*);
         void emit_op_end(Instruction*);
         void emit_op_enter(Instruction*);
-        void emit_op_enter_with_activation(Instruction*);
+        void emit_op_create_activation(Instruction*);
         void emit_op_eq(Instruction*);
         void emit_op_eq_null(Instruction*);
         void emit_op_get_by_id(Instruction*);
@@ -845,6 +846,7 @@ namespace JSC {
         void emitSlow_op_call_varargs(Instruction*, Vector<SlowCaseEntry>::iterator&);
         void emitSlow_op_construct(Instruction*, Vector<SlowCaseEntry>::iterator&);
         void emitSlow_op_convert_this(Instruction*, Vector<SlowCaseEntry>::iterator&);
+        void emitSlow_op_convert_this_strict(Instruction*, Vector<SlowCaseEntry>::iterator&);
         void emitSlow_op_div(Instruction*, Vector<SlowCaseEntry>::iterator&);
         void emitSlow_op_eq(Instruction*, Vector<SlowCaseEntry>::iterator&);
         void emitSlow_op_get_by_id(Instruction*, Vector<SlowCaseEntry>::iterator&);

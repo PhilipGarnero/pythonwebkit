@@ -25,6 +25,7 @@
 #define HTMLInputElement_h
 
 #include "HTMLFormControlElement.h"
+#include "HTMLFormElement.h"
 #include "InputElement.h"
 #include <wtf/OwnPtr.h>
 
@@ -44,10 +45,12 @@ public:
     static PassRefPtr<HTMLInputElement> create(const QualifiedName&, Document*, HTMLFormElement*);
     virtual ~HTMLInputElement();
 
+    DEFINE_ATTRIBUTE_EVENT_LISTENER(webkitspeechchange);
+
     bool autoComplete() const;
 
     // For ValidityState
-    bool typeMismatch(const String&) const;
+    bool typeMismatch() const;
     // valueMissing() ignores the specified string value for CHECKBOX and RADIO.
     bool valueMissing(const String&) const;
     bool patternMismatch(const String&) const;
@@ -98,7 +101,8 @@ public:
 
 #if ENABLE(INPUT_SPEECH)
     virtual bool isSpeechEnabled() const;
-#endif    
+    void dispatchWebkitSpeechChangeEvent();
+#endif
 
     bool checked() const { return m_checked; }
     void setChecked(bool, bool sendChangeEvent = false);
@@ -191,6 +195,13 @@ public:
 #if ENABLE(WCSS)
     void setWapInputFormat(String& mask);
 #endif
+
+    inline CheckedRadioButtons& checkedRadioButtons() const
+    {
+        if (HTMLFormElement* formElement = form())
+            return formElement->checkedRadioButtons();
+        return document()->checkedRadioButtons();
+    }
 
 protected:
     HTMLInputElement(const QualifiedName&, Document*, HTMLFormElement* = 0);
@@ -323,31 +334,8 @@ private:
     void handleBeforeTextInsertedEvent(Event*);
     void handleKeyEventForRange(KeyboardEvent*);
     PassRefPtr<HTMLFormElement> createTemporaryFormForIsIndex();
-    // Helper for getAllowedValueStep();
-    bool getStepParameters(double* defaultStep, double* stepScaleFactor) const;
     // Helper for stepUp()/stepDown().  Adds step value * count to the current value.
     void applyStep(double count, ExceptionCode&);
-    // Helper for applyStepForNumberOrRange().
-    double stepBase() const;
-
-    // Parses the specified string as the DeprecatedInputType, and returns true if it is successfully parsed.
-    // An instance pointed by the DateComponents* parameter will have parsed values and be
-    // modified even if the parsing fails.  The DateComponents* parameter may be 0.
-    static bool parseToDateComponents(DeprecatedInputType, const String&, DateComponents*);
-
-    // Parses the specified string for the current type, and return
-    // the double value for the parsing result if the parsing
-    // succeeds; Returns defaultValue otherwise. This function can
-    // return NaN or Infinity only if defaultValue is NaN or Infinity.
-    double parseToDouble(const String&, double defaultValue) const;
-    // Create a string representation of the specified double value for the
-    // current input type. If NaN or Infinity is specified, this returns an
-    // emtpy string. This should not be called for types without valueAsNumber.
-    String serialize(double) const;
-    // Create a string representation of the specified double value for the
-    // current input type. The type must be one of DATE, DATETIME,
-    // DATETIMELOCAL, MONTH, TIME, and WEEK.
-    String serializeForDateTimeTypes(double) const;
 
 #if ENABLE(DATALIST)
     HTMLDataListElement* dataList() const;

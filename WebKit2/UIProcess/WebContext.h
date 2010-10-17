@@ -48,6 +48,7 @@ namespace WebKit {
 class WebPageNamespace;
 class WebPageProxy;
 class WebPreferences;
+struct WebProcessCreationParameters;
 
 class WebContext : public APIObject {
 public:
@@ -101,12 +102,17 @@ public:
     String applicationCacheDirectory();
     
     void registerURLSchemeAsEmptyDocument(const String&);
-    
+    void registerURLSchemeAsSecure(const String&);
+    void setDomainRelaxationForbiddenForURLScheme(const String&);
+
     void addVisitedLink(const String&);
     void addVisitedLink(WebCore::LinkHash);
 
     void didReceiveMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::ArgumentDecoder*);
     void didReceiveSyncMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::ArgumentDecoder*, CoreIPC::ArgumentEncoder*);
+
+    void setCacheModel(CacheModel);
+    CacheModel cacheModel() const { return m_cacheModel; }
 
 #if PLATFORM(WIN)
     void setShouldPaintNativeControls(bool);
@@ -119,7 +125,7 @@ private:
 
     void ensureWebProcess();
     bool hasValidProcess() const { return m_process && m_process->isValid(); }
-    void platformSetUpWebProcess();
+    void platformInitializeWebProcess(WebProcessCreationParameters&);
 
     ProcessModel m_processModel;
     
@@ -138,7 +144,12 @@ private:
     VisitedLinkProvider m_visitedLinkProvider;
         
     HashSet<String> m_schemesToRegisterAsEmptyDocument;
+    HashSet<String> m_schemesToRegisterAsSecure;
+    HashSet<String> m_schemesToSetDomainRelaxationForbiddenFor;
+
     Vector<pair<String, RefPtr<APIObject> > > m_pendingMessagesToPostToInjectedBundle;
+
+    CacheModel m_cacheModel;
 
 #if PLATFORM(WIN)
     bool m_shouldPaintNativeControls;

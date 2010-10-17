@@ -127,43 +127,49 @@ PassRefPtr<DOMStringList> IDBDatabaseBackendImpl::objectStores() const
     return objectStoreNames.release();
 }
 
-void IDBDatabaseBackendImpl::createObjectStore(const String& name, const String& keyPath, bool autoIncrement, PassRefPtr<IDBCallbacks> prpCallbacks, IDBTransactionBackendInterface* transaction)
+PassRefPtr<IDBObjectStoreBackendInterface>  IDBDatabaseBackendImpl::createObjectStore(const String& name, const String& keyPath, bool autoIncrement, IDBTransactionBackendInterface* transactionPtr, ExceptionCode& ec)
 {
-    RefPtr<IDBDatabaseBackendImpl> database = this;
-    RefPtr<IDBCallbacks> callbacks = prpCallbacks;
-    if (!transaction->scheduleTask(createCallbackTask(&IDBDatabaseBackendImpl::createObjectStoreInternal, database, name, keyPath, autoIncrement, callbacks)))
-        callbacks->onError(IDBDatabaseError::create(IDBDatabaseException::NOT_ALLOWED_ERR, "createObjectStore must be called from within a setVersion transaction."));
-}
-
-void IDBDatabaseBackendImpl::createObjectStoreInternal(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, const String& name, const String& keyPath, bool autoIncrement, PassRefPtr<IDBCallbacks> callbacks)
-{
-    if (database->m_objectStores.contains(name)) {
-        callbacks->onError(IDBDatabaseError::create(IDBDatabaseException::CONSTRAINT_ERR, "An objectStore with that name already exists."));
-        return;
+    if (m_objectStores.contains(name)) {
+        // FIXME: Throw CONSTRAINT_ERR in this case.
+        return 0;
     }
 
-    SQLiteStatement insert(database->sqliteDatabase(), "INSERT INTO ObjectStores (name, keyPath, doAutoIncrement) VALUES (?, ?, ?)");
-    bool ok = insert.prepare() == SQLResultOk;
-    ASSERT_UNUSED(ok, ok); // FIXME: Better error handling.
-    insert.bindText(1, name);
-    insert.bindText(2, keyPath);
-    insert.bindInt(3, static_cast<int>(autoIncrement));
-    ok = insert.step() == SQLResultDone;
-    ASSERT_UNUSED(ok, ok); // FIXME: Better error handling.
-    int64_t id = database->sqliteDatabase().lastInsertRowID();
-
-    RefPtr<IDBObjectStoreBackendImpl> objectStore = IDBObjectStoreBackendImpl::create(database.get(), id, name, keyPath, autoIncrement);
+    RefPtr<IDBObjectStoreBackendImpl> objectStore = IDBObjectStoreBackendImpl::create(this, name, keyPath, autoIncrement);
     ASSERT(objectStore->name() == name);
-    database->m_objectStores.set(name, objectStore);
-    callbacks->onSuccess(objectStore.get());
+
+    RefPtr<IDBDatabaseBackendImpl> database = this;
+    RefPtr<IDBTransactionBackendInterface> transaction = transactionPtr;
+    if (!transaction->scheduleTask(createCallbackTask(&IDBDatabaseBackendImpl::createObjectStoreInternal, database, objectStore, transaction),
+                                   createCallbackTask(&IDBDatabaseBackendImpl::removeObjectStoreFromMap, database, objectStore))) {
+        return 0;
+    }
+
+    m_objectStores.set(name, objectStore);
+    return objectStore.release();
 }
 
-// FIXME: Do not expose this method via IDL.
-PassRefPtr<IDBObjectStoreBackendInterface> IDBDatabaseBackendImpl::objectStore(const String& name, unsigned short mode)
+void IDBDatabaseBackendImpl::createObjectStoreInternal(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, PassRefPtr<IDBObjectStoreBackendImpl> objectStore,  PassRefPtr<IDBTransactionBackendInterface> transaction)
 {
-    ASSERT_UNUSED(mode, !mode); // FIXME: Remove the mode parameter. Transactions have modes, not object stores.
-    RefPtr<IDBObjectStoreBackendInterface> objectStore = m_objectStores.get(name);
-    return objectStore.release();
+    SQLiteStatement insert(database->sqliteDatabase(), "INSERT INTO ObjectStores (name, keyPath, doAutoIncrement) VALUES (?, ?, ?)");
+    if (insert.prepare() != SQLResultOk) {
+        transaction->abort();
+        return;
+    }
+    insert.bindText(1, objectStore->name());
+    insert.bindText(2, objectStore->keyPath());
+    insert.bindInt(3, static_cast<int>(objectStore->autoIncrement()));
+    if (insert.step() != SQLResultDone) {
+        transaction->abort();
+        return;
+    }
+    int64_t id = database->sqliteDatabase().lastInsertRowID();
+    objectStore->setId(id);
+    transaction->didCompleteTaskEvents();
+}
+
+PassRefPtr<IDBObjectStoreBackendInterface> IDBDatabaseBackendImpl::objectStore(const String& name)
+{
+    return m_objectStores.get(name);
 }
 
 static void doDelete(SQLiteDatabase& db, const char* sql, int64_t id)
@@ -176,50 +182,60 @@ static void doDelete(SQLiteDatabase& db, const char* sql, int64_t id)
     ASSERT_UNUSED(ok, ok); // FIXME: Better error handling.
 }
 
-void IDBDatabaseBackendImpl::removeObjectStore(const String& name, PassRefPtr<IDBCallbacks> prpCallbacks, IDBTransactionBackendInterface* transaction)
+void IDBDatabaseBackendImpl::removeObjectStore(const String& name, IDBTransactionBackendInterface* transactionPtr, ExceptionCode& ec)
 {
-    RefPtr<IDBDatabaseBackendImpl> database = this;
-    RefPtr<IDBCallbacks> callbacks = prpCallbacks;
-    if (!transaction->scheduleTask(createCallbackTask(&IDBDatabaseBackendImpl::removeObjectStoreInternal, database, name, callbacks)))
-        callbacks->onError(IDBDatabaseError::create(IDBDatabaseException::NOT_ALLOWED_ERR, "removeObjectStore must be called from within a setVersion transaction."));
-}
-
-void IDBDatabaseBackendImpl::removeObjectStoreInternal(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, const String& name, PassRefPtr<IDBCallbacks> callbacks)
-{
-    RefPtr<IDBObjectStoreBackendImpl> objectStore = database->m_objectStores.get(name);
+    RefPtr<IDBObjectStoreBackendImpl> objectStore = m_objectStores.get(name);
     if (!objectStore) {
-        callbacks->onError(IDBDatabaseError::create(IDBDatabaseException::NOT_FOUND_ERR, "No objectStore with that name exists."));
+        ec = IDBDatabaseException::NOT_FOUND_ERR;
         return;
     }
+    RefPtr<IDBDatabaseBackendImpl> database = this;
+    RefPtr<IDBTransactionBackendInterface> transaction = transactionPtr;
+    if (!transaction->scheduleTask(createCallbackTask(&IDBDatabaseBackendImpl::removeObjectStoreInternal, database, objectStore, transaction),
+                                   createCallbackTask(&IDBDatabaseBackendImpl::addObjectStoreToMap, database, objectStore))) {
+        ec = IDBDatabaseException::NOT_ALLOWED_ERR;
+        return;
+    }
+    m_objectStores.remove(name);
+}
 
+void IDBDatabaseBackendImpl::removeObjectStoreInternal(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, PassRefPtr<IDBObjectStoreBackendImpl> objectStore, PassRefPtr<IDBTransactionBackendInterface> transaction)
+{
     doDelete(database->sqliteDatabase(), "DELETE FROM ObjectStores WHERE id = ?", objectStore->id());
     doDelete(database->sqliteDatabase(), "DELETE FROM ObjectStoreData WHERE objectStoreId = ?", objectStore->id());
     doDelete(database->sqliteDatabase(), "DELETE FROM IndexData WHERE indexId IN (SELECT id FROM Indexes WHERE objectStoreId = ?)", objectStore->id());
     doDelete(database->sqliteDatabase(), "DELETE FROM Indexes WHERE objectStoreId = ?", objectStore->id());
 
-    database->m_objectStores.remove(name);
-    callbacks->onSuccess();
+    transaction->didCompleteTaskEvents();
 }
 
-void IDBDatabaseBackendImpl::setVersion(const String& version, PassRefPtr<IDBCallbacks> prpCallbacks)
+void IDBDatabaseBackendImpl::setVersion(const String& version, PassRefPtr<IDBCallbacks> prpCallbacks, ExceptionCode& ec)
 {
     RefPtr<IDBDatabaseBackendImpl> database = this;
     RefPtr<IDBCallbacks> callbacks = prpCallbacks;
     RefPtr<DOMStringList> objectStores = DOMStringList::create();
     RefPtr<IDBTransactionBackendInterface> transaction = m_transactionCoordinator->createTransaction(objectStores.get(), IDBTransaction::VERSION_CHANGE, 0, this);
-    if (!transaction->scheduleTask(createCallbackTask(&IDBDatabaseBackendImpl::setVersionInternal, database, version, callbacks, transaction)))
-        callbacks->onError(IDBDatabaseError::create(IDBDatabaseException::NOT_ALLOWED_ERR, "setVersion must be called from within a setVersion transaction."));
+    if (!transaction->scheduleTask(createCallbackTask(&IDBDatabaseBackendImpl::setVersionInternal, database, version, callbacks, transaction),
+                                   createCallbackTask(&IDBDatabaseBackendImpl::resetVersion, database, m_version))) {
+        ec = IDBDatabaseException::NOT_ALLOWED_ERR;
+    }
 }
 
 void IDBDatabaseBackendImpl::setVersionInternal(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, const String& version, PassRefPtr<IDBCallbacks> callbacks, PassRefPtr<IDBTransactionBackendInterface> transaction)
 {
     database->m_version = version;
-    setMetaData(database->m_sqliteDatabase.get(), database->m_name, database->m_description, database->m_version);
+    if (!setMetaData(database->m_sqliteDatabase.get(), database->m_name, database->m_description, database->m_version)) {
+        // FIXME: The Indexed Database specification does not have an error code dedicated to I/O errors.
+        callbacks->onError(IDBDatabaseError::create(IDBDatabaseException::UNKNOWN_ERR, "Error writing data to stable storage."));
+        transaction->abort();
+        return;
+    }
     callbacks->onSuccess(transaction);
 }
 
-PassRefPtr<IDBTransactionBackendInterface> IDBDatabaseBackendImpl::transaction(DOMStringList* objectStores, unsigned short mode, unsigned long timeout)
+PassRefPtr<IDBTransactionBackendInterface> IDBDatabaseBackendImpl::transaction(DOMStringList* objectStores, unsigned short mode, unsigned long timeout, ExceptionCode&)
 {
+    // FIXME: Return not allowed err if close has been called.
     return m_transactionCoordinator->createTransaction(objectStores, mode, timeout, this);
 }
 
@@ -243,6 +259,25 @@ void IDBDatabaseBackendImpl::loadObjectStores()
         m_objectStores.set(name, IDBObjectStoreBackendImpl::create(this, id, name, keyPath, autoIncrement));
     }
 }
+
+void IDBDatabaseBackendImpl::removeObjectStoreFromMap(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, PassRefPtr<IDBObjectStoreBackendImpl> objectStore)
+{
+    ASSERT(database->m_objectStores.contains(objectStore->name()));
+    database->m_objectStores.remove(objectStore->name());
+}
+
+void IDBDatabaseBackendImpl::addObjectStoreToMap(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, PassRefPtr<IDBObjectStoreBackendImpl> objectStore)
+{
+    RefPtr<IDBObjectStoreBackendImpl> objectStorePtr = objectStore;
+    ASSERT(!database->m_objectStores.contains(objectStorePtr->name()));
+    database->m_objectStores.set(objectStorePtr->name(), objectStorePtr);
+}
+
+void IDBDatabaseBackendImpl::resetVersion(ScriptExecutionContext*, PassRefPtr<IDBDatabaseBackendImpl> database, const String& version)
+{
+    database->m_version = version;
+}
+
 
 } // namespace WebCore
 

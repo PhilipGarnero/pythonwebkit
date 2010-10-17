@@ -25,13 +25,18 @@
 
 #include "NetscapePlugin.h"
 
-#include <AppKit/AppKit.h>
+#include "NotImplemented.h"
 #include "WebEvent.h"
 #include <WebCore/GraphicsContext.h>
 
 using namespace WebCore;
 
 namespace WebKit {
+
+#ifndef NP_NO_QUICKDRAW
+static const double nullEventIntervalActive = 0.02;
+static const double nullEventIntervalNotActive = 0.25;
+#endif
 
 NPError NetscapePlugin::setDrawingModel(NPDrawingModel drawingModel)
 {
@@ -122,11 +127,37 @@ bool NetscapePlugin::platformPostInitialize()
         }
     }
 
+#ifndef NP_NO_CARBON
+    if (m_eventModel == NPEventModelCarbon) {
+        // Initialize the fake Carbon window.
+        Rect bounds = { 0, 0, 0, 0 };
+        CreateNewWindow(kDocumentWindowClass, 0, &bounds, reinterpret_cast<WindowRef*>(&m_npCGContext.window));
+        
+        // FIXME: Disable the backing store.
+        
+        m_npWindow.window = &m_npCGContext;
+
+        // Start the null event timer.
+        // FIXME: Throttle null events when the plug-in isn't visible on screen.
+        m_nullEventTimer.startRepeating(nullEventIntervalActive);        
+    }
+#endif
+
     return true;
 }
 
 void NetscapePlugin::platformDestroy()
 {
+#ifndef NP_NO_CARBON
+    if (m_eventModel == NPEventModelCarbon) {
+        // Destroy the fake Carbon window.
+        ASSERT(m_npCGContext.window);
+        DisposeWindow(static_cast<WindowRef>(m_npCGContext.window));
+
+        // Stop the null event timer.
+        m_nullEventTimer.stop();
+    }
+#endif
 }
 
 void NetscapePlugin::platformGeometryDidChange()
@@ -143,8 +174,79 @@ static inline NPCocoaEvent initializeEvent(NPCocoaEventType type)
     return event;
 }
 
+#ifndef NP_NO_CARBON
+WindowRef NetscapePlugin::windowRef() const
+{
+    ASSERT(m_eventModel == NPEventModelCarbon);
+
+    return reinterpret_cast<WindowRef>(m_npCGContext.window);
+}
+
+static inline EventRecord initializeEventRecord(EventKind eventKind)
+{
+    EventRecord eventRecord;
+
+    eventRecord.what = eventKind;
+    eventRecord.message = 0;
+    eventRecord.when = TickCount();
+    eventRecord.where = Point();
+    eventRecord.modifiers = 0;
+
+    return eventRecord;
+}
+
+static bool anyMouseButtonIsDown(const WebEvent& event)
+{
+    if (event.type() == WebEvent::MouseDown)
+        return true;
+
+    if (event.type() == WebEvent::MouseMove && static_cast<const WebMouseEvent&>(event).button() != WebMouseEvent::NoButton)
+        return true;
+
+    return false;
+}
+
+static bool rightMouseButtonIsDown(const WebEvent& event)
+{
+    if (event.type() == WebEvent::MouseDown && static_cast<const WebMouseEvent&>(event).button() == WebMouseEvent::RightButton)
+        return true;
+    
+    if (event.type() == WebEvent::MouseMove && static_cast<const WebMouseEvent&>(event).button() == WebMouseEvent::RightButton)
+        return true;
+    
+    return false;
+}
+
+static EventModifiers modifiersForEvent(const WebEvent& event)
+{
+    EventModifiers modifiers = 0;
+
+    // We only want to set the btnState if a mouse button is _not_ down.
+    if (!anyMouseButtonIsDown(event))
+        modifiers |= btnState;
+
+    if (event.metaKey())
+        modifiers |= cmdKey;
+
+    if (event.shiftKey())
+        modifiers |= shiftKey;
+
+    if (event.altKey())
+        modifiers |= optionKey;
+
+    // Set controlKey if the control key is down or the right mouse button is down.
+    if (event.controlKey() || rightMouseButtonIsDown(event))
+        modifiers |= controlKey;
+
+    return modifiers;
+}
+
+#endif
+
 void NetscapePlugin::platformPaint(GraphicsContext* context, const IntRect& dirtyRect)
 {
+    CGContextRef platformContext = context->platformContext();
+
     // Translate the context so that the origin is at the top left corner of the plug-in view.
     context->translate(m_frameRect.x(), m_frameRect.y());
 
@@ -156,7 +258,7 @@ void NetscapePlugin::platformPaint(GraphicsContext* context, const IntRect& dirt
 
             NPCocoaEvent event = initializeEvent(NPCocoaEventDrawRect);
 
-            event.data.draw.context = context->platformContext();
+            event.data.draw.context = platformContext;
             event.data.draw.x = dirtyRect.x() - m_frameRect.x();
             event.data.draw.y = dirtyRect.y() - m_frameRect.y();
             event.data.draw.width = dirtyRect.width();
@@ -165,7 +267,22 @@ void NetscapePlugin::platformPaint(GraphicsContext* context, const IntRect& dirt
             NPP_HandleEvent(&event);
             break;
         }
-        
+
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon: {
+            if (platformContext != m_npCGContext.context) {
+                m_npCGContext.context = platformContext;
+                callSetWindow();
+            }
+
+            EventRecord event = initializeEventRecord(updateEvt);
+            event.message = reinterpret_cast<unsigned long>(windowRef());
+            
+            NPP_HandleEvent(&event);
+            break;            
+        }
+#endif
+
         default:
             ASSERT_NOT_REACHED();
     }
@@ -251,6 +368,31 @@ bool NetscapePlugin::platformHandleMouseEvent(const WebMouseEvent& mouseEvent)
             return NPP_HandleEvent(&event);
         }
 
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon: {
+            EventKind eventKind = nullEvent;
+
+            switch (mouseEvent.type()) {
+            case WebEvent::MouseDown:
+                eventKind = mouseDown;
+                break;
+            case WebEvent::MouseUp:
+                eventKind = mouseUp;
+                break;
+            case WebEvent::MouseMove:
+                eventKind = nullEvent;
+                break;
+            default:
+                ASSERT_NOT_REACHED();
+            }
+
+            EventRecord event = initializeEventRecord(eventKind);
+            event.where.h = mouseEvent.globalPositionX();
+            event.where.v = mouseEvent.globalPositionY();
+            return NPP_HandleEvent(&event);
+        }
+#endif
+
         default:
             ASSERT_NOT_REACHED();
     }
@@ -275,6 +417,12 @@ bool NetscapePlugin::platformHandleWheelEvent(const WebWheelEvent& wheelEvent)
             return NPP_HandleEvent(&event);
         }
 
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon:
+            // Carbon doesn't have wheel events.
+            break;
+#endif
+
         default:
             ASSERT_NOT_REACHED();
     }
@@ -292,13 +440,22 @@ bool NetscapePlugin::platformHandleMouseEnterEvent(const WebMouseEvent& mouseEve
             return NPP_HandleEvent(&event);
         }
 
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon: {
+            EventRecord eventRecord = initializeEventRecord(adjustCursorEvent);
+            eventRecord.modifiers = modifiersForEvent(mouseEvent);
+            
+            return NPP_HandleEvent(&eventRecord);
+        }
+#endif
+
         default:
             ASSERT_NOT_REACHED();
     }
 
     return false;
 }
-        
+
 bool NetscapePlugin::platformHandleMouseLeaveEvent(const WebMouseEvent& mouseEvent)
 {
     switch (m_eventModel) {
@@ -306,6 +463,72 @@ bool NetscapePlugin::platformHandleMouseLeaveEvent(const WebMouseEvent& mouseEve
             NPCocoaEvent event = initializeEvent(NPCocoaEventMouseExited);
             
             fillInCocoaEventFromMouseEvent(event, mouseEvent, m_frameRect.location());
+            return NPP_HandleEvent(&event);
+        }
+
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon: {
+            EventRecord eventRecord = initializeEventRecord(adjustCursorEvent);
+            eventRecord.modifiers = modifiersForEvent(mouseEvent);
+            
+            return NPP_HandleEvent(&eventRecord);
+        }
+#endif
+
+        default:
+            ASSERT_NOT_REACHED();
+    }
+
+    return false;
+}
+
+static unsigned modifierFlags(const WebKeyboardEvent& keyboardEvent)
+{
+    unsigned modifierFlags = 0;
+
+    if (keyboardEvent.shiftKey())
+        modifierFlags |= NSShiftKeyMask;
+    if (keyboardEvent.controlKey())
+        modifierFlags |= NSControlKeyMask;
+    if (keyboardEvent.altKey())
+        modifierFlags |= NSAlternateKeyMask;
+    if (keyboardEvent.metaKey())
+        modifierFlags |= NSCommandKeyMask;
+
+    return modifierFlags;
+}
+
+static NPCocoaEvent initializeKeyboardEvent(const WebKeyboardEvent& keyboardEvent)
+{
+    NPCocoaEventType eventType;
+    
+    switch (keyboardEvent.type()) {
+        case WebEvent::KeyDown:
+            eventType = NPCocoaEventKeyDown;
+            break;
+        case WebEvent::KeyUp:
+            eventType = NPCocoaEventKeyUp;
+            break;
+        default:
+            ASSERT_NOT_REACHED();
+            return NPCocoaEvent();
+    }
+
+    NPCocoaEvent event = initializeEvent(eventType);
+    event.data.key.modifierFlags = modifierFlags(keyboardEvent);
+    event.data.key.characters = reinterpret_cast<NPNSString*>(static_cast<NSString*>(keyboardEvent.text()));
+    event.data.key.charactersIgnoringModifiers = reinterpret_cast<NPNSString*>(static_cast<NSString*>(keyboardEvent.unmodifiedText()));
+    event.data.key.isARepeat = keyboardEvent.isAutoRepeat();
+    event.data.key.keyCode = keyboardEvent.nativeVirtualKeyCode();
+
+    return event;
+}
+
+bool NetscapePlugin::platformHandleKeyboardEvent(const WebKeyboardEvent& keyboardEvent)
+{
+    switch (m_eventModel) {
+        case NPEventModelCocoa: {
+            NPCocoaEvent event  = initializeKeyboardEvent(keyboardEvent);
             return NPP_HandleEvent(&event);
         }
 
@@ -327,12 +550,20 @@ void NetscapePlugin::platformSetFocus(bool hasFocus)
             break;
         }
 
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon: {
+            EventRecord event = initializeEventRecord(hasFocus ? getFocusEvent : loseFocusEvent);
+
+            NPP_HandleEvent(&event);
+            break;
+        }
+#endif
+            
         default:
             ASSERT_NOT_REACHED();
     }
 }
 
-#if PLATFORM(MAC)
 void NetscapePlugin::windowFocusChanged(bool hasFocus)
 {
     switch (m_eventModel) {
@@ -343,6 +574,22 @@ void NetscapePlugin::windowFocusChanged(bool hasFocus)
             NPP_HandleEvent(&event);
             break;
         }
+        
+#ifndef NP_NO_CARBON
+        case NPEventModelCarbon: {
+            HiliteWindow(windowRef(), hasFocus);
+            if (hasFocus)
+                SetUserFocusWindow(windowRef());
+
+            EventRecord event = initializeEventRecord(activateEvt);
+            event.message = reinterpret_cast<unsigned long>(windowRef());
+            if (hasFocus)
+                event.modifiers |= activeFlag;
+            
+            NPP_HandleEvent(&event);
+            break;
+        }
+#endif
 
         default:
             ASSERT_NOT_REACHED();
@@ -359,11 +606,28 @@ void NetscapePlugin::windowVisibilityChanged(bool)
     // FIXME: Implement.
 }
     
-#endif
-
 PlatformLayer* NetscapePlugin::pluginLayer()
 {
     return static_cast<PlatformLayer*>(m_pluginLayer.get());
 }
+
+#ifndef NP_NO_CARBON
+void NetscapePlugin::nullEventTimerFired()
+{
+    EventRecord event = initializeEventRecord(nullEvent);
+
+    event.message = 0;
+    CGPoint mousePosition;
+    HIGetMousePosition(kHICoordSpaceScreenPixel, 0, &mousePosition);
+    event.where.h = mousePosition.x;
+    event.where.v = mousePosition.y;
+
+    event.modifiers = GetCurrentKeyModifiers();
+    if (!Button())
+        event.modifiers |= btnState;
+
+    NPP_HandleEvent(&event);
+}
+#endif
 
 } // namespace WebKit

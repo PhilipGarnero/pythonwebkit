@@ -42,8 +42,9 @@ import sys
 import time
 
 import apache_http_server
-import test_files
+import http_lock
 import http_server
+import test_files
 import websocket_server
 
 from webkitpy.common.system import logutils
@@ -53,22 +54,6 @@ from webkitpy.common.system.user import User
 
 _log = logutils.get_logger(__file__)
 
-
-# Python's Popen has a bug that causes any pipes opened to a
-# process that can't be executed to be leaked.  Since this
-# code is specifically designed to tolerate exec failures
-# to gracefully handle cases where wdiff is not installed,
-# the bug results in a massive file descriptor leak. As a
-# workaround, if an exec failure is ever experienced for
-# wdiff, assume it's not available.  This will leak one
-# file descriptor but that's better than leaking each time
-# wdiff would be run.
-#
-# http://mail.python.org/pipermail/python-list/
-#    2008-August/505753.html
-# http://bugs.python.org/issue3210
-_wdiff_available = True
-_pretty_patch_available = True
 
 # FIXME: This class should merge with webkitpy.webkit_port at some point.
 class Port(object):
@@ -92,6 +77,26 @@ class Port(object):
         self._http_server = None
         self._webkit_base_dir = None
         self._websocket_server = None
+        self._http_lock = None
+
+        # Python's Popen has a bug that causes any pipes opened to a
+        # process that can't be executed to be leaked.  Since this
+        # code is specifically designed to tolerate exec failures
+        # to gracefully handle cases where wdiff is not installed,
+        # the bug results in a massive file descriptor leak. As a
+        # workaround, if an exec failure is ever experienced for
+        # wdiff, assume it's not available.  This will leak one
+        # file descriptor but that's better than leaking each time
+        # wdiff would be run.
+        #
+        # http://mail.python.org/pipermail/python-list/
+        #    2008-August/505753.html
+        # http://bugs.python.org/issue3210
+        self._wdiff_available = True
+
+        self._pretty_patch_path = self.path_from_webkit_base("BugsSite",
+              "PrettyPatch", "prettify.rb")
+        self._pretty_patch_available = True
 
     def default_child_processes(self):
         """Return the number of DumpRenderTree instances to use for this
@@ -124,6 +129,27 @@ class Port(object):
     def check_image_diff(self, override_step=None, logging=True):
         """This routine is used to check whether image_diff binary exists."""
         raise NotImplementedError('Port.check_image_diff')
+
+    def check_pretty_patch(self):
+        """Checks whether we can use the PrettyPatch ruby script."""
+
+        # check if Ruby is installed
+        try:
+            result = self._executive.run_command(['ruby', '--version'])
+        except OSError, e:
+            if e.errno in [errno.ENOENT, errno.EACCES, errno.ECHILD]:
+                _log.error("Ruby is not installed; "
+                           "can't generate pretty patches.")
+                _log.error('')
+                return False
+
+        if not self.path_exists(self._pretty_patch_path):
+            _log.error('Unable to find %s .' % self._pretty_patch_path)
+            _log.error("Can't generate pretty patches.")
+            _log.error('')
+            return False
+
+        return True
 
     def compare_text(self, expected_text, actual_text):
         """Return whether or not the two strings are *not* equal. This
@@ -259,7 +285,10 @@ class Port(object):
         path = self.expected_filename(test, extension)
         if not os.path.exists(path):
             return None
-        with codecs.open(path, 'r', encoding) as file:
+        open_mode = 'r'
+        if encoding is None:
+            open_mode = 'r+b'
+        with codecs.open(path, open_mode, encoding) as file:
             return file.read()
 
     def expected_checksum(self, test):
@@ -281,22 +310,18 @@ class Port(object):
         return text.strip("\r\n").replace("\r\n", "\n") + "\n"
 
     def filename_to_uri(self, filename):
-        """Convert a test file to a URI."""
+        """Convert a test file (which is an absolute path) to a URI."""
         LAYOUTTEST_HTTP_DIR = "http/tests/"
-        LAYOUTTEST_WEBSOCKET_DIR = "websocket/tests/"
+        LAYOUTTEST_WEBSOCKET_DIR = "http/tests/websocket/tests/"
 
         relative_path = self.relative_test_filename(filename)
         port = None
         use_ssl = False
 
-        if relative_path.startswith(LAYOUTTEST_HTTP_DIR):
-            # http/tests/ run off port 8000 and ssl/ off 8443
+        if (relative_path.startswith(LAYOUTTEST_WEBSOCKET_DIR)
+            or relative_path.startswith(LAYOUTTEST_HTTP_DIR)):
             relative_path = relative_path[len(LAYOUTTEST_HTTP_DIR):]
             port = 8000
-        elif relative_path.startswith(LAYOUTTEST_WEBSOCKET_DIR):
-            # websocket/tests/ run off port 8880 and 9323
-            # Note: the root is /, not websocket/tests/
-            port = 8880
 
         # Make http/tests/local run as local files. This is to mimic the
         # logic in run-webkit-tests.
@@ -311,9 +336,17 @@ class Port(object):
                 protocol = "http"
             return "%s://127.0.0.1:%u/%s" % (protocol, port, relative_path)
 
-        if sys.platform is 'win32':
-            return "file:///" + self.get_absolute_path(filename)
-        return "file://" + self.get_absolute_path(filename)
+        abspath = os.path.abspath(filename)
+
+        # On Windows, absolute paths are of the form "c:\foo.txt". However,
+        # all current browsers (except for Opera) normalize file URLs by
+        # prepending an additional "/" as if the absolute path was
+        # "/c:/foo.txt". This means that all file URLs end up with "file:///"
+        # at the beginning.
+        if sys.platform == 'win32':
+            abspath = '/' + abspath.replace('\\', '/')
+
+        return "file://" + abspath
 
     def tests(self, paths):
         """Return the list of tests found (relative to layout_tests_dir()."""
@@ -382,13 +415,6 @@ class Port(object):
 
         raise NotImplementedError('unknown url type: %s' % uri)
 
-    def get_absolute_path(self, filename):
-        """Return the absolute path in unix format for the given filename.
-
-        This routine exists so that platforms that don't use unix filenames
-        can convert accordingly."""
-        return os.path.abspath(filename)
-
     def layout_tests_dir(self):
         """Return the absolute path to the top of the LayoutTests directory."""
         return self.path_from_webkit_base('LayoutTests')
@@ -445,7 +471,7 @@ class Port(object):
         """Relative unix-style path for a filename under the LayoutTests
         directory. Filenames outside the LayoutTests directory should raise
         an error."""
-        assert(filename.startswith(self.layout_tests_dir()))
+        #assert(filename.startswith(self.layout_tests_dir()))
         return filename[len(self.layout_tests_dir()) + 1:]
 
     def results_directory(self):
@@ -500,6 +526,10 @@ class Port(object):
             self._options.results_directory)
         self._websocket_server.start()
 
+    def acquire_http_lock(self):
+        self._http_lock = http_lock.HttpLock(None)
+        self._http_lock.wait_for_httpd_lock()
+
     def stop_helper(self):
         """Shut down the test helper if it is running. Do nothing if
         it isn't, or it isn't available. If a port overrides start_helper()
@@ -517,6 +547,10 @@ class Port(object):
         it isn't, or it isn't available."""
         if self._websocket_server:
             self._websocket_server.stop()
+
+    def release_http_lock(self):
+        if self._http_lock:
+            self._http_lock.cleanup_http_lock()
 
     def test_expectations(self):
         """Returns the test expectations for this port.
@@ -628,8 +662,7 @@ class Port(object):
         """Returns a string of HTML indicating the word-level diff of the
         contents of the two filenames. Returns an empty string if word-level
         diffing isn't available."""
-        global _wdiff_available  # See explaination at top of file.
-        if not _wdiff_available:
+        if not self._wdiff_available:
             return ""
         try:
             # It's possible to raise a ScriptError we pass wdiff invalid paths.
@@ -637,33 +670,33 @@ class Port(object):
         except OSError, e:
             if e.errno in [errno.ENOENT, errno.EACCES, errno.ECHILD]:
                 # Silently ignore cases where wdiff is missing.
-                _wdiff_available = False
+                self._wdiff_available = False
                 return ""
             raise
 
-    _pretty_patch_error_html = "Failed to run PrettyPatch, see error console."
+    # This is a class variable so we can test error output easily.
+    _pretty_patch_error_html = "Failed to run PrettyPatch, see error log."
 
     def pretty_patch_text(self, diff_path):
-        # FIXME: Much of this function could move to prettypatch.rb
-        global _pretty_patch_available
-        if not _pretty_patch_available:
+        if not self._pretty_patch_available:
             return self._pretty_patch_error_html
-        pretty_patch_path = self.path_from_webkit_base("BugsSite", "PrettyPatch")
-        prettify_path = os.path.join(pretty_patch_path, "prettify.rb")
-        command = ["ruby", "-I", pretty_patch_path, prettify_path, diff_path]
+        command = ("ruby", "-I", os.path.dirname(self._pretty_patch_path),
+                   self._pretty_patch_path, diff_path)
         try:
             # Diffs are treated as binary (we pass decode_output=False) as they
             # may contain multiple files of conflicting encodings.
             return self._executive.run_command(command, decode_output=False)
         except OSError, e:
             # If the system is missing ruby log the error and stop trying.
-            _pretty_patch_available = False
+            self._pretty_patch_available = False
             _log.error("Failed to run PrettyPatch (%s): %s" % (command, e))
             return self._pretty_patch_error_html
         except ScriptError, e:
-            # If ruby failed to run for some reason, log the command output and stop trying.
-            _pretty_patch_available = False
-            _log.error("Failed to run PrettyPatch (%s):\n%s" % (command, e.message_with_output()))
+            # If ruby failed to run for some reason, log the command
+            # output and stop trying.
+            self._pretty_patch_available = False
+            _log.error("Failed to run PrettyPatch (%s):\n%s" % (command,
+                       e.message_with_output()))
             return self._pretty_patch_error_html
 
     def _webkit_build_directory(self, args):

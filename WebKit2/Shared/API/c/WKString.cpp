@@ -24,6 +24,7 @@
  */
 
 #include "WKString.h"
+#include "WKStringPrivate.h"
 
 #include "WKAPICast.h"
 
@@ -31,20 +32,47 @@ using namespace WebKit;
 
 WKTypeID WKStringGetTypeID()
 {
-    return toRef(WebString::APIType);
+    return toAPI(WebString::APIType);
+}
+
+WKStringRef WKStringCreateWithUTF8CString(const char* string)
+{
+    RefPtr<WebString> webString = WebString::createFromUTF8String(string);
+    return toAPI(webString.release().leakRef());
 }
 
 bool WKStringIsEmpty(WKStringRef stringRef)
 {
-    return toWK(stringRef)->isEmpty();
+    return toImpl(stringRef)->isEmpty();
 }
 
-bool WKStringIsEqual(WKStringRef firstString, WKStringRef secondString)
+size_t WKStringGetMaximumUTF8CStringSize(WKStringRef stringRef)
 {
-    if (firstString == secondString)
-        return true;
-    if (!firstString || !secondString)
-        return false;
-        
-    return toWK(firstString)->string() == toWK(secondString)->string();
+    return toImpl(stringRef)->maximumUTF8CStringSize();
+}
+
+size_t WKStringGetUTF8CString(WKStringRef stringRef, char* buffer, size_t bufferSize)
+{
+    return toImpl(stringRef)->getUTF8CString(buffer, bufferSize);
+}
+
+bool WKStringIsEqual(WKStringRef aRef, WKStringRef bRef)
+{
+    return toImpl(aRef)->equal(toImpl(bRef));
+}
+
+bool WKStringIsEqualToUTF8CString(WKStringRef aRef, const char* b)
+{
+    return toImpl(aRef)->equalToUTF8String(b);
+}
+
+WKStringRef WKStringCreateWithJSString(JSStringRef jsStringRef)
+{
+    RefPtr<WebString> webString = WebString::create(jsStringRef);
+    return toAPI(webString.release().leakRef());
+}
+
+JSStringRef WKStringCopyJSString(WKStringRef stringRef)
+{
+    return toImpl(stringRef)->createJSString();
 }

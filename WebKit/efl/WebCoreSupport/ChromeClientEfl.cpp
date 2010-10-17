@@ -118,8 +118,10 @@ void ChromeClientEfl::setWindowRect(const FloatRect& rect)
 
 FloatRect ChromeClientEfl::pageRect()
 {
-    notImplemented();
-    return FloatRect();
+    if (!m_view)
+        return FloatRect();
+
+    return ewk_view_page_rect_get(m_view);
 }
 
 float ChromeClientEfl::scaleFactor()
@@ -319,6 +321,8 @@ IntRect ChromeClientEfl::windowResizerRect() const
 void ChromeClientEfl::contentsSizeChanged(Frame* frame, const IntSize& size) const
 {
     ewk_frame_contents_size_changed(kit(frame), size.width(), size.height());
+    if (ewk_view_frame_main_get(m_view) == kit(frame))
+        ewk_view_contents_size_changed(m_view, size.width(), size.height());
 }
 
 IntRect ChromeClientEfl::windowToScreen(const IntRect& rect) const
@@ -513,13 +517,9 @@ void ChromeClientEfl::chooseIconForFiles(const Vector<String>&, FileChooser*)
     notImplemented();
 }
 
-void ChromeClientEfl::didReceiveViewportArguments(Frame* frame, const ViewportArguments& arguments) const
+void ChromeClientEfl::dispatchViewportDataDidChange(const ViewportArguments& arguments) const
 {
-    FrameLoaderClientEfl* client = static_cast<FrameLoaderClientEfl*>(frame->loader()->client());
-    if (client->getInitLayoutCompleted())
-        return;
-
-    ewk_view_viewport_set(m_view, arguments.width, arguments.height, arguments.initialScale, arguments.minimumScale, arguments.maximumScale, arguments.userScalable);
+    ewk_view_viewport_attributes_set(m_view, arguments);
 }
 
 bool ChromeClientEfl::selectItemWritingDirectionIsNatural()

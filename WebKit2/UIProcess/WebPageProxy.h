@@ -28,9 +28,12 @@
 
 #include "APIObject.h"
 #include "DrawingAreaProxy.h"
+#include "FindOptions.h"
 #include "GenericCallback.h"
+#include "SharedMemory.h"
 #include "WKBase.h"
 #include "WebEvent.h"
+#include "WebFindClient.h"
 #include "WebFormClient.h"
 #include "WebFrameProxy.h"
 #include "WebHistoryClient.h"
@@ -54,8 +57,10 @@ namespace CoreIPC {
 }
 
 namespace WebCore {
-    class IntSize;
     class Cursor;
+    class FloatRect;
+    class IntSize;
+    struct ViewportArguments;
 }
 
 struct WKContextStatistics;
@@ -66,6 +71,7 @@ class DrawingAreaProxy;
 class NativeWebKeyboardEvent;
 class PageClient;
 class PlatformCertificateInfo;
+class StringPairVector;
 class WebBackForwardList;
 class WebBackForwardListItem;
 class WebData;
@@ -73,6 +79,8 @@ class WebEditCommandProxy;
 class WebKeyboardEvent;
 class WebMouseEvent;
 class WebPageNamespace;
+class WebPopupItem;
+class WebPopupMenuProxy;
 class WebProcessProxy;
 class WebURLRequest;
 class WebWheelEvent;
@@ -104,7 +112,7 @@ public:
     void initializePolicyClient(const WKPagePolicyClient*);
     void initializeFormClient(const WKPageFormClient*);
     void initializeUIClient(const WKPageUIClient*);
-
+    void initializeFindClient(const WKPageFindClient*);
     void revive();
 
     void initializeWebPage(const WebCore::IntSize&);
@@ -140,8 +148,8 @@ public:
 
 // These are only used on Mac currently.
 #if PLATFORM(MAC)
-    void setWindowIsVisible(bool windowIsVisible);
-    void setWindowFrame(const WebCore::IntRect&);
+    void updateWindowIsVisible(bool windowIsVisible);
+    void updateWindowFrame(const WebCore::IntRect&);
 #endif
 
     void handleMouseEvent(const WebMouseEvent&);
@@ -159,15 +167,21 @@ public:
     void setCustomUserAgent(const String&);
 
     void terminateProcess();
-    
-    PassRefPtr<WebData> sessionState() const;
-    void restoreFromSessionState(WebData*);
+
+    typedef bool (*WebPageProxySessionStateFilterCallback)(WKPageRef, WKStringRef type, WKTypeRef object, void* context);
+    PassRefPtr<WebData> sessionStateData(WebPageProxySessionStateFilterCallback, void* context) const;
+    void restoreFromSessionStateData(WebData*);
 
     double textZoomFactor() const { return m_textZoomFactor; }
     void setTextZoomFactor(double);
     double pageZoomFactor() const { return m_pageZoomFactor; }
     void setPageZoomFactor(double);
     void setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFactor);
+
+    // Find.
+    void findString(const String&, FindDirection, FindOptions, unsigned maxNumMatches);
+    void hideFindUI();
+    void countStringMatches(const String&, bool caseInsensitive, unsigned maxNumMatches);
 
     void runJavaScriptInMainFrame(const String&, PassRefPtr<ScriptReturnValueCallback>);
     void getRenderTreeExternalRepresentation(PassRefPtr<RenderTreeExternalRepresentationCallback>);
@@ -188,10 +202,12 @@ public:
     void didLeaveAcceleratedCompositing();
 #endif
 
+    void didDraw();
+
+    enum UndoOrRedo { Undo, Redo };
     void addEditCommand(WebEditCommandProxy*);
     void removeEditCommand(WebEditCommandProxy*);
-    void registerEditCommandForUndo(PassRefPtr<WebEditCommandProxy>);
-    void registerEditCommandForRedo(PassRefPtr<WebEditCommandProxy>);
+    void registerEditCommand(PassRefPtr<WebEditCommandProxy>, UndoOrRedo);
 
     WebProcessProxy* process() const;
     WebPageNamespace* pageNamespace() const { return m_pageNamespace.get(); }
@@ -210,53 +226,78 @@ private:
 
     virtual Type type() const { return APIType; }
 
+    // Implemented in generated WebPageProxyMessageReceiver.cpp
+    void didReceiveWebPageProxyMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::ArgumentDecoder*);
+    CoreIPC::SyncReplyMode didReceiveSyncWebPageProxyMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::ArgumentDecoder*, CoreIPC::ArgumentEncoder*);
+
     void didCreateMainFrame(uint64_t frameID);
     void didCreateSubFrame(uint64_t frameID);
 
-    void didStartProvisionalLoadForFrame(WebFrameProxy*, const String&, APIObject*);
-    void didReceiveServerRedirectForProvisionalLoadForFrame(WebFrameProxy*, const String&, APIObject*);
-    void didFailProvisionalLoadForFrame(WebFrameProxy*, APIObject*);
-    void didCommitLoadForFrame(WebFrameProxy*, const PlatformCertificateInfo&, APIObject*);
-    void didFinishDocumentLoadForFrame(WebFrameProxy*, APIObject*);
-    void didFinishLoadForFrame(WebFrameProxy*, APIObject*);
-    void didFailLoadForFrame(WebFrameProxy*, APIObject*);
-    void didReceiveTitleForFrame(WebFrameProxy*, const String&, APIObject*);
-    void didFirstLayoutForFrame(WebFrameProxy*, APIObject*);
-    void didFirstVisuallyNonEmptyLayoutForFrame(WebFrameProxy*, APIObject*);
-    void didRemoveFrameFromHierarchy(WebFrameProxy*, APIObject*);
+    void didStartProvisionalLoadForFrame(uint64_t frameID, const String&, CoreIPC::ArgumentDecoder*);
+    void didReceiveServerRedirectForProvisionalLoadForFrame(uint64_t frameID, const String&, CoreIPC::ArgumentDecoder*);
+    void didFailProvisionalLoadForFrame(uint64_t frameID, CoreIPC::ArgumentDecoder*);
+    void didCommitLoadForFrame(uint64_t frameID, const String& mimeType, const PlatformCertificateInfo&, CoreIPC::ArgumentDecoder*);
+    void didFinishDocumentLoadForFrame(uint64_t frameID, CoreIPC::ArgumentDecoder*);
+    void didFinishLoadForFrame(uint64_t frameID, CoreIPC::ArgumentDecoder*);
+    void didFailLoadForFrame(uint64_t frameID, CoreIPC::ArgumentDecoder*);
+    void didReceiveTitleForFrame(uint64_t frameID, const String&, CoreIPC::ArgumentDecoder*);
+    void didFirstLayoutForFrame(uint64_t frameID, CoreIPC::ArgumentDecoder*);
+    void didFirstVisuallyNonEmptyLayoutForFrame(uint64_t frameID, CoreIPC::ArgumentDecoder*);
+    void didRemoveFrameFromHierarchy(uint64_t frameID, CoreIPC::ArgumentDecoder*);
     void didStartProgress();
     void didChangeProgress(double);
     void didFinishProgress();
     
-    void decidePolicyForNavigationAction(WebFrameProxy*, WebCore::NavigationType, WebEvent::Modifiers, WebMouseEvent::Button, const String& url, uint64_t listenerID);
-    void decidePolicyForNewWindowAction(WebFrameProxy*, WebCore::NavigationType, WebEvent::Modifiers, WebMouseEvent::Button, const String& url, uint64_t listenerID);
-    void decidePolicyForMIMEType(WebFrameProxy*, const String& MIMEType, const String& url, uint64_t listenerID);
+    void decidePolicyForNavigationAction(uint64_t frameID, uint32_t navigationType, uint32_t modifiers, int32_t mouseButton, const String& url, uint64_t listenerID);
+    void decidePolicyForNewWindowAction(uint64_t frameID, uint32_t navigationType, uint32_t modifiers, int32_t mouseButton, const String& url, uint64_t listenerID);
+    void decidePolicyForMIMEType(uint64_t frameID, const String& MIMEType, const String& url, uint64_t listenerID);
 
-    void willSubmitForm(WebFrameProxy* frame, WebFrameProxy* frameSource, Vector<std::pair<String, String> >& textFieldValues, APIObject* userData, uint64_t listenerID);
+    void willSubmitForm(uint64_t frameID, uint64_t sourceFrameID, const StringPairVector& textFieldValues, uint64_t listenerID, CoreIPC::ArgumentDecoder*);
 
-    PassRefPtr<WebPageProxy> createNewPage();
+    // UI client
+    void createNewPage(uint64_t& newPageID, WebPageCreationParameters&);
     void showPage();
     void closePage();
-    void runJavaScriptAlert(WebFrameProxy*, const String&);
-    bool runJavaScriptConfirm(WebFrameProxy* frame, const String&);
-    String runJavaScriptPrompt(WebFrameProxy* frame, const String&, const String&);
+    void runJavaScriptAlert(uint64_t frameID, const String&);
+    void runJavaScriptConfirm(uint64_t frameID, const String&, bool& result);
+    void runJavaScriptPrompt(uint64_t frameID, const String&, const String&, String& result);
     void setStatusText(const String&);
-    void mouseDidMoveOverElement(WebEvent::Modifiers, APIObject*);
-    void contentsSizeChanged(WebFrameProxy*, const WebCore::IntSize&);
+    void mouseDidMoveOverElement(uint32_t modifiers, CoreIPC::ArgumentDecoder*);
+    void contentsSizeChanged(uint64_t frameID, const WebCore::IntSize&);
+    void setWindowFrame(const WebCore::FloatRect&);
+    void getWindowFrame(WebCore::FloatRect&);
+    void canRunBeforeUnloadConfirmPanel(bool& canRun);
+    void runBeforeUnloadConfirmPanel(const String& message, uint64_t frameID, bool& shouldClose);
+    void didChangeViewportData(const WebCore::ViewportArguments&);
 
     // Back/Forward list management
-    void addItemToBackForwardList(WebBackForwardListItem*);
-    void goToItemInBackForwardList(WebBackForwardListItem*);
+    void backForwardAddItem(uint64_t itemID);
+    void backForwardGoToItem(uint64_t itemID);
+    void backForwardBackItem(uint64_t& itemID);
+    void backForwardCurrentItem(uint64_t& itemID);
+    void backForwardForwardItem(uint64_t& itemID);
+    void backForwardItemAtIndex(int32_t index, uint64_t& itemID);
+    void backForwardBackListCount(int32_t& count);
+    void backForwardForwardListCount(int32_t& count);
 
     // Undo management
-    void registerEditCommandForUndo(uint64_t commandID, WebCore::EditAction);
+    void registerEditCommandForUndo(uint64_t commandID, uint32_t editAction);
     void clearAllEditCommands();
+
+    // Find.
+    void didCountStringMatches(const String&, uint32_t numMatches);
+    void setFindIndicator(const WebCore::FloatRect& selectionRect, const Vector<WebCore::FloatRect>& textRects, const SharedMemory::Handle& contentImageHandle, bool fadeOut);
+
+    // Popup Menu.
+    void showPopupMenu(const WebCore::IntRect& rect, const Vector<WebPopupItem>& items, int32_t selectedIndex);
+    void hidePopupMenu();
 
     void takeFocus(bool direction);
     void setToolTip(const String&);
     void setCursor(const WebCore::Cursor&);
-
-    void didReceiveEvent(WebEvent::Type, bool handled);
+    void didValidateMenuItem(const String& commandName, bool isEnabled, int32_t state);
+    
+    void didReceiveEvent(uint32_t opaqueType, bool handled);
 
     void didRunJavaScriptInMainFrame(const String&, uint64_t);
     void didGetRenderTreeExternalRepresentation(const String&, uint64_t);
@@ -265,7 +306,7 @@ private:
     WebPageCreationParameters creationParameters(const WebCore::IntSize&) const;
 
 #if USE(ACCELERATED_COMPOSITING)
-    void didChangeAcceleratedCompositing(bool compositing);
+    void didChangeAcceleratedCompositing(bool compositing, DrawingAreaBase::DrawingAreaInfo&);
 #endif    
 
     PageClient* m_pageClient;
@@ -273,6 +314,7 @@ private:
     WebPolicyClient m_policyClient;
     WebFormClient m_formClient;
     WebUIClient m_uiClient;
+    WebFindClient m_findClient;
 
     OwnPtr<DrawingAreaProxy> m_drawingArea;
     RefPtr<WebPageNamespace> m_pageNamespace;
@@ -284,6 +326,8 @@ private:
     HashMap<uint64_t, RefPtr<FrameSourceCallback> > m_frameSourceCallbacks;
 
     HashSet<WebEditCommandProxy*> m_editCommandSet;
+
+    RefPtr<WebPopupMenuProxy> m_activePopupMenu;
 
     double m_estimatedProgress;
 

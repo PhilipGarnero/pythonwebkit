@@ -34,7 +34,6 @@
 #include "ClientRect.h"
 #include "ClientRectList.h"
 #include "ContentType.h"
-#include "CSSHelper.h"
 #include "CSSPropertyNames.h"
 #include "CSSValueKeywords.h"
 #include "Event.h"
@@ -137,7 +136,6 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document* docum
     , m_playing(false)
     , m_isWaitingUntilMediaCanStart(false)
     , m_shouldDelayLoadEvent(false)
-    , m_isWaitingToDecrementLoadEventDelayCount(false)
     , m_haveFiredLoadedData(false)
     , m_inActiveDocument(true)
     , m_autoplaying(true)
@@ -400,15 +398,6 @@ void HTMLMediaElement::scheduleEvent(const AtomicString& eventName)
 
 void HTMLMediaElement::asyncEventTimerFired(Timer<HTMLMediaElement>*)
 {
-    // If we are waiting to release our delay on the load event, do that first and post
-    // the pending events on the next go around.
-    if (m_isWaitingToDecrementLoadEventDelayCount) {
-        setShouldDelayLoadEvent(false);
-        if (!m_asyncEventTimer.isActive())
-            m_asyncEventTimer.startOneShot(0);
-        return;
-    }
-
     Vector<RefPtr<Event> > pendingEvents;
     ExceptionCode ec = 0;
 
@@ -541,6 +530,7 @@ void HTMLMediaElement::prepareForLoad()
     m_displayMode = Unknown;
 
     // 1 - Abort any already-running instance of the resource selection algorithm for this element.
+    m_loadState = WaitingForSource;
     m_currentSourceNode = 0;
 
     // 2 - If there are any tasks from the media element's media element event task source in 
@@ -884,6 +874,10 @@ void HTMLMediaElement::setNetworkState(MediaPlayer::NetworkState state)
         // If we failed while trying to load a <source> element, the movie was never parsed, and there are more
         // <source> children, schedule the next one
         if (m_readyState < HAVE_METADATA && m_loadState == LoadingFromSourceElement) {
+            ASSERT(m_currentSourceNode);
+            if (!m_currentSourceNode)
+                return;
+
             m_currentSourceNode->scheduleErrorEvent();
             if (havePotentialSourceChild()) {
                 LOG(Media, "HTMLMediaElement::setNetworkState scheduling next <source>");
@@ -2333,24 +2327,9 @@ void HTMLMediaElement::setShouldDelayLoadEvent(bool shouldDelay)
     if (m_shouldDelayLoadEvent == shouldDelay)
         return;
 
-    // Don't decrement the load event delay if we are in the middle of a callback from
-    // the media engine. The load event is sent synchronously and may trigger a script that
-    // causes the document to be come inactive and that will clear the media engine, causing 
-    // the return to be a rough one.
-    if (!shouldDelay && processingMediaPlayerCallback()) {
-        m_isWaitingToDecrementLoadEventDelayCount = true;
-
-        // Instead of creating yet-another-timer, reuse the async event timer which is always
-        // used as a one-shot.
-        if (!m_asyncEventTimer.isActive())
-            m_asyncEventTimer.startOneShot(0);
-        return;
-    }
-
     LOG(Media, "HTMLMediaElement::setShouldDelayLoadEvent(%s)", boolString(shouldDelay));
 
     m_shouldDelayLoadEvent = shouldDelay;
-    m_isWaitingToDecrementLoadEventDelayCount = false;
     if (shouldDelay)
         document()->incrementLoadEventDelayCount();
     else

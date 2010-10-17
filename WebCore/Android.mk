@@ -38,7 +38,6 @@ LOCAL_SRC_FILES := \
 	css/CSSFontSelector.cpp \
 	css/CSSFunctionValue.cpp \
 	css/CSSGradientValue.cpp \
-	css/CSSHelper.cpp \
 	css/CSSImageGeneratorValue.cpp \
 	css/CSSImageValue.cpp \
 	css/CSSImportRule.cpp \
@@ -199,6 +198,7 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	dom/default/PlatformMessagePortChannel.cpp \
 	\
 	editing/AppendNodeCommand.cpp \
+	editing/ApplyBlockElementCommand.cpp \
 	editing/ApplyStyleCommand.cpp \
 	editing/BreakBlockquoteCommand.cpp \
 	editing/CompositeEditCommand.cpp \
@@ -220,6 +220,7 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	editing/InsertParagraphSeparatorCommand.cpp \
 	editing/InsertTextCommand.cpp \
 	editing/JoinTextNodesCommand.cpp \
+	editing/MarkupAccumulator.cpp \
 	editing/MergeIdenticalElementsCommand.cpp \
 	editing/ModifySelectionListLevel.cpp \
 	editing/MoveSelectionCommand.cpp \
@@ -261,6 +262,7 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	history/android/HistoryItemAndroid.cpp \
 	\
 	html/AsyncImageResizer.cpp \
+	html/BaseDateAndTimeInputType.cpp \
 	html/BaseTextInputType.cpp \
 	html/ButtonInputType.cpp \
 	html/CheckboxInputType.cpp \
@@ -364,7 +366,7 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	loader/PolicyCallback.cpp \
 	loader/PolicyChecker.cpp \
 	loader/ProgressTracker.cpp \
-	loader/RedirectScheduler.cpp \
+	loader/NavigationScheduler.cpp \
 	loader/Request.cpp \
 	loader/ResourceLoadNotifier.cpp \
 	loader/ResourceLoader.cpp \
@@ -605,7 +607,6 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	platform/text/RegularExpression.cpp \
 	platform/text/SegmentedString.cpp \
 	platform/text/String.cpp \
-	platform/text/StringBuilder.cpp \
 	platform/text/TextBreakIteratorICU.cpp \
 	platform/text/TextCodec.cpp \
 	platform/text/TextCodecICU.cpp \
@@ -680,7 +681,6 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	rendering/RenderObject.cpp \
 	rendering/RenderObjectChildList.cpp \
 	rendering/RenderPart.cpp \
-	rendering/RenderPath.cpp \
 	rendering/RenderReplaced.cpp \
 	rendering/RenderReplica.cpp \
 
@@ -691,8 +691,6 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	rendering/RenderSVGGradientStop.cpp \
 	rendering/RenderSVGHiddenContainer.cpp \
 	rendering/RenderSVGImage.cpp \
-	rendering/RenderSVGInline.cpp \
-	rendering/RenderSVGInlineText.cpp \
 	rendering/RenderSVGModelObject.cpp \
 	rendering/RenderSVGResource.cpp \
 	rendering/RenderSVGResourceClipper.cpp \
@@ -708,13 +706,26 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 	rendering/RenderSVGResourceSolidColor.cpp \
 	rendering/RenderSVGRoot.cpp \
 	rendering/RenderSVGShadowTreeRootContainer.cpp \
-	rendering/RenderSVGTSpan.cpp \
-	rendering/RenderSVGText.cpp \
-	rendering/RenderSVGTextPath.cpp \
 	rendering/RenderSVGTransformableContainer.cpp \
 	rendering/RenderSVGViewportContainer.cpp \
+	rendering/svg/RenderSVGInline.cpp \
+	rendering/svg/RenderSVGInlineText.cpp \
+	rendering/svg/RenderSVGPath.cpp \
+	rendering/svg/RenderSVGTSpan.cpp \
+	rendering/svg/RenderSVGText.cpp \
+	rendering/svg/RenderSVGTextPath.cpp \
+	rendering/svg/SVGInlineFlowBox.cpp \
+	rendering/svg/SVGInlineTextBox.cpp \
+	rendering/svg/SVGRootInlineBox.cpp \
+	rendering/svg/SVGTextChunk.cpp \
+	rendering/svg/SVGTextChunkBuilder.cpp \
 	rendering/svg/SVGTextLayoutAttributes.cpp \
-	rendering/svg/SVGTextLayoutBuilder.cpp
+	rendering/svg/SVGTextLayoutAttributesBuilder.cpp \
+	rendering/svg/SVGTextLayoutEngine.cpp \
+	rendering/svg/SVGTextLayoutEngineBaseline.cpp \
+	rendering/svg/SVGTextLayoutEngineSpacing.cpp \
+	rendering/svg/SVGTextMetrics.cpp \
+	rendering/svg/SVGTextQuery.cpp
 endif
 
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
@@ -742,22 +753,14 @@ LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
 
 ifeq ($(ENABLE_SVG), true)
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \
-	rendering/SVGCharacterData.cpp \
-	rendering/SVGCharacterLayoutInfo.cpp \
 	rendering/SVGImageBufferTools.cpp \
-	rendering/SVGInlineFlowBox.cpp \
-	rendering/SVGInlineTextBox.cpp \
 	rendering/SVGMarkerLayoutInfo.cpp \
 	rendering/SVGRenderSupport.cpp \
 	rendering/SVGRenderTreeAsText.cpp \
 	rendering/SVGResources.cpp \
 	rendering/SVGResourcesCache.cpp \
 	rendering/SVGResourcesCycleSolver.cpp \
-	rendering/SVGRootInlineBox.cpp \
-	rendering/SVGShadowTreeElements.cpp \
-	rendering/SVGTextChunkLayoutInfo.cpp \
-	rendering/SVGTextLayoutUtilities.cpp \
-	rendering/SVGTextQuery.cpp
+	rendering/SVGShadowTreeElements.cpp
 endif
 
 LOCAL_SRC_FILES := $(LOCAL_SRC_FILES) \

@@ -56,6 +56,10 @@ NetscapePlugin::NetscapePlugin(PassRefPtr<NetscapePluginModule> pluginModule)
 #if PLATFORM(MAC)
     , m_drawingModel(static_cast<NPDrawingModel>(-1))
     , m_eventModel(static_cast<NPEventModel>(-1))
+#ifndef NP_NO_CARBON
+    , m_nullEventTimer(RunLoop::main(), this, &NetscapePlugin::nullEventTimerFired)
+    , m_npCGContext()
+#endif    
 #endif
 {
     m_npp.ndata = this;
@@ -165,6 +169,11 @@ bool NetscapePlugin::evaluate(NPObject* npObject, const String& scriptString, NP
     return m_pluginController->evaluate(npObject, scriptString, result, allowPopups());
 }
 
+bool NetscapePlugin::isPrivateBrowsingEnabled()
+{
+    return m_pluginController->isPrivateBrowsingEnabled();
+}
+
 NPObject* NetscapePlugin::windowScriptNPObject()
 {
     return m_pluginController->windowScriptNPObject();
@@ -204,6 +213,21 @@ bool NetscapePlugin::isAcceleratedCompositingEnabled()
 #else
     return false;
 #endif
+}
+
+String NetscapePlugin::proxiesForURL(const String& urlString)
+{
+    return m_pluginController->proxiesForURL(urlString);
+}
+    
+String NetscapePlugin::cookiesForURL(const String& urlString)
+{
+    return m_pluginController->cookiesForURL(urlString);
+}
+
+void NetscapePlugin::setCookiesForURL(const String& urlString, const String& cookieString)
+{
+    m_pluginController->setCookiesForURL(urlString, cookieString);
 }
 
 NPError NetscapePlugin::NPP_New(NPMIMEType pluginType, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* savedData)
@@ -259,6 +283,11 @@ void NetscapePlugin::NPP_URLNotify(const char* url, NPReason reason, void* notif
 NPError NetscapePlugin::NPP_GetValue(NPPVariable variable, void *value)
 {
     return m_pluginModule->pluginFuncs().getvalue(&m_npp, variable, value);
+}
+
+NPError NetscapePlugin::NPP_SetValue(NPNVariable variable, void *value)
+{
+    return m_pluginModule->pluginFuncs().setvalue(&m_npp, variable, value);
 }
 
 void NetscapePlugin::callSetWindow()
@@ -512,6 +541,11 @@ bool NetscapePlugin::handleMouseLeaveEvent(const WebMouseEvent& mouseEvent)
     return platformHandleMouseLeaveEvent(mouseEvent);
 }
 
+bool NetscapePlugin::handleKeyboardEvent(const WebKeyboardEvent& keyboardEvent)
+{
+    return platformHandleKeyboardEvent(keyboardEvent);
+}
+
 void NetscapePlugin::setFocus(bool hasFocus)
 {
     platformSetFocus(hasFocus);
@@ -525,6 +559,17 @@ NPObject* NetscapePlugin::pluginScriptableNPObject()
         return 0;
     
     return scriptableNPObject;
+}
+
+void NetscapePlugin::privateBrowsingStateChanged(bool privateBrowsingEnabled)
+{
+    // From https://wiki.mozilla.org/Plugins:PrivateMode
+    //   When the browser turns private mode on or off it will call NPP_SetValue for "NPNVprivateModeBool" 
+    //   (assigned enum value 18) with a pointer to an NPBool value on all applicable instances.
+    //   Plugins should check the boolean value pointed to, not the pointer itself. 
+    //   The value will be true when private mode is on.
+    NPBool value = privateBrowsingEnabled;
+    NPP_SetValue(NPNVprivateModeBool, &value);
 }
 
 PluginController* NetscapePlugin::controller()

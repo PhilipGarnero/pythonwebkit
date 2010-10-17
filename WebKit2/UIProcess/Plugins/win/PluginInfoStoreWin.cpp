@@ -303,6 +303,43 @@ Vector<String> PluginInfoStore::pluginPathsInDirectory(const String& directory)
     return paths;
 }
 
+static void addPluginPathsFromRegistry(HKEY rootKey, Vector<String>& paths)
+{
+    HKEY key;
+    if (::RegOpenKeyExW(rootKey, L"Software\\MozillaPlugins", 0, KEY_ENUMERATE_SUB_KEYS, &key) != ERROR_SUCCESS)
+        return;
+
+    for (size_t i = 0; ; ++i) {
+        // MSDN says that key names have a maximum length of 255 characters.
+        wchar_t name[256];
+        DWORD nameLen = _countof(name);
+        if (::RegEnumKeyExW(key, i, name, &nameLen, 0, 0, 0, 0) != ERROR_SUCCESS)
+            break;
+
+        wchar_t path[MAX_PATH];
+        DWORD pathSizeInBytes = sizeof(path);
+        DWORD type;
+        if (::SHGetValueW(key, name, L"Path", &type, path, &pathSizeInBytes) != ERROR_SUCCESS)
+            continue;
+        if (type != REG_SZ)
+            continue;
+
+        paths.append(path);
+    }
+
+    ::RegCloseKey(key);
+}
+
+Vector<String> PluginInfoStore::individualPluginPaths()
+{
+    Vector<String> paths;
+
+    addPluginPathsFromRegistry(HKEY_LOCAL_MACHINE, paths);
+    addPluginPathsFromRegistry(HKEY_CURRENT_USER, paths);
+
+    return paths;
+}
+
 static String getVersionInfo(const LPVOID versionInfoData, const String& info)
 {
     LPVOID buffer;

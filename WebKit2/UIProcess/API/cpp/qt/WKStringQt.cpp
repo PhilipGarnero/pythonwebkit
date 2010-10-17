@@ -30,13 +30,13 @@ using namespace WebKit;
 WKStringRef WKStringCreateWithQString(const QString& qString)
 {
     WTF::String string(qString);
-    return toCopiedRef(string);
+    return toCopiedAPI(string);
 }
 
 QString WKStringCopyQString(WKStringRef stringRef)
 {
     if (!stringRef)
         return QString();
-    const WTF::String& string = toWK(stringRef)->string();
+    const WTF::String& string = toImpl(stringRef)->string();
     return QString(reinterpret_cast<const QChar*>(string.characters()), string.length());
 }

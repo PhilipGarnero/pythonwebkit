@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2006 Apple Computer, Inc.  All rights reserved.
+ * Copyright (C) 2004, 2005, 2006 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,12 +31,12 @@
 #include "AffineTransform.h"
 #include "FloatConversion.h"
 #include "FloatRect.h"
-#include "GraphicsContext.h"
-#include "GraphicsContextPlatformPrivateCG.h"
+#include "GraphicsContextCG.h"
 #include "ImageObserver.h"
 #include "PDFDocumentImage.h"
 #include "PlatformString.h"
 #include <ApplicationServices/ApplicationServices.h>
+#include <wtf/RetainPtr.h>
 
 #if PLATFORM(MAC) || PLATFORM(CHROMIUM)
 #include "WebCoreSystemInterface.h"
@@ -141,8 +141,7 @@ static RetainPtr<CGImageRef> imageWithColorSpace(CGImageRef originalImage, Color
     case DeviceColorSpace:
         return originalImage;
     case sRGBColorSpace:
-        return RetainPtr<CGImageRef>(AdoptCF, CGImageCreateCopyWithColorSpace(originalImage, 
-            sRGBColorSpaceRef()));
+        return RetainPtr<CGImageRef>(AdoptCF, CGImageCreateCopyWithColorSpace(originalImage, sRGBColorSpaceRef()));
     }
 
     ASSERT_NOT_REACHED();

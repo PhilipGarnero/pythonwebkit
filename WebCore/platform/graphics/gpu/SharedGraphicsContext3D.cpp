@@ -49,16 +49,26 @@
 namespace WebCore {
 
 // static
-PassRefPtr<SharedGraphicsContext3D> SharedGraphicsContext3D::create(PassOwnPtr<GraphicsContext3D> context)
+PassRefPtr<SharedGraphicsContext3D> SharedGraphicsContext3D::create(HostWindow* hostWindow)
 {
-    return adoptRef(new SharedGraphicsContext3D(context));
+    GraphicsContext3D::Attributes attr;
+    RefPtr<GraphicsContext3D> context = GraphicsContext3D::create(attr, hostWindow);
+    if (!context)
+        return 0;
+    OwnPtr<SolidFillShader> solidFillShader = SolidFillShader::create(context.get());
+    if (!solidFillShader)
+        return 0;
+    OwnPtr<TexShader> texShader = TexShader::create(context.get());
+    if (!texShader)
+        return 0;
+    return adoptRef(new SharedGraphicsContext3D(context.release(), solidFillShader.release(), texShader.release()));
 }
 
-SharedGraphicsContext3D::SharedGraphicsContext3D(PassOwnPtr<GraphicsContext3D> context)
+SharedGraphicsContext3D::SharedGraphicsContext3D(PassRefPtr<GraphicsContext3D> context, PassOwnPtr<SolidFillShader> solidFillShader, PassOwnPtr<TexShader> texShader)
     : m_context(context)
     , m_quadVertices(0)
-    , m_solidFillShader(SolidFillShader::create(m_context.get()))
-    , m_texShader(TexShader::create(m_context.get()))
+    , m_solidFillShader(solidFillShader)
+    , m_texShader(texShader)
 {
     allContexts()->add(this);
 }

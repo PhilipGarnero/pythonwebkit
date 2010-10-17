@@ -88,7 +88,7 @@ class HTMLInputElement;
 class HTMLMapElement;
 class HitTestRequest;
 class HitTestResult;
-class InspectorTimelineAgent;
+class InspectorController;
 class IntPoint;
 class DOMWrapperWorld;
 class JSNode;
@@ -256,6 +256,7 @@ public:
     DEFINE_ATTRIBUTE_EVENT_LISTENER(error);
     DEFINE_ATTRIBUTE_EVENT_LISTENER(focus);
     DEFINE_ATTRIBUTE_EVENT_LISTENER(load);
+    DEFINE_ATTRIBUTE_EVENT_LISTENER(readystatechange);
 
     // WebKit extensions
     DEFINE_ATTRIBUTE_EVENT_LISTENER(beforecut);
@@ -481,7 +482,6 @@ public:
     Page* page() const; // can be NULL
     Settings* settings() const; // can be NULL
 #if ENABLE(INSPECTOR)
-    InspectorTimelineAgent* inspectorTimelineAgent() const; // can be NULL
     virtual InspectorController* inspectorController() const; // can be NULL
 #endif
 
@@ -1077,6 +1077,8 @@ private:
 
     PassRefPtr<NodeList> handleZeroPadding(const HitTestRequest&, HitTestResult&) const;
 
+    void loadEventDelayTimerFired(Timer<Document>*);
+
     OwnPtr<CSSStyleSelector> m_styleSelector;
     bool m_didCalculateStyleSelector;
 
@@ -1319,6 +1321,7 @@ private:
 #endif
 
     int m_loadEventDelayCount;
+    Timer<Document> m_loadEventDelayTimer;
 
     ViewportArguments m_viewportArguments;
 };

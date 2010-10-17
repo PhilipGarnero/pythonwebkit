@@ -33,15 +33,11 @@
 #include "WebPageNamespace.h"
 #include "WebPageProxy.h"
 #include "WebProcessManager.h"
-#include "WebProcessMessageKinds.h"
+#include "WebProcessMessages.h"
 #include "WebProcessProxyMessageKinds.h"
 #include <WebCore/KURL.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/WTFString.h>
-
-#if ENABLE(WEB_PROCESS_SANDBOX)
-#include <sandbox.h>
-#endif
 
 using namespace WebCore;
 
@@ -63,32 +59,6 @@ WebProcessProxy::WebProcessProxy(WebContext* context)
     , m_context(context)
 {
     connect();
-
-    // FIXME: Instead of sending three separate initialization related messages here, we should just send a
-    // single "Initialize" messages with a struct that has all the needed information.
-    String applicationCacheDirectory = m_context->applicationCacheDirectory();
-    if (!applicationCacheDirectory.isEmpty())
-        send(WebProcessMessage::SetApplicationCacheDirectory, 0, CoreIPC::In(applicationCacheDirectory));
-
-    // FIXME: We could instead send the bundle path as part of the arguments to process creation?
-    // Would that be better than sending a connection?
-    if (!context->injectedBundlePath().isEmpty()) {
-#if ENABLE(WEB_PROCESS_SANDBOX)
-        char *sandboxBundleToken = NULL;
-        CString injectedBundlePath = context->injectedBundlePath().utf8();
-        sandbox_issue_extension(injectedBundlePath.data(), &sandboxBundleToken);
-        send(WebProcessMessage::LoadInjectedBundle, 0, CoreIPC::In(context->injectedBundlePath(), String::fromUTF8(sandboxBundleToken)));
-        if (sandboxBundleToken)
-            free(sandboxBundleToken);
-#else
-        send(WebProcessMessage::LoadInjectedBundle, 0, CoreIPC::In(context->injectedBundlePath()));
-#endif
-    }
-
-#if USE(ACCELERATED_COMPOSITING)
-    setUpAcceleratedCompositing();
-#endif
-
 }
 
 WebProcessProxy::~WebProcessProxy()
@@ -154,12 +124,6 @@ void WebProcessProxy::terminate()
     if (m_processLauncher)
         m_processLauncher->terminateProcess();
 }
-
-#if USE(ACCELERATED_COMPOSITING) && !PLATFORM(MAC)
-void WebProcessProxy::setUpAcceleratedCompositing()
-{
-}
-#endif
 
 WebPageProxy* WebProcessProxy::webPage(uint64_t pageID) const
 {

@@ -139,6 +139,7 @@ public:
     virtual bool isRootInlineBox() const { return false; }
 #if ENABLE(SVG)
     virtual bool isSVGInlineTextBox() const { return false; }
+    virtual bool isSVGInlineFlowBox() const { return false; }
     virtual bool isSVGRootInlineBox() const { return false; }
 #endif
 
@@ -216,6 +217,7 @@ public:
 
     // The logicalLeft position is the left edge of the line box in a horizontal line and the top edge in a vertical line.
     int logicalLeft() const { return !m_isVertical ? m_x : m_y; }
+    int logicalRight() const { return logicalLeft() + logicalWidth(); }
     void setLogicalLeft(int left)
     {
         if (!m_isVertical)

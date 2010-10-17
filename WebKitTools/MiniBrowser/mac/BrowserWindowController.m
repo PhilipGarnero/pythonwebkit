@@ -484,6 +484,46 @@ static void contentsSizeChanged(WKPageRef page, int width, int height, WKFrameRe
     LOG(@"contentsSizeChanged");
 }
 
+static WKRect getWindowFrame(WKPageRef page, const void* clientInfo)
+{
+    NSRect rect = [[(BrowserWindowController *)clientInfo window] frame];
+    WKRect wkRect;
+    wkRect.origin.x = rect.origin.x;
+    wkRect.origin.y = rect.origin.y;
+    wkRect.size.width = rect.size.width;
+    wkRect.size.height = rect.size.height;
+    return wkRect;
+}
+
+static void setWindowFrame(WKPageRef page, WKRect rect, const void* clientInfo)
+{
+    [[(BrowserWindowController *)clientInfo window] setFrame:NSMakeRect(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height) display:YES];
+}
+
+static bool runBeforeUnloadConfirmPanel(WKPageRef page, WKStringRef message, WKFrameRef frame, const void* clientInfo)
+{
+    NSAlert *alert = [[NSAlert alloc] init];
+
+    WKURLRef wkURL = WKFrameCopyURL(frame);
+    CFURLRef cfURL = WKURLCopyCFURL(0, wkURL);
+    WKRelease(wkURL);
+
+    [alert setMessageText:[NSString stringWithFormat:@"BeforeUnload confirm dialog from %@.", [(NSURL *)cfURL absoluteString]]];
+    CFRelease(cfURL);
+
+    CFStringRef cfMessage = WKStringCopyCFString(0, message);
+    [alert setInformativeText:(NSString *)cfMessage];
+    CFRelease(cfMessage);
+
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSInteger button = [alert runModal];
+    [alert release];
+
+    return button == NSAlertFirstButtonReturn;
+}
+
 - (void)awakeFromNib
 {
     _webView = [[WKView alloc] initWithFrame:[containerView frame] pageNamespaceRef:_pageNamespace];
@@ -538,7 +578,11 @@ static void contentsSizeChanged(WKPageRef page, int width, int height, WKFrameRe
         setStatusText,
         mouseDidMoveOverElement,
         contentsSizeChanged,
-        0           /* didNotHandleKeyEvent */
+        0,          /* didNotHandleKeyEvent */
+        getWindowFrame,
+        setWindowFrame,
+        runBeforeUnloadConfirmPanel,
+        0          /* didDraw */
     };
     WKPageSetPageUIClient(_webView.pageRef, &uiClient);
 }
@@ -614,6 +658,19 @@ static void contentsSizeChanged(WKPageRef page, int width, int height, WKFrameRe
     // FIXME: We shouldn't have to set the url text here.
     [urlText setStringValue:urlString];
     [self fetch:nil];
+}
+
+- (IBAction)performFindPanelAction:(id)sender
+{
+    [findPanelWindow makeKeyAndOrderFront:sender];
+}
+
+- (IBAction)find:(id)sender
+{
+    WKStringRef string = WKStringCreateWithCFString((CFStringRef)[sender stringValue]);
+
+    WKPageFindString(_webView.pageRef, string, kWKFindDirectionForward, 
+                     kWKFindOptionsCaseInsensitive | kWKFindOptionsWrapAround | kWKFindOptionsShowFindIndicator | kWKFindOptionsShowOverlay, 100);
 }
 
 @end

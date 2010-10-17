@@ -631,8 +631,8 @@ void DumpRenderTreeSupportQt::dumpNotification(bool b)
 
 QString DumpRenderTreeSupportQt::viewportAsText(QWebPage* page, const QSize& availableSize)
 {
-    WebCore::ViewportArguments args = page->mainFrame()->d->viewportArguments();
-    WebCore::ViewportConfiguration conf = WebCore::findConfigurationForViewportData(args,
+    WebCore::ViewportArguments args = page->d->viewportArguments();
+    WebCore::ViewportAttributes conf = WebCore::computeViewportAttributes(args,
         /* desktop-width */ 980,
         /* device-width  */ 320,
         /* device-height */ 480,
@@ -641,8 +641,8 @@ QString DumpRenderTreeSupportQt::viewportAsText(QWebPage* page, const QSize& ava
 
     QString res;
     res = res.sprintf("viewport size %dx%d scale %f with limits [%f, %f]\n",
-            conf.layoutViewport.width(),
-            conf.layoutViewport.height(),
+            conf.layoutSize.width(),
+            conf.layoutSize.height(),
             conf.initialScale,
             conf.minimumScale,
             conf.maximumScale);

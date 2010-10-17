@@ -90,14 +90,7 @@ public:
 
     void markAllDescendantsWithFloatsForLayout(RenderBox* floatToRemove = 0, bool inLayout = true);
     void markPositionedObjectsForLayout();
-    void markForPaginationRelayout()
-    { 
-        if (isTable())
-            markDescendantBlocksAndLinesForLayout();
-        else
-            setChildNeedsLayout(true, false);
-    }
-    virtual void markDescendantBlocksAndLinesForLayout(bool inLayout = true);
+    virtual void markForPaginationRelayoutIfNeeded();
     
     bool containsFloats() { return m_floatingObjects && !m_floatingObjects->isEmpty(); }
     bool containsFloat(RenderObject*);
@@ -106,6 +99,7 @@ public:
     int logicalRightOffsetForLine(int position, bool firstLine) const { return logicalRightOffsetForLine(position, logicalRightOffsetForContent(), firstLine); }
     int logicalLeftOffsetForLine(int position, bool firstLine) const { return logicalLeftOffsetForLine(position, logicalLeftOffsetForContent(), firstLine); }
 
+    virtual int topmostPosition(bool includeOverflowInterior = true, bool includeSelf = true) const;
     virtual int lowestPosition(bool includeOverflowInterior = true, bool includeSelf = true) const;
     virtual int rightmostPosition(bool includeOverflowInterior = true, bool includeSelf = true) const;
     virtual int leftmostPosition(bool includeOverflowInterior = true, bool includeSelf = true) const;
@@ -170,11 +164,12 @@ public:
     void setPageY(int y);
 
     // Accessors for logical width/height and margins in the containing block's block-flow direction.
-    int logicalWidthForChild(RenderBox* child) { return style()->isVerticalBlockFlow() ? child->width() : child->height(); }
-    int logicalHeightForChild(RenderBox* child) { return style()->isVerticalBlockFlow() ? child->height() : child->width(); }
-    int logicalTopForChild(RenderBox* child) { return style()->isVerticalBlockFlow() ? child->y() : child->x(); }
-    void setLogicalLeftForChild(RenderBox* child, int logicalLeft);
-    void setLogicalTopForChild(RenderBox* child, int logicalTop);
+    enum ApplyLayoutDeltaMode { ApplyLayoutDelta, DoNotApplyLayoutDelta };
+    int logicalWidthForChild(RenderBox* child) { return style()->isHorizontalWritingMode() ? child->width() : child->height(); }
+    int logicalHeightForChild(RenderBox* child) { return style()->isHorizontalWritingMode() ? child->height() : child->width(); }
+    int logicalTopForChild(RenderBox* child) { return style()->isHorizontalWritingMode() ? child->y() : child->x(); }
+    void setLogicalLeftForChild(RenderBox* child, int logicalLeft, ApplyLayoutDeltaMode = DoNotApplyLayoutDelta);
+    void setLogicalTopForChild(RenderBox* child, int logicalTop, ApplyLayoutDeltaMode = DoNotApplyLayoutDelta);
     int marginBeforeForChild(RenderBoxModelObject* child) const;
     int marginAfterForChild(RenderBoxModelObject* child) const;
     int marginStartForChild(RenderBoxModelObject* child) const;
@@ -185,7 +180,7 @@ public:
     void setMarginAfterForChild(RenderBox* child, int);
     int collapsedMarginBeforeForChild(RenderBox* child) const;
     int collapsedMarginAfterForChild(RenderBox* child) const;
-    
+
     class MarginValues {
     public:
         MarginValues(int beforePos, int beforeNeg, int afterPos, int afterNeg)
@@ -262,8 +257,8 @@ protected:
     virtual void paint(PaintInfo&, int tx, int ty);
     virtual void paintObject(PaintInfo&, int tx, int ty);
 
-    int logicalRightOffsetForContent() const { return style()->isVerticalBlockFlow() ? borderLeft() + paddingLeft() + availableLogicalWidth() : borderTop() + paddingTop() + availableLogicalWidth(); }
-    int logicalLeftOffsetForContent() const { return style()->isVerticalBlockFlow() ? borderLeft() + paddingLeft() : borderTop() + paddingTop(); }
+    int logicalRightOffsetForContent() const { return style()->isHorizontalWritingMode() ? borderLeft() + paddingLeft() + availableLogicalWidth() : borderTop() + paddingTop() + availableLogicalWidth(); }
+    int logicalLeftOffsetForContent() const { return style()->isHorizontalWritingMode() ? borderLeft() + paddingLeft() : borderTop() + paddingTop(); }
     int logicalRightOffsetForLine(int position, int fixedOffset, bool applyTextIndent = true, int* logicalHeightRemaining = 0) const;
     int logicalLeftOffsetForLine(int position, int fixedOffset, bool applyTextIndent = true, int* logicalHeightRemaining = 0) const;
 
@@ -298,9 +293,9 @@ protected:
     // Only used by RenderSVGText, which explicitely overrides RenderBlock::layoutBlock(), do NOT use for anything else.
     void forceLayoutInlineChildren()
     {
-        int repaintTop = 0;
-        int repaintBottom = 0;
-        layoutInlineChildren(true, repaintTop, repaintBottom);
+        int repaintLogicalTop = 0;
+        int repaintLogicalBottom = 0;
+        layoutInlineChildren(true, repaintLogicalTop, repaintLogicalBottom);
     }
 #endif
 
@@ -331,8 +326,8 @@ private:
 
     virtual void repaintOverhangingFloats(bool paintAllDescendants);
 
-    void layoutBlockChildren(bool relayoutChildren, int& maxFloatBottom);
-    void layoutInlineChildren(bool relayoutChildren, int& repaintTop, int& repaintBottom);
+    void layoutBlockChildren(bool relayoutChildren, int& maxFloatLogicalBottom);
+    void layoutInlineChildren(bool relayoutChildren, int& repaintLogicalTop, int& repaintLogicalBottom);
 
     virtual void positionListMarker() { }
 
@@ -359,36 +354,93 @@ private:
     };
 
     struct FloatingObject : Noncopyable {
-        enum Type {
-            FloatLeft,
-            FloatRight
-        };
+        // Note that Type uses bits so you can use FloatBoth as a mask to query for both left and right.
+        enum Type { FloatLeft = 1, FloatRight = 2, FloatBoth = 3 };
 
         FloatingObject(Type type)
             : m_renderer(0)
-            , m_top(0)
-            , m_bottom(0)
-            , m_left(0)
-            , m_width(0)
             , m_paginationStrut(0)
             , m_type(type)
             , m_shouldPaint(true)
             , m_isDescendant(false)
+            , m_isPlaced(false)
         {
         }
 
-        Type type() { return static_cast<Type>(m_type); }
+        FloatingObject(Type type, const IntRect& frameRect)
+            : m_renderer(0)
+            , m_frameRect(frameRect)
+            , m_paginationStrut(0)
+            , m_type(type)
+            , m_shouldPaint(true)
+            , m_isDescendant(false)
+            , m_isPlaced(true)
+        {
+        }
+
+        Type type() const { return static_cast<Type>(m_type); }
+        RenderBox* renderer() const { return m_renderer; }
+        
+        bool isPlaced() const { return m_isPlaced; }
+        void setIsPlaced(bool placed = true) { m_isPlaced = placed; }
+
+        int left() const { ASSERT(isPlaced()); return m_frameRect.x(); }
+        int right() const { ASSERT(isPlaced()); return m_frameRect.right(); }
+        int top() const { ASSERT(isPlaced()); return m_frameRect.y(); }
+        int bottom() const { ASSERT(isPlaced()); return m_frameRect.bottom(); }
+        int width() const { return m_frameRect.width(); }
+        int height() const { return m_frameRect.height(); }
+    
+        void setLeft(int left) { m_frameRect.setX(left); }
+        void setTop(int top) { m_frameRect.setY(top); }
+        void setWidth(int width) { m_frameRect.setWidth(width); }
+        void setHeight(int height) { m_frameRect.setHeight(height); }
+
+        const IntRect& frameRect() const { ASSERT(isPlaced()); return m_frameRect; }
+        void setFrameRect(const IntRect& frameRect) { m_frameRect = frameRect; }
 
         RenderBox* m_renderer;
-        int m_top;
-        int m_bottom;
-        int m_left;
-        int m_width;
+        IntRect m_frameRect;
         int m_paginationStrut;
-        unsigned m_type : 1; // Type (left or right aligned)
+        unsigned m_type : 2; // Type (left or right aligned)
         bool m_shouldPaint : 1;
         bool m_isDescendant : 1;
+        bool m_isPlaced : 1;
     };
+
+    int logicalTopForFloat(FloatingObject* child) const { return style()->isHorizontalWritingMode() ? child->top() : child->left(); }
+    int logicalBottomForFloat(FloatingObject* child) const { return style()->isHorizontalWritingMode() ? child->bottom() : child->right(); }
+    int logicalLeftForFloat(FloatingObject* child) const { return style()->isHorizontalWritingMode() ? child->left() : child->top(); }
+    int logicalRightForFloat(FloatingObject* child) const { return style()->isHorizontalWritingMode() ? child->right() : child->bottom(); }
+    int logicalWidthForFloat(FloatingObject* child) const { return style()->isHorizontalWritingMode() ? child->width() : child->height(); }
+    void setLogicalTopForFloat(FloatingObject* child, int logicalTop)
+    {
+        if (style()->isHorizontalWritingMode())
+            child->setTop(logicalTop);
+        else
+            child->setLeft(logicalTop);
+    }
+    void setLogicalLeftForFloat(FloatingObject* child, int logicalLeft)
+    {
+        if (style()->isHorizontalWritingMode())
+            child->setLeft(logicalLeft);
+        else
+            child->setTop(logicalLeft);
+    }
+    void setLogicalHeightForFloat(FloatingObject* child, int logicalHeight)
+    {
+        if (style()->isHorizontalWritingMode())
+            child->setHeight(logicalHeight);
+        else
+            child->setWidth(logicalHeight);
+    }
+    void setLogicalWidthForFloat(FloatingObject* child, int logicalWidth)
+    {
+        if (style()->isHorizontalWritingMode())
+            child->setWidth(logicalWidth);
+        else
+            child->setHeight(logicalWidth);
+    }
 
     // The following functions' implementations are in RenderBlockLineLayout.cpp.
     RootInlineBox* determineStartPosition(bool& firstLine, bool& fullLayout, bool& previousLineBrokeCleanly,
@@ -411,6 +463,10 @@ private:
     void deleteEllipsisLineBoxes();
     void checkLinesForTextOverflow();
     void addOverflowFromInlineChildren();
+    int beforeSideVisibleOverflowForLine(RootInlineBox*) const;
+    int afterSideVisibleOverflowForLine(RootInlineBox*) const;
+    int beforeSideLayoutOverflowForLine(RootInlineBox*) const;
+    int afterSideLayoutOverflowForLine(RootInlineBox*) const;
     // End of functions defined in RenderBlockLineLayout.cpp.
 
     void addOverflowFromBlockChildren();
@@ -442,15 +498,13 @@ private:
 
     virtual bool avoidsFloats() const;
 
-    bool hasOverhangingFloats() { return parent() && !hasColumns() && floatBottom() > height(); }
+    bool hasOverhangingFloats() { return parent() && !hasColumns() && lowestFloatLogicalBottom() > logicalHeight(); }
     void addIntrudingFloats(RenderBlock* prev, int xoffset, int yoffset);
     int addOverhangingFloats(RenderBlock* child, int xoffset, int yoffset, bool makeChildPaintOtherFloats);
 
-    int nextFloatBottomBelow(int) const;
-    int floatBottom() const;
-    inline int leftBottom();
-    inline int rightBottom();
-
+    int lowestFloatLogicalBottom(FloatingObject::Type = FloatingObject::FloatBoth) const;
+    int nextFloatLogicalBottomBelow(int) const;
+    
     virtual bool hitTestColumns(const HitTestRequest&, HitTestResult&, int x, int y, int tx, int ty, HitTestAction);
     virtual bool hitTestContents(const HitTestRequest&, HitTestResult&, int x, int y, int tx, int ty, HitTestAction);
     bool hitTestFloats(const HitTestRequest&, HitTestResult&, int x, int y, int tx, int ty);
@@ -504,7 +558,7 @@ private:
     void adjustPointToColumnContents(IntPoint&) const;
     void adjustForBorderFit(int x, int& left, int& right) const; // Helper function for borderFitAdjust
 
-    void markLinesDirtyInVerticalRange(int top, int bottom, RootInlineBox* highest = 0);
+    void markLinesDirtyInBlockRange(int logicalTop, int logicalBottom, RootInlineBox* highest = 0);
 
     void newLine(EClear);
 
@@ -593,7 +647,7 @@ private:
         int margin() const { return m_positiveMargin - m_negativeMargin; }
     };
 
-    void layoutBlockChild(RenderBox* child, MarginInfo&, int& previousFloatBottom, int& maxFloatBottom);
+    void layoutBlockChild(RenderBox* child, MarginInfo&, int& previousFloatLogicalBottom, int& maxFloatLogicalBottom);
     void adjustPositionedBlock(RenderBox* child, const MarginInfo&);
     void adjustFloatingBlock(const MarginInfo&);
     bool handleSpecialChild(RenderBox* child, const MarginInfo&);

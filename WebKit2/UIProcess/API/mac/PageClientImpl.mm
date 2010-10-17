@@ -25,13 +25,17 @@
 
 #import "PageClientImpl.h"
 
+#import "FindIndicator.h"
 #import "WKAPICast.h"
 #import "WKStringCF.h"
 #import "WKViewInternal.h"
 #import "WebEditCommandProxy.h"
+#import "WebPopupMenuProxyMac.h"
 #import <WebCore/Cursor.h>
+#import <WebCore/FloatRect.h>
 #import <WebCore/FoundationExtras.h>
 #import <wtf/PassOwnPtr.h>
+#import <wtf/text/CString.h>
 #import <wtf/text/WTFString.h>
 
 using namespace WebCore;
@@ -88,12 +92,11 @@ using namespace WebCore;
 
 @end
 
-
 namespace WebKit {
 
 NSString* nsStringFromWebCoreString(const String& string)
 {
-    return string.impl() ? HardAutorelease(WKStringCopyCFString(0, toRef(string.impl()))) : @"";
+    return string.impl() ? HardAutorelease(WKStringCopyCFString(0, toAPI(string.impl()))) : @"";
 }
 
 PassOwnPtr<PageClientImpl> PageClientImpl::create(WKView* wkView)
@@ -134,6 +137,11 @@ void PageClientImpl::toolTipChanged(const String& oldToolTip, const String& newT
 void PageClientImpl::setCursor(const WebCore::Cursor& cursor)
 {
     [m_wkView _setCursor:cursor.platformCursor()];
+}
+
+void PageClientImpl::setViewportArguments(const WebCore::ViewportArguments&)
+{
+
 }
 
 static NSString* nameForEditAction(EditAction editAction)
@@ -183,7 +191,7 @@ static NSString* nameForEditAction(EditAction editAction)
     return nil;
 }
 
-void PageClientImpl::registerEditCommand(PassRefPtr<WebEditCommandProxy> prpCommand, UndoOrRedo undoOrRedo)
+void PageClientImpl::registerEditCommand(PassRefPtr<WebEditCommandProxy> prpCommand, WebPageProxy::UndoOrRedo undoOrRedo)
 {
     RefPtr<WebEditCommandProxy> command = prpCommand;
 
@@ -191,7 +199,7 @@ void PageClientImpl::registerEditCommand(PassRefPtr<WebEditCommandProxy> prpComm
     NSString *actionName = nameForEditAction(command->editAction());
 
     NSUndoManager *undoManager = [m_wkView undoManager];
-    [undoManager registerUndoWithTarget:m_undoTarget.get() selector:((undoOrRedo == Undo) ? @selector(undoEditing:) : @selector(redoEditing:)) object:commandObjC.get()];
+    [undoManager registerUndoWithTarget:m_undoTarget.get() selector:((undoOrRedo == WebPageProxy::Undo) ? @selector(undoEditing:) : @selector(redoEditing:)) object:commandObjC.get()];
     if (actionName)
         [undoManager setActionName:actionName];
 }
@@ -204,6 +212,30 @@ void PageClientImpl::clearAllEditCommands()
 void PageClientImpl::setEditCommandState(const String& commandName, bool isEnabled, int newState)
 {
     [m_wkView _setUserInterfaceItemState:nsStringFromWebCoreString(commandName) enabled:isEnabled state:newState];
+}
+
+FloatRect PageClientImpl::convertToDeviceSpace(const FloatRect& rect)
+{
+    return [m_wkView _convertToDeviceSpace:rect];
+}
+
+FloatRect PageClientImpl::convertToUserSpace(const FloatRect& rect)
+{
+    return [m_wkView _convertToUserSpace:rect];
+}
+
+void PageClientImpl::didNotHandleKeyEvent(const NativeWebKeyboardEvent&)
+{
+}
+
+PassRefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy()
+{
+    return WebPopupMenuProxyMac::create(m_wkView);
+}
+
+void PageClientImpl::setFindIndicator(PassRefPtr<FindIndicator> findIndicator, bool fadeOut)
+{
+    [m_wkView _setFindIndicator:findIndicator fadeOut:fadeOut];
 }
 
 #if USE(ACCELERATED_COMPOSITING)

@@ -46,8 +46,9 @@ public:
     const WebCore::HitTestResult& coreHitTestResult() const { return m_hitTestResult; }
 
     PassRefPtr<InjectedBundleNodeHandle> nodeHandle() const; 
-    WebFrame* webFrame() const;
-    const String& absoluteLinkURL() const;
+    WebFrame* frame() const;
+    WebFrame* targetFrame() const;
+    String absoluteLinkURL() const;
 
 private:
     explicit InjectedBundleHitTestResult(const WebCore::HitTestResult& hitTestResult)

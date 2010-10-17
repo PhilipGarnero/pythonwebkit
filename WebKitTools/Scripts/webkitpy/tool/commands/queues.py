@@ -27,6 +27,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import with_statement
+
+import codecs
 import time
 import traceback
 import os
@@ -36,11 +39,12 @@ from optparse import make_option
 from StringIO import StringIO
 
 from webkitpy.common.net.bugzilla import CommitterValidator
+from webkitpy.common.net.layouttestresults import LayoutTestResults
 from webkitpy.common.net.statusserver import StatusServer
 from webkitpy.common.system.executive import ScriptError
 from webkitpy.common.system.deprecated_logging import error, log
 from webkitpy.tool.commands.stepsequence import StepSequenceErrorHandler
-from webkitpy.tool.bot.commitqueuetask import CommitQueueTask
+from webkitpy.tool.bot.commitqueuetask import CommitQueueTask, CommitQueueTaskDelegate
 from webkitpy.tool.bot.feeders import CommitQueueFeeder
 from webkitpy.tool.bot.patchcollection import PersistentPatchCollection, PersistentPatchCollectionDelegate
 from webkitpy.tool.bot.queueengine import QueueEngine, QueueEngineDelegate
@@ -80,6 +84,8 @@ class AbstractQueue(Command, QueueEngineDelegate):
         webkit_patch_args += ["--status-host=%s" % self._tool.status_server.host]
         if self._tool.status_server.bot_id:
             webkit_patch_args += ["--bot-id=%s" % self._tool.status_server.bot_id]
+        if self._options.port:
+            webkit_patch_args += ["--port=%s" % self._options.port]
         webkit_patch_args.extend(args)
         return self._tool.executive.run_and_throw_if_fail(webkit_patch_args)
 
@@ -96,7 +102,7 @@ class AbstractQueue(Command, QueueEngineDelegate):
 
     def begin_work_queue(self):
         log("CAUTION: %s will discard all local changes in \"%s\"" % (self.name, self._tool.scm().checkout_root))
-        if self.options.confirm:
+        if self._options.confirm:
             response = self._tool.user.prompt("Are you sure?  Type \"yes\" to continue: ")
             if (response != "yes"):
                 error("User declined.")
@@ -108,7 +114,7 @@ class AbstractQueue(Command, QueueEngineDelegate):
 
     def should_continue_work_queue(self):
         self._iteration_count += 1
-        return not self.options.iterations or self._iteration_count <= self.options.iterations
+        return not self._options.iterations or self._iteration_count <= self._options.iterations
 
     def next_work_item(self):
         raise NotImplementedError, "subclasses must implement"
@@ -125,7 +131,7 @@ class AbstractQueue(Command, QueueEngineDelegate):
     # Command methods
 
     def execute(self, options, args, tool, engine=QueueEngine):
-        self.options = options  # FIXME: This code is wrong.  Command.options is a list, this assumes an Options element!
+        self._options = options # FIXME: This code is wrong.  Command.options is a list, this assumes an Options element!
         self._tool = tool  # FIXME: This code is wrong too!  Command.bind_to_tool handles this!
         return engine(self.name, self, self._tool.wakeup_event).run()
 
@@ -209,7 +215,7 @@ class AbstractPatchQueue(AbstractQueue):
         return os.path.join(self._log_directory(), "%s.log" % patch.bug_id())
 
 
-class CommitQueue(AbstractPatchQueue, StepSequenceErrorHandler):
+class CommitQueue(AbstractPatchQueue, StepSequenceErrorHandler, CommitQueueTaskDelegate):
     name = "commit-queue"
 
     # AbstractPatchQueue methods
@@ -231,7 +237,7 @@ class CommitQueue(AbstractPatchQueue, StepSequenceErrorHandler):
 
     def process_work_item(self, patch):
         self._cc_watchers(patch.bug_id())
-        task = CommitQueueTask(self._tool, self, patch)
+        task = CommitQueueTask(self, patch)
         try:
             if task.run():
                 self._did_pass(patch)
@@ -242,8 +248,19 @@ class CommitQueue(AbstractPatchQueue, StepSequenceErrorHandler):
             validator.reject_patch_from_commit_queue(patch.id(), self._error_message_for_bug(task.failure_status_id, e))
             self._did_fail(patch)
 
+    def _error_message_for_bug(self, status_id, script_error):
+        if not script_error.output:
+            return script_error.message_with_output()
+        results_link = self._tool.status_server.results_url_for_status(status_id)
+        return "%s\nFull output: %s" % (script_error.message_with_output(), results_link)
+
     def handle_unexpected_error(self, patch, message):
         self.committer_validator.reject_patch_from_commit_queue(patch.id(), message)
+
+    # CommitQueueTaskDelegate methods
+
+    def run_command(self, command):
+        self.run_webkit_patch(command)
 
     def command_passed(self, message, patch):
         self._update_status(message, patch=patch)
@@ -252,11 +269,29 @@ class CommitQueue(AbstractPatchQueue, StepSequenceErrorHandler):
         failure_log = self._log_from_script_error_for_upload(script_error)
         return self._update_status(message, patch=patch, results_file=failure_log)
 
-    def _error_message_for_bug(self, status_id, script_error):
-        if not script_error.output:
-            return script_error.message_with_output()
-        results_link = self._tool.status_server.results_url_for_status(status_id)
-        return "%s\nFull output: %s" % (script_error.message_with_output(), results_link)
+    # FIXME: This exists for mocking, but should instead be mocked via
+    # some sort of tool.filesystem() object.
+    def _read_file_contents(self, path):
+        try:
+            with codecs.open(path, "r", "utf-8") as open_file:
+                return open_file.read()
+        except OSError, e:  # File does not exist or can't be read.
+            return None
+
+    # FIXME: This may belong on the Port object.
+    def layout_test_results(self):
+        results_path = self._tool.port().layout_tests_results_path()
+        results_html = self._read_file_contents(results_path)
+        if not results_html:
+            return None
+        return LayoutTestResults.results_from_string(results_html)
+
+    def refetch_patch(self, patch):
+        return self._tool.bugs.fetch_attachment(patch.id())
+
+    def report_flaky_tests(self, patch, flaky_tests):
+        message = "The %s encountered the following flaky tests while processing attachment %s:\n\n%s\n\nPlease file bugs against the tests.  The commit-queue is continuing to process your patch." % (self.name, patch.id(), flaky_tests)
+        self._tool.bugs.post_comment_to_bug(patch.bug_id(), message, cc=self.watchers)
 
     # StepSequenceErrorHandler methods
 

@@ -31,6 +31,7 @@
 #include "RenderArena.h"
 #include "RenderBlock.h"
 #include "RenderLayer.h"
+#include "RenderTheme.h"
 #include "RenderView.h"
 #include "TransformState.h"
 #include "VisiblePosition.h"
@@ -471,28 +472,28 @@ static int computeMargin(const RenderInline* renderer, const Length& margin)
 
 int RenderInline::marginLeft() const
 {
-    if (!style()->isVerticalBlockFlow())
+    if (!style()->isHorizontalWritingMode())
         return 0;
     return computeMargin(this, style()->marginLeft());
 }
 
 int RenderInline::marginRight() const
 {
-    if (!style()->isVerticalBlockFlow())
+    if (!style()->isHorizontalWritingMode())
         return 0;
     return computeMargin(this, style()->marginRight());
 }
 
 int RenderInline::marginTop() const
 {
-    if (style()->isVerticalBlockFlow())
+    if (style()->isHorizontalWritingMode())
         return 0;
     return computeMargin(this, style()->marginTop());
 }
 
 int RenderInline::marginBottom() const
 {
-    if (style()->isVerticalBlockFlow())
+    if (style()->isHorizontalWritingMode())
         return 0;
     return computeMargin(this, style()->marginBottom());
 }
@@ -993,15 +994,10 @@ void RenderInline::paintOutline(GraphicsContext* graphicsContext, int tx, int ty
     
     RenderStyle* styleToUse = style();
     if (styleToUse->outlineStyleIsAuto() || hasOutlineAnnotation()) {
-        int ow = styleToUse->outlineWidth();
-        Color oc = styleToUse->visitedDependentColor(CSSPropertyOutlineColor);
-
-        Vector<IntRect> focusRingRects;
-        addFocusRingRects(focusRingRects, tx, ty);
-        if (styleToUse->outlineStyleIsAuto())
-            graphicsContext->drawFocusRing(focusRingRects, ow, styleToUse->outlineOffset(), oc);
-        else
-            addPDFURLRect(graphicsContext, unionRect(focusRingRects));
+        if (!theme()->supportsFocusRing(styleToUse)) {
+            // Only paint the focus ring by hand if the theme isn't able to draw the focus ring.
+            paintFocusRing(graphicsContext, tx, ty, styleToUse);
+        }
     }
 
     if (styleToUse->outlineStyleIsAuto() || styleToUse->outlineStyle() == BNONE)

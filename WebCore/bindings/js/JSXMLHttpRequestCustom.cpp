@@ -94,7 +94,7 @@ JSValue JSXMLHttpRequest::open(ExecState* exec)
 
 JSValue JSXMLHttpRequest::send(ExecState* exec)
 {
-    InspectorInstrumentation::instrumentWillSendXMLHttpRequest(impl()->scriptExecutionContext(), impl()->url());
+    InspectorInstrumentation::willSendXMLHttpRequest(impl()->scriptExecutionContext(), impl()->url());
 
     ExceptionCode ec = 0;
     if (!exec->argumentCount())
@@ -128,7 +128,7 @@ JSValue JSXMLHttpRequest::send(ExecState* exec)
 JSValue JSXMLHttpRequest::responseText(ExecState* exec) const
 {
     ExceptionCode ec = 0;
-    const ScriptString& text = impl()->responseText(ec);
+    String text = impl()->responseText(ec);
     if (ec) {
         setDOMException(exec, ec);
         return jsUndefined();

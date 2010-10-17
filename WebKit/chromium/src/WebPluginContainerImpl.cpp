@@ -48,6 +48,7 @@
 #include "WebURLError.h"
 #include "WebURLRequest.h"
 #include "WebVector.h"
+#include "WebViewImpl.h"
 #include "WrappedResourceResponse.h"
 
 #include "EventNames.h"
@@ -348,6 +349,12 @@ void WebPluginContainerImpl::loadFrameRequest(
         SendReferrer);
 }
 
+void WebPluginContainerImpl::zoomLevelChanged(double zoomLevel)
+{
+    WebViewImpl* view = WebViewImpl::fromPage(m_element->document()->frame()->page());
+    view->fullFramePluginZoomLevelChanged(zoomLevel);
+}
+
 void WebPluginContainerImpl::didReceiveResponse(const ResourceResponse& response)
 {
     // Make sure that the plugin receives window geometry before data, or else
@@ -459,6 +466,16 @@ void WebPluginContainerImpl::handleKeyboardEvent(KeyboardEvent* event)
             event->setDefaultHandled();
             return;
         }
+    }
+
+    const WebInputEvent* currentInputEvent = WebViewImpl::currentInputEvent();
+
+    // Copy stashed info over, and only copy here in order not to interfere
+    // the ctrl-c logic above.
+    if (currentInputEvent
+        && WebInputEvent::isKeyboardEventType(currentInputEvent->type)) {
+        webEvent.modifiers |= currentInputEvent->modifiers &
+            (WebInputEvent::CapsLockOn | WebInputEvent::NumLockOn);
     }
 
     WebCursorInfo cursorInfo;

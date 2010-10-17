@@ -35,6 +35,7 @@
 #include "StillImageQt.h"
 #include "TransparencyLayer.h"
 #include <wtf/text/CString.h>
+#include <wtf/text/StringConcatenate.h>
 
 #include <QBuffer>
 #include <QColor>
@@ -139,7 +140,7 @@ void ImageBuffer::clip(GraphicsContext* context, const FloatRect& floatRect) con
     if (!nativeImage)
         return;
 
-    IntRect rect(floatRect);
+    IntRect rect = enclosingIntRect(floatRect);
     QPixmap alphaMask = *nativeImage;
     if (alphaMask.width() != rect.width() || alphaMask.height() != rect.height())
         alphaMask = alphaMask.scaled(rect.width(), rect.height());
@@ -401,7 +402,8 @@ String ImageBuffer::toDataURL(const String& mimeType, const double* quality) con
     }
 
     buffer.close();
-    return String::format("data:%s;base64,%s", mimeType.utf8().data(), data.toBase64().data());
+
+    return makeString("data:", mimeType, ";base64,", data.toBase64().data());
 }
 
 }

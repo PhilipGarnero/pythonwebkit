@@ -34,19 +34,17 @@
 #include "WebPageCreationParameters.h"
 #include "WebPlatformStrategies.h"
 #include "WebPreferencesStore.h"
+#include "WebProcessCreationParameters.h"
+#include "WebProcessMessages.h"
 #include "WebProcessProxyMessageKinds.h"
-#include "WebProcessMessageKinds.h"
 #include <WebCore/ApplicationCacheStorage.h>
 #include <WebCore/Page.h>
 #include <WebCore/PageGroup.h>
 #include <WebCore/SchemeRegistry.h>
+#include <WebCore/SecurityOrigin.h>
 #include <WebCore/Settings.h>
 #include <wtf/PassRefPtr.h>
 #include <wtf/RandomNumber.h>
-
-#if PLATFORM(MAC)
-#include "MachPort.h"
-#endif
 
 #ifndef NDEBUG
 #include <WebCore/Cache.h>
@@ -91,6 +89,8 @@ WebProcess& WebProcess::shared()
 
 WebProcess::WebProcess()
     : m_inDidClose(false)
+    , m_hasSetCacheModel(false)
+    , m_cacheModel(CacheModelDocumentViewer)
 #if USE(ACCELERATED_COMPOSITING) && PLATFORM(MAC)
     , m_compositingRenderServerPort(MACH_PORT_NULL)
 #endif
@@ -113,34 +113,62 @@ void WebProcess::initialize(CoreIPC::Connection::Identifier serverIdentifier, Ru
     startRandomCrashThreadIfRequested();
 }
 
-#if ENABLE(WEB_PROCESS_SANDBOX)
-void WebProcess::loadInjectedBundle(const String& path, const String& token)
-#else
-void WebProcess::loadInjectedBundle(const String& path)
-#endif
+void WebProcess::initializeWebProcess(const WebProcessCreationParameters& parameters)
 {
     ASSERT(m_pageMap.isEmpty());
-    ASSERT(!path.isEmpty());
 
-    m_injectedBundle = InjectedBundle::create(path);
+    if (!parameters.applicationCacheDirectory.isEmpty())
+        cacheStorage().setCacheDirectory(parameters.applicationCacheDirectory);
+
+    if (!parameters.injectedBundlePath.isEmpty()) {
+        m_injectedBundle = InjectedBundle::create(parameters.injectedBundlePath);
 #if ENABLE(WEB_PROCESS_SANDBOX)
-    m_injectedBundle->setSandboxToken(token);
+        m_injectedBundle->setSandboxToken(parameters.injectedBundlePathToken);
 #endif
-
-    if (!m_injectedBundle->load()) {
-        // Don't keep around the InjectedBundle reference if the load fails.
-        m_injectedBundle.clear();
+        if (!m_injectedBundle->load()) {
+            // Don't keep around the InjectedBundle reference if the load fails.
+            m_injectedBundle.clear();
+        }
     }
+
+    setShouldTrackVisitedLinks(parameters.shouldTrackVisitedLinks);
+    setCacheModel(static_cast<uint32_t>(parameters.cacheModel));
+
+    for (size_t i = 0; i < parameters.urlSchemesRegistererdAsEmptyDocument.size(); ++i)
+        registerURLSchemeAsEmptyDocument(parameters.urlSchemesRegistererdAsEmptyDocument[i]);
+
+    for (size_t i = 0; i < parameters.urlSchemesRegisteredAsSecure.size(); ++i)
+        registerURLSchemeAsSecure(parameters.urlSchemesRegisteredAsSecure[i]);
+
+    for (size_t i = 0; i < parameters.urlSchemesForWhichDomainRelaxationIsForbidden.size(); ++i)
+        setDomainRelaxationForbiddenForURLScheme(parameters.urlSchemesForWhichDomainRelaxationIsForbidden[i]);
+
+#if USE(ACCELERATED_COMPOSITING) && PLATFORM(MAC)
+    m_compositingRenderServerPort = parameters.acceleratedCompositingPort.port();
+#endif
+#if PLATFORM(WIN)
+    setShouldPaintNativeControls(parameters.shouldPaintNativeControls);
+#endif
 }
 
-void WebProcess::setApplicationCacheDirectory(const String& directory)
+void WebProcess::setShouldTrackVisitedLinks(bool shouldTrackVisitedLinks)
 {
-    cacheStorage().setCacheDirectory(directory);
+    PageGroup::setShouldTrackVisitedLinks(shouldTrackVisitedLinks);
 }
 
 void WebProcess::registerURLSchemeAsEmptyDocument(const String& urlScheme)
 {
     SchemeRegistry::registerURLSchemeAsEmptyDocument(urlScheme);
+}
+
+void WebProcess::registerURLSchemeAsSecure(const String& urlScheme) const
+{
+    SchemeRegistry::registerURLSchemeAsSecure(urlScheme);
+}
+
+void WebProcess::setDomainRelaxationForbiddenForURLScheme(const String& urlScheme) const
+{
+    SecurityOrigin::setDomainRelaxationForbiddenForURLScheme(true, urlScheme);
 }
 
 void WebProcess::setVisitedLinkTable(const SharedMemory::Handle& handle)
@@ -181,12 +209,32 @@ void WebProcess::addVisitedLink(WebCore::LinkHash linkHash)
     m_connection->send(WebProcessProxyMessage::AddVisitedLink, 0, CoreIPC::In(linkHash));
 }
 
+void WebProcess::setCacheModel(uint32_t cm)
+{
+    CacheModel cacheModel = static_cast<CacheModel>(cm);
+
+    if (!m_hasSetCacheModel || cacheModel != m_cacheModel) {
+        m_hasSetCacheModel = true;
+        m_cacheModel = cacheModel;
+        platformSetCacheModel(cacheModel);
+    }
+}
+
+#if PLATFORM(WIN)
+void WebProcess::setShouldPaintNativeControls(bool shouldPaintNativeControls)
+{
+#if USE(SAFARI_THEME)
+    Settings::setShouldPaintNativeControls(shouldPaintNativeControls);
+#endif
+}
+#endif
+
 WebPage* WebProcess::webPage(uint64_t pageID) const
 {
     return m_pageMap.get(pageID).get();
 }
 
-WebPage* WebProcess::createWebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
+void WebProcess::createWebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
 {
     // It is necessary to check for page existence here since during a window.open() (or targeted
     // link) the WebPage gets created both in the synchronous handler and through the normal way. 
@@ -197,7 +245,6 @@ WebPage* WebProcess::createWebPage(uint64_t pageID, const WebPageCreationParamet
     }
 
     ASSERT(result.first->second);
-    return result.first->second.get();
 }
 
 void WebProcess::removeWebPage(uint64_t pageID)
@@ -236,99 +283,8 @@ void WebProcess::shutdown()
 void WebProcess::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::MessageID messageID, CoreIPC::ArgumentDecoder* arguments)
 {
     if (messageID.is<CoreIPC::MessageClassWebProcess>()) {
-        switch (messageID.get<WebProcessMessage::Kind>()) {
-            case WebProcessMessage::SetVisitedLinkTable: {
-                SharedMemory::Handle handle;
-                if (!arguments->decode(CoreIPC::Out(handle)))
-                    return;
-                
-                setVisitedLinkTable(handle);
-                return;
-            }
-            case WebProcessMessage::VisitedLinkStateChanged: {
-                Vector<LinkHash> linkHashes;
-                if (!arguments->decode(CoreIPC::Out(linkHashes)))
-                    return;
-                visitedLinkStateChanged(linkHashes);
-            }
-            case WebProcessMessage::AllVisitedLinkStateChanged:
-                allVisitedLinkStateChanged();
-                return;
-            
-            case WebProcessMessage::LoadInjectedBundle: {
-                String path;
-
-#if ENABLE(WEB_PROCESS_SANDBOX)
-                String token;
-                if (!arguments->decode(CoreIPC::Out(path, token)))
-                    return;
-
-                loadInjectedBundle(path, token);
-                return;
-#else
-                if (!arguments->decode(CoreIPC::Out(path)))
-                    return;
-
-                loadInjectedBundle(path);
-                return;
-#endif
-            }
-            case WebProcessMessage::SetApplicationCacheDirectory: {
-                String directory;
-                if (!arguments->decode(CoreIPC::Out(directory)))
-                    return;
-                
-                setApplicationCacheDirectory(directory);
-                return;
-            }
-            case WebProcessMessage::SetShouldTrackVisitedLinks: {
-                bool shouldTrackVisitedLinks;
-                if (!arguments->decode(CoreIPC::Out(shouldTrackVisitedLinks)))
-                    return;
-                
-                PageGroup::setShouldTrackVisitedLinks(shouldTrackVisitedLinks);
-                return;
-            }
-            
-            case WebProcessMessage::Create: {
-                uint64_t pageID = arguments->destinationID();
-                WebPageCreationParameters parameters;
-                if (!arguments->decode(CoreIPC::Out(parameters)))
-                    return;
-
-                createWebPage(pageID, parameters);
-                return;
-            }
-            case WebProcessMessage::RegisterURLSchemeAsEmptyDocument: {
-                String message;
-                if (!arguments->decode(CoreIPC::Out(message)))
-                    return;
-
-                registerURLSchemeAsEmptyDocument(message);
-                return;
-            }
-#if USE(ACCELERATED_COMPOSITING) && PLATFORM(MAC)
-            case WebProcessMessage::SetupAcceleratedCompositingPort: {
-                CoreIPC::MachPort port;
-                if (!arguments->decode(port))
-                    return;
-
-                m_compositingRenderServerPort = port.port();
-                return;
-            }
-#endif
-#if PLATFORM(WIN)
-            case WebProcessMessage::SetShouldPaintNativeControls: {
-                bool b;
-                if (!arguments->decode(b))
-                    return;
-#if USE(SAFARI_THEME)
-                Settings::setShouldPaintNativeControls(b);
-#endif
-                return;
-            }
-#endif
-        }
+        didReceiveWebProcessMessage(connection, messageID, arguments);
+        return;
     }
 
     if (messageID.is<CoreIPC::MessageClassInjectedBundle>()) {

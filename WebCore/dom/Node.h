@@ -69,7 +69,6 @@ class RenderBox;
 class RenderBoxModelObject;
 class RenderObject;
 class RenderStyle;
-class StringBuilder;
 class TagNodeList;
 
 typedef int ExceptionCode;
@@ -687,8 +686,8 @@ private:
     // Used to share code between lazyAttach and setNeedsStyleRecalc.
     void markAncestorsWithChildNeedsStyleRecalc();
 
-    virtual void refEventTarget() { ref(); }
-    virtual void derefEventTarget() { deref(); }
+    virtual void refEventTarget();
+    virtual void derefEventTarget();
 
     virtual NodeRareData* createRareData();
     Node* containerChildNode(unsigned index) const;
@@ -706,7 +705,6 @@ private:
 
     Element* ancestorElement() const;
 
-    void appendTextContent(bool convertBRsToNewlines, StringBuilder&) const;
     void trackForDebugging();
 
     Document* m_document;

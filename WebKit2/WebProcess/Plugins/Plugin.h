@@ -45,6 +45,7 @@ namespace WebCore {
 
 namespace WebKit {
 
+class WebKeyboardEvent;
 class WebMouseEvent;
 class WebWheelEvent;
     
@@ -131,6 +132,9 @@ public:
     // Tells the plug-in to handle the passed in mouse leave event. The plug-in should return true if it processed the event.
     virtual bool handleMouseLeaveEvent(const WebMouseEvent&) = 0;
 
+    // Tells the plug-in to handle the passed in keyboard event. The plug-in should return true if it processed the event.
+    virtual bool handleKeyboardEvent(const WebKeyboardEvent&) = 0;
+    
     // Tells the plug-in about focus changes.
     virtual void setFocus(bool) = 0;
 
@@ -147,6 +151,9 @@ public:
     // Tells the plug-in about window visibility changes.
     virtual void windowVisibilityChanged(bool) = 0;
 #endif
+
+    // Called when the private browsing state for this plug-in changes.
+    virtual void privateBrowsingStateChanged(bool) = 0;
 
     // Returns the plug-in controller for this plug-in.
     // FIXME: We could just have the controller be a member variable of Plugin.

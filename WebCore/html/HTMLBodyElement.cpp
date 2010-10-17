@@ -33,6 +33,7 @@
 #include "FrameView.h"
 #include "HTMLFrameElementBase.h"
 #include "HTMLNames.h"
+#include "HTMLParserIdioms.h"
 #include "ScriptEventListener.h"
 
 namespace WebCore {
@@ -95,7 +96,7 @@ bool HTMLBodyElement::mapToEntry(const QualifiedName& attrName, MappedAttributeE
 void HTMLBodyElement::parseMappedAttribute(Attribute* attr)
 {
     if (attr->name() == backgroundAttr) {
-        String url = deprecatedParseURL(attr->value());
+        String url = stripLeadingAndTrailingHTMLSpaces(attr->value());
         if (!url.isEmpty())
             addCSSImageProperty(attr, CSSPropertyBackgroundImage, document()->completeURL(url).string());
     } else if (attr->name() == marginwidthAttr || attr->name() == leftmarginAttr) {
@@ -195,11 +196,19 @@ void HTMLBodyElement::insertedIntoDocument()
     // But without it we hang during WebKit tests; need to fix that and remove this.
     if (FrameView* view = document()->view())
         view->scheduleRelayout();
+
+    if (document() && document()->page())
+        document()->page()->updateViewportArguments();
 }
 
 bool HTMLBodyElement::isURLAttribute(Attribute *attr) const
 {
     return attr->name() == backgroundAttr;
+}
+
+bool HTMLBodyElement::supportsFocus() const
+{
+    return isContentEditable() || HTMLElement::supportsFocus();
 }
 
 String HTMLBodyElement::aLink() const
