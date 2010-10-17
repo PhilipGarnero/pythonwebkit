@@ -27,7 +27,7 @@ from gettext import gettext as _
 import gobject
 import gtk
 import pango
-import pywebkit as webkit
+import webkit
 from inspector import Inspector
 
 ABOUT_PAGE = """
@@ -364,7 +364,8 @@ class WebBrowser(gtk.Window):
 
         self.show_all()
 
-        content_tabs.new_tab("file:///home/lkcl/oldindex.html")
+        #content_tabs.new_tab("file:///home/lkcl/oldindex.html")
+        content_tabs.new_tab("http://www.google.com")
 
     def _new_window_requested_cb (self, content_pane, view):
         features = view.get_window_features()

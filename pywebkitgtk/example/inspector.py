@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import gtk
-import pywebkit as webkit
+import webkit
 
 class Inspector (gtk.Window):
     def __init__ (self, inspector):
