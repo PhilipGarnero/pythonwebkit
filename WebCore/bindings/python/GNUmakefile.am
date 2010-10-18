@@ -41,7 +41,8 @@ DerivedSources/python/PyWebkit.cpp: \
 	$(PYTHON) $(pycodegen)/xpidl.py \
 				$(pycodegen)/_pywebkit.override \
 				DerivedSources/python/PyWebkit.cpp \
-				$(shell cat $(pycodegen)/idl_files.txt)
+				$(pycodegen)/idl_files.txt \
+                $(srcdir)
 
 webcore_sources += \
 	WebCore/bindings/python/PythonBinding.cpp \

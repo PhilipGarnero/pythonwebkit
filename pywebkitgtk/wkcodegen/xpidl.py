@@ -1381,7 +1381,11 @@ if __name__ == '__main__':
     o = override.Overrides(sys.argv[1])
     output_fname = sys.argv[2]
     cwd = os.path.abspath(os.getcwd())
-    for f in sys.argv[3:]:
+    files = open(sys.argv[3])
+    files_prefix = sys.argv[4]
+    for fname in files.readlines():
+        f = fname.strip()
+        f = os.path.join(files_prefix, f)
         print "Parsing %s" % f
         (pth, fn) = os.path.split(f)
         (fn, ext) = os.path.splitext(fn)
