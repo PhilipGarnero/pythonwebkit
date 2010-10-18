@@ -1,3 +1,75 @@
+2010-10-18  David Levin  <levin@chromium.org>
+
+        Reviewed by Adam Barth.
+
+        check-webkit-style should treat the GObject binding directory like other GTK directories.
+        https://bugs.webkit.org/show_bug.cgi?id=47796
+
+        * Scripts/webkitpy/style/checker.py: Added the GObject binding directory
+        with the other gtk directories (and fixed typo).
+
+2010-10-18  David Levin  <levin@chromium.org>
+
+        Reviewed by Oliver Hunt.
+
+        check-webkit-style needs to ignore underscores in opcode names and vm_throw
+        https://bugs.webkit.org/show_bug.cgi?id=47789
+
+        * Scripts/webkitpy/style/checker.py: Added the exception for the assembler directory.
+        * Scripts/webkitpy/style/checkers/cpp.py: Added special cased names.
+        * Scripts/webkitpy/style/checkers/cpp_unittest.py: Added unit tests for the special cases.
+
+2010-10-18  MORITA Hajime  <morrita@google.com>
+
+        Reviewed by Kent Tamura.
+
+        TextInputController.hasSpellingMarkers() should be owned by LayoutTestController
+        https://bugs.webkit.org/show_bug.cgi?id=47659
+        
+        Moved hasSpellingMarkers() from TextInputController to
+        LayoutTestController.  Currently the implementation is available
+        only for Mac and for Chromium.
+
+        * DumpRenderTree/LayoutTestController.cpp:
+        (hasSpellingMarkerCallback):
+        (LayoutTestController::staticFunctions):
+        * DumpRenderTree/LayoutTestController.h:
+        * DumpRenderTree/chromium/LayoutTestController.cpp:
+        (LayoutTestController::LayoutTestController):
+        (LayoutTestController::hasSpellingMarker):
+        * DumpRenderTree/chromium/LayoutTestController.h:
+        * DumpRenderTree/chromium/TextInputController.cpp:
+        (TextInputController::TextInputController):
+        (TextInputController::makeAttributedString):
+        * DumpRenderTree/chromium/TextInputController.h:
+        * DumpRenderTree/gtk/LayoutTestControllerGtk.cpp:
+        (LayoutTestController::hasSpellingMarker):
+        * DumpRenderTree/mac/LayoutTestControllerMac.mm:
+        (LayoutTestController::hasSpellingMarker):
+        * DumpRenderTree/mac/TextInputController.m:
+        (+[TextInputController isSelectorExcludedFromWebScript:]):
+        (+[TextInputController webScriptNameForSelector:]):
+        * DumpRenderTree/qt/LayoutTestControllerQt.cpp:
+        (LayoutTestController::hasSpellingMarker):
+        * DumpRenderTree/qt/LayoutTestControllerQt.h:
+        * DumpRenderTree/win/LayoutTestControllerWin.cpp:
+        (LayoutTestController::hasSpellingMarker):
+        * DumpRenderTree/wx/LayoutTestControllerWx.cpp:
+        (LayoutTestController::hasSpellingMarker):
+
+2010-10-18  Adam Barth  <abarth@webkit.org>
+
+        Reviewed by David Levin.
+
+        commit-queue's flaky test notice is very Pythony
+        https://bugs.webkit.org/show_bug.cgi?id=47790
+
+        This patch make the list of tests delimted by \n instead of just
+        converting the array to a string.
+
+        * Scripts/webkitpy/tool/commands/queues.py:
+        * Scripts/webkitpy/tool/commands/queues_unittest.py:
+
 2010-10-14  Antonio Gomes  <agomes@rim.com>
 
         Reviewed by Martin Robinson and Xan Lopez.

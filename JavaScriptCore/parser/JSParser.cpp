@@ -529,18 +529,10 @@ bool JSParser::parseProgram(JSGlobalObject* lexicalGlobalObject)
     if (!sourceElements || !consume(EOFTOK))
         return true;
     if (!m_syntaxAlreadyValidated) {
-        IdentifierSet writtenVariables;
-        scope->getUncapturedWrittenVariables(writtenVariables);
-        IdentifierSet::const_iterator end = writtenVariables.end();
-        for (IdentifierSet::const_iterator ptr = writtenVariables.begin(); ptr != end; ++ptr) {
-            PropertySlot slot(lexicalGlobalObject);
-            if (!lexicalGlobalObject->getPropertySlot(lexicalGlobalObject->globalExec(), Identifier(m_globalData, *ptr), slot))
-                return true;
-        }
         IdentifierSet deletedVariables;
         if (!scope->getDeletedVariables(deletedVariables))
             return true;
-        end = deletedVariables.end();
+        IdentifierSet::const_iterator end = deletedVariables.end();
         SymbolTable& globalEnvRecord = lexicalGlobalObject->symbolTable();
         for (IdentifierSet::const_iterator ptr = deletedVariables.begin(); ptr != end; ++ptr) {
             if (!globalEnvRecord.get(*ptr).isNull())
@@ -1877,19 +1869,22 @@ template <class TreeBuilder> TreeExpression JSParser::parseUnaryExpression(TreeB
     int subExprStart = tokenStart();
     TreeExpression expr = parseMemberExpression(context);
     failIfFalse(expr);
-    bool isEval = false;
+    bool isEvalOrArguments = false;
     if (strictMode() && !m_syntaxAlreadyValidated) {
-        if (context.isResolve(expr))
-            isEval = m_globalData->propertyNames->eval == *m_lastIdentifier;
+        if (context.isResolve(expr)) {
+            isEvalOrArguments = m_globalData->propertyNames->eval == *m_lastIdentifier;
+            if (!isEvalOrArguments && currentScope()->isFunction())
+                isEvalOrArguments = m_globalData->propertyNames->arguments == *m_lastIdentifier;
+        }
     }
-    failIfTrueIfStrict(isEval && modifiesExpr);
+    failIfTrueIfStrict(isEvalOrArguments && modifiesExpr);
     switch (m_token.m_type) {
     case PLUSPLUS:
         m_nonTrivialExpressionCount++;
         m_nonLHSCount++;
         expr = context.makePostfixNode(expr, OpPlusPlus, subExprStart, lastTokenEnd(), tokenEnd());
         m_assignmentCount++;
-        failIfTrueIfStrict(isEval);
+        failIfTrueIfStrict(isEvalOrArguments);
         failIfTrueIfStrict(requiresLExpr);
         next();
         break;
@@ -1898,7 +1893,7 @@ template <class TreeBuilder> TreeExpression JSParser::parseUnaryExpression(TreeB
         m_nonLHSCount++;
         expr = context.makePostfixNode(expr, OpMinusMinus, subExprStart, lastTokenEnd(), tokenEnd());
         m_assignmentCount++;
-        failIfTrueIfStrict(isEval);
+        failIfTrueIfStrict(isEvalOrArguments);
         failIfTrueIfStrict(requiresLExpr);
         next();
         break;
