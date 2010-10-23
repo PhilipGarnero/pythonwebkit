@@ -933,8 +933,8 @@ AM_CONDITIONAL([USE_GSETTINGS], [test "$have_gsettings" = "yes"])
 AM_CONDITIONAL([USE_GSTREAMER], [test "$have_gstreamer" = "yes"])
 
 # WebKit feature conditionals
-AM_CONDITIONAL([WEBKIT_GOBJECT_BINDINGS],[test "$enable_gobject_bindings" = "yes"])
-AM_CONDITIONAL([WEBKIT_PYTHON_BINDINGS],[test "$enable_python_bindings" = "yes"])
+AM_CONDITIONAL([ENABLE_GOBJECT_BINDINGS],[test "$enable_gobject_bindings" = "yes"])
+AM_CONDITIONAL([ENABLE_PYTHON_BINDINGS],[test "$enable_python_bindings" = "yes"])
 AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 AM_CONDITIONAL([ENABLE_3D_TRANSFORMS],[test "$enable_3D_transforms" = "yes"])
 AM_CONDITIONAL([ENABLE_BLOB],[test "$enable_blob" = "yes"])

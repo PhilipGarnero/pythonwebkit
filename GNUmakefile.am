@@ -350,7 +350,7 @@ webkitgtk_built_sources += \
 	WebKit/gtk/webkit/webkitenumtypes.cpp \
 	WebKit/gtk/webkit/webkitenumtypes.h
 
-if WEBKIT_GOBJECT_BINDINGS
+if ENABLE_GOBJECT_BINDINGS
 webkitgtk_built_sources += \
 	$(webkitgtk_gdom_built_sources)
 endif
@@ -400,7 +400,7 @@ webkitgtk_sources += \
 	WebKit/gtk/webkit/webkitwebwindowfeatures.cpp \
 	WebKit/gtk/webkit/webkitworkers.cpp
 
-if WEBKIT_GOBJECT_BINDINGS
+if ENABLE_GOBJECT_BINDINGS
 webkitgtk_sources += \
 	WebKit/gtk/webkit/webkithittestresult.cpp 
 endif
@@ -560,7 +560,7 @@ dist_resources_DATA = \
 # Include module makefiles
 include JavaScriptCore/GNUmakefile.am
 include WebCore/GNUmakefile.am
-if WEBKIT_GOBJECT_BINDINGS
+if ENABLE_GOBJECT_BINDINGS
 include WebCore/bindings/gobject/GNUmakefile.am
 endif
 if WEBKIT_PYTHON_BINDINGS
@@ -618,7 +618,7 @@ TEST_PROGS += \
 	Programs/unittests/testkeyevents \
 	Programs/unittests/testcopyandpaste
 
-if WEBKIT_GOBJECT_BINDINGS
+if ENABLE_GOBJECT_BINDINGS
 TEST_PROGS += \
 	Programs/unittests/testhittestresult \
 	Programs/unittests/testdomdocument \

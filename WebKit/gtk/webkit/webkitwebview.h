@@ -26,7 +26,7 @@
 #include <libsoup/soup.h>
 #include <JavaScriptCore/JSBase.h>
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 #include <webkit/webkitdefines.h>
 #include <webkit/webkitdom.h>
 #endif
@@ -387,7 +387,7 @@ webkit_web_view_set_view_source_mode            (WebKitWebView        *webView,
 WEBKIT_API gboolean
 webkit_web_view_get_view_source_mode            (WebKitWebView        *webView);
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 WEBKIT_API WebKitHitTestResult*
 webkit_web_view_get_hit_test_result             (WebKitWebView        *webView,
                                                  GdkEventButton       *event);
@@ -402,7 +402,7 @@ webkit_set_cache_model                          (WebKitCacheModel     cache_mode
 WEBKIT_API WebKitCacheModel
 webkit_get_cache_model                          (void);
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 WEBKIT_API WebKitDOMDocument *
 webkit_web_view_get_dom_document                (WebKitWebView        *webView);
 #endif

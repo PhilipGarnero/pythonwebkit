@@ -86,7 +86,7 @@
 #include "ResourceHandle.h"
 #include "ScriptValue.h"
 #include "Scrollbar.h"
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 #include "webkit/WebKitDOMDocumentPrivate.h"
 #endif
 #include <wtf/text/CString.h>
@@ -4575,7 +4575,7 @@ void webkit_web_view_set_tooltip_text(WebKitWebView* webView, const char* toolti
 #endif
 }
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 /**
  * webkit_web_view_get_hit_test_result:
  * @webView: a #WebKitWebView
@@ -4623,7 +4623,7 @@ G_CONST_RETURN gchar* webkit_web_view_get_icon_uri(WebKitWebView* webView)
     return webView->priv->iconURI.data();
 }
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 /**
  * webkit_web_view_get_dom_document:
  * @webView: a #WebKitWebView

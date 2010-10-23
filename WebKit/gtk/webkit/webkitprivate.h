@@ -106,7 +106,7 @@ namespace WebKit {
     WebKitSecurityOrigin* kit(WebCore::SecurityOrigin*);
     WebCore::SecurityOrigin* core(WebKitSecurityOrigin*);
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
     WebKitHitTestResult* kit(const WebCore::HitTestResult&);
 #endif
 

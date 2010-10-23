@@ -143,7 +143,7 @@ WebCore::EditingBehaviorType core(WebKitEditingBehavior type)
     return (WebCore::EditingBehaviorType)type;
 }
 
-#ifdef WEBKIT_GOBJECT_BINDINGS
+#ifdef ENABLE_GOBJECT_BINDINGS
 WebKitHitTestResult* kit(const WebCore::HitTestResult& result)
 {
     guint context = WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT;
