@@ -781,6 +781,18 @@ AC_SUBST([G_IR_SCANNER])
 AC_SUBST([G_IR_COMPILER])
 AC_SUBST([G_IR_GENERATE])
 
+# Python Bindings
+
+if test "$enable_python_bindings" = "yes"; then
+  AC_DEFINE([ENABLE_PYTHON_BINDINGS],[1],[Define to enable python bindings])
+fi
+
+# GObject Bindings
+if test "$enable_gobject_bindings" = "yes"; then
+  AC_DEFINE([ENABLE_GOBJECT_BINDINGS],[1],[Define to enable gobject bindings])
+fi
+
+
 # determine the font backend
 AC_MSG_CHECKING([the font backend to use])
 AC_ARG_WITH(font_backend,

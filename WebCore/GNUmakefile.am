@@ -3438,7 +3438,7 @@ webcore_sources += \
 	WebCore/xml/XSLTUnicodeSort.cpp \
 	WebCore/xml/XSLTUnicodeSort.h
 
-if WEBKIT_GOBJECT_BINDINGS
+if ENABLE_GOBJECT_BINDINGS
 webcore_sources += \
 	WebCore/bindings/gobject/ConvertToUTF8String.cpp \
 	WebCore/bindings/gobject/ConvertToUTF8String.h \
