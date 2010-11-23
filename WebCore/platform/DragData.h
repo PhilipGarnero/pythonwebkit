@@ -50,6 +50,9 @@ typedef const QMimeData* DragDataRef;
 typedef struct IDataObject* DragDataRef;
 #elif PLATFORM(WX)
 typedef class wxDataObject* DragDataRef;
+#elif PLATFORM(DIRECTFB)
+// FIXME: this should probably be something DirectFB specific
+typedef void* DragDataRef;
 #elif PLATFORM(GTK)
 namespace WebCore {
 class DataObjectGtk;

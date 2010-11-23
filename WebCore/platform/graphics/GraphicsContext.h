@@ -39,6 +39,8 @@
 
 #if PLATFORM(CG)
 typedef struct CGContext PlatformGraphicsContext;
+#elif PLATFORM(DIRECTFB)
+typedef IDirectFBSurface PlatformGraphicsContext;
 #elif PLATFORM(CAIRO)
 #include "PlatformRefPtrCairo.h"
 namespace WebCore {

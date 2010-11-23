@@ -246,6 +246,7 @@ Usage: $programName [options] [options to pass to build system]
   --debug                           Compile in debug mode
   --wincairo                        Build using Cairo (rather than CoreGraphics) on Windows
   --chromium                        Build the Chromium port on Mac/Win/Linux
+  --dfb                             Build the DirectFB port
   --gtk                             Build the GTK+ port
   --qt                              Build the Qt port
   --efl                             Build the EFL port
@@ -459,7 +460,9 @@ for my $dir (@projects) {
         next;
     }
 
-    if (isGtk()) {
+    if (isDFB()) {
+        $result = buildDFBProject($dir, $clean,  @options);
+    } elsif (isGtk()) {
         $result = buildGtkProject($dir, $clean,  @options);
     } elsif (isQt()) {
         $result = buildQMakeQtProject($dir, $clean, @options);

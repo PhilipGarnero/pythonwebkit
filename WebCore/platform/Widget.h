@@ -59,6 +59,10 @@ typedef struct HWND__* HWND;
 typedef HWND PlatformWidget;
 #endif
 
+#if PLATFORM(DIRECTFB)
+typedef void* PlatformWidget;
+#endif
+
 #if PLATFORM(GTK)
 typedef struct _GdkDrawable GdkDrawable;
 typedef struct _GtkWidget GtkWidget;

@@ -73,6 +73,10 @@ typedef unsigned long int uint32;
 #define AEEEvent uint16
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 namespace WebCore {
 
     class PlatformKeyboardEvent : public FastAllocBase {
@@ -193,6 +197,10 @@ namespace WebCore {
 
 #if PLATFORM(BREWMP)
         PlatformKeyboardEvent(AEEEvent, uint16, uint32, Type);
+#endif
+
+#if PLATFORM(DIRECTFB)
+        PlatformKeyboardEvent(const DFBEvent*);
 #endif
 
 #if PLATFORM(WIN) || PLATFORM(CHROMIUM)

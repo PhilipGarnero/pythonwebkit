@@ -34,6 +34,8 @@
 #if PLATFORM(WX)
 class wxBitmap;
 class wxGraphicsBitmap;
+#elif PLATFORM(DIRECTFB)
+#include <directfb.h>
 #elif PLATFORM(CG)
 typedef struct CGImageSource* CGImageSourceRef;
 typedef struct CGImage* CGImageRef;
@@ -83,6 +85,8 @@ typedef wxGraphicsBitmap* NativeImagePtr;
 #else
 typedef wxBitmap* NativeImagePtr;
 #endif
+#elif PLATFORM(DIRECTFB)
+typedef IDirectFBSurface* NativeImagePtr;
 #elif PLATFORM(CAIRO)
 typedef cairo_surface_t* NativeImagePtr;
 #elif PLATFORM(SKIA)

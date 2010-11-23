@@ -73,6 +73,7 @@ webcore_cppflags += \
 	-I$(top_builddir)/DerivedSources/JavaScriptCore \
 	-DDATA_DIR=\"${datadir}\"
 
+if WITH_GTK
 webcoregtk_cppflags += \
 	-DWEBKITGTK_API_VERSION_STRING=\"@WEBKITGTK_API_VERSION@\" \
 	-DWTF_USE_SOUP=1 \
@@ -86,6 +87,19 @@ webcoregtk_cppflags += \
 	-I$(srcdir)/WebCore/platform/network/soup \
 	-I$(srcdir)/WebCore/platform/network/soup/cache \
 	-I$(srcdir)/WebCore/platform/network/soup/cache/webkit
+else
+webcoregtk_cppflags += \
+	-DWTF_USE_SOUP=1 \
+        -DENABLE_PLUGIN_PACKAGE_SIMPLE_HASH=1 \
+	-I$(srcdir)/WebCore/accessibility/dfb \
+	-I$(srcdir)/WebCore/loader/dfb \
+	-I$(srcdir)/WebCore/page/dfb \
+	-I$(srcdir)/WebCore/platform/graphics/dfb \
+	-I$(srcdir)/WebCore/platform/dfb \
+	-I$(srcdir)/WebCore/platform/network/soup \
+	-I$(srcdir)/WebCore/platform/network/soup/cache \
+	-I$(srcdir)/WebCore/platform/network/soup/cache/webkit
+endif
 
 webcore_built_nosources += \
 	DerivedSources/WebCore/tokenizer.cpp
@@ -1282,7 +1296,6 @@ webcore_sources += \
 	WebCore/editing/EditorInsertAction.h \
 	WebCore/editing/FormatBlockCommand.cpp \
 	WebCore/editing/FormatBlockCommand.h \
-	WebCore/editing/gtk/SelectionControllerGtk.cpp \
 	WebCore/editing/htmlediting.cpp \
 	WebCore/editing/htmlediting.h \
 	WebCore/editing/HTMLInterchange.cpp \
@@ -3455,6 +3468,14 @@ webcore_sources += \
 	WebCore/bindings/gobject/WebKitHTMLElementWrapperFactory.h
 endif
 
+#
+# GTK+
+#
+if WITH_GTK
+
+webcore_sources += \
+	WebCore/editing/gtk/SelectionControllerGtk.cpp
+
 webcoregtk_sources += \
 	WebCore/accessibility/gtk/AccessibilityObjectAtk.cpp \
 	WebCore/accessibility/gtk/AccessibilityObjectWrapperAtk.cpp \
@@ -3636,6 +3657,125 @@ webcore_sources += \
 	WebCore/plugins/win/PluginMessageThrottlerWin.h
 endif
 
+#
+# DirectFB
+#
+else
+
+webcoregtk_sources += \
+	WebCore/bindings/js/ScriptControllerDFB.cpp \
+	WebCore/page/dfb/DragControllerDFB.cpp \
+	WebCore/page/dfb/EventHandlerDFB.cpp \
+	WebCore/page/dfb/FrameDFB.cpp \
+	WebCore/platform/graphics/dfb/ColorDFB.cpp \
+	WebCore/platform/graphics/dfb/FontCacheDFB.cpp \
+	WebCore/platform/graphics/dfb/FontCustomPlatformData.h \
+	WebCore/platform/graphics/dfb/FontCustomPlatformData.cpp \
+	WebCore/platform/graphics/dfb/FontDFB.cpp \
+	WebCore/platform/graphics/dfb/FontPlatformData.h \
+	WebCore/platform/graphics/dfb/FontPlatformDataDFB.cpp \
+	WebCore/platform/graphics/dfb/GlyphPageTreeNodeDFB.cpp \
+	WebCore/platform/graphics/dfb/GradientDFB.cpp \
+	WebCore/platform/graphics/dfb/GraphicsContextDFB.cpp \
+	WebCore/platform/graphics/dfb/IconDFB.cpp \
+	WebCore/platform/graphics/dfb/ImageBufferDFB.cpp \
+	WebCore/platform/graphics/dfb/ImageBufferData.h \
+	WebCore/platform/graphics/dfb/ImageDFB.cpp \
+	WebCore/platform/graphics/dfb/IntPointDFB.cpp \
+	WebCore/platform/graphics/dfb/IntRectDFB.cpp \
+	WebCore/platform/graphics/dfb/IntSizeDFB.cpp \
+	WebCore/platform/graphics/dfb/PathDFB.cpp \
+	WebCore/platform/graphics/dfb/SimpleFontDataDFB.cpp \
+	WebCore/platform/graphics/dfb/StillImageDFB.cpp \
+	WebCore/platform/dfb/ClipboardDFB.cpp \
+	WebCore/platform/dfb/ClipboardDFB.h \
+	WebCore/platform/dfb/ContextMenuDFB.cpp \
+	WebCore/platform/dfb/ContextMenuItemDFB.cpp \
+	WebCore/platform/dfb/CursorDFB.cpp \
+	WebCore/platform/dfb/DragDataDFB.cpp \
+	WebCore/platform/dfb/DragImageDFB.cpp \
+	WebCore/platform/dfb/EventLoopDFB.cpp \
+	WebCore/platform/dfb/FileChooserDFB.cpp \
+	WebCore/platform/dfb/FileSystemDFB.cpp \
+	WebCore/platform/dfb/Globals.cpp \
+	WebCore/platform/dfb/Globals.h \
+	WebCore/platform/dfb/KeyboardCodes.h \
+	WebCore/platform/dfb/LanguageDFB.cpp \
+	WebCore/platform/dfb/LocalizedStringsDFB.cpp \
+	WebCore/platform/dfb/LoggingDFB.cpp \
+	WebCore/platform/dfb/MIMETypeRegistryDFB.cpp \
+	WebCore/platform/dfb/PasteboardDFB.cpp \
+	WebCore/platform/dfb/PlatformKeyboardEventDFB.cpp \
+	WebCore/platform/dfb/PlatformMouseEventDFB.cpp \
+	WebCore/platform/dfb/PlatformWheelEventDFB.cpp \
+	WebCore/platform/dfb/PopupMenuDFB.cpp \
+	WebCore/platform/dfb/RenderThemeDFB.cpp \
+	WebCore/platform/dfb/RenderThemeDFB.h \
+	WebCore/platform/dfb/ScreenDFB.cpp \
+	WebCore/platform/dfb/ScrollbarThemeDFB.cpp \
+	WebCore/platform/dfb/ScrollbarThemeDFB.h \
+	WebCore/platform/dfb/SearchPopupMenuDFB.cpp \
+	WebCore/platform/dfb/SharedBufferDFB.cpp \
+	WebCore/platform/dfb/SharedTimerDFB.cpp \
+	WebCore/platform/dfb/SoundDFB.cpp \
+	WebCore/platform/dfb/TemporaryLinkStubs.cpp \
+	WebCore/platform/dfb/WidgetDFB.cpp \
+	WebCore/platform/image-decoders/ImageDecoder.h \
+	WebCore/platform/image-decoders/ImageDecoder.cpp \
+	WebCore/platform/image-decoders/bmp/BMPImageDecoder.cpp \
+	WebCore/platform/image-decoders/bmp/BMPImageDecoder.h \
+	WebCore/platform/image-decoders/bmp/BMPImageReader.cpp \
+	WebCore/platform/image-decoders/bmp/BMPImageReader.h \
+	WebCore/platform/image-decoders/dfb/ImageDecoderDFB.cpp \
+	WebCore/platform/image-decoders/gif/GIFImageDecoder.cpp \
+	WebCore/platform/image-decoders/gif/GIFImageDecoder.h \
+	WebCore/platform/image-decoders/gif/GIFImageReader.cpp \
+	WebCore/platform/image-decoders/gif/GIFImageReader.h \
+	WebCore/platform/image-decoders/ico/ICOImageDecoder.cpp \
+	WebCore/platform/image-decoders/ico/ICOImageDecoder.h \
+	WebCore/platform/image-decoders/jpeg/JPEGImageDecoder.cpp \
+	WebCore/platform/image-decoders/jpeg/JPEGImageDecoder.h \
+	WebCore/platform/image-decoders/png/PNGImageDecoder.cpp \
+	WebCore/platform/image-decoders/png/PNGImageDecoder.h \
+	WebCore/platform/network/soup/AuthenticationChallenge.h \
+	WebCore/platform/network/soup/CookieJarSoup.cpp \
+	WebCore/platform/network/soup/CookieJarSoup.h \
+	WebCore/platform/network/soup/GOwnPtrSoup.cpp \
+	WebCore/platform/network/soup/GOwnPtrSoup.h \
+	WebCore/platform/network/soup/ProxyServerSoup.cpp \
+	WebCore/platform/network/soup/ResourceError.h \
+	WebCore/platform/network/soup/ResourceHandleSoup.cpp \
+	WebCore/platform/network/soup/ResourceRequest.h \
+	WebCore/platform/network/soup/ResourceRequestSoup.cpp \
+	WebCore/platform/network/soup/ResourceResponse.h \
+	WebCore/platform/network/soup/ResourceResponseSoup.cpp \
+	WebCore/platform/network/soup/SocketStreamError.h \
+	WebCore/platform/network/soup/SocketStreamHandle.h \
+	WebCore/platform/network/soup/SocketStreamHandleSoup.cpp \
+	WebCore/platform/network/soup/SoupURIUtils.cpp \
+	WebCore/platform/network/soup/SoupURIUtils.h \
+	WebCore/platform/network/soup/cache/soup-directory-input-stream.c \
+	WebCore/platform/network/soup/cache/soup-directory-input-stream.h \
+	WebCore/platform/network/soup/cache/soup-http-input-stream.c \
+	WebCore/platform/network/soup/cache/soup-http-input-stream.h \
+	WebCore/platform/network/soup/cache/soup-request-data.c \
+	WebCore/platform/network/soup/cache/soup-request-data.h \
+	WebCore/platform/network/soup/cache/soup-request-file.c \
+	WebCore/platform/network/soup/cache/soup-request-file.h \
+	WebCore/platform/network/soup/cache/soup-request-http.c \
+	WebCore/platform/network/soup/cache/soup-request-http.h \
+	WebCore/platform/network/soup/cache/soup-request.c \
+	WebCore/platform/network/soup/cache/soup-request.h \
+	WebCore/platform/network/soup/cache/soup-requester.c \
+	WebCore/platform/network/soup/cache/soup-requester.h \
+	WebCore/platform/network/soup/cache/webkit/soup-cache.c \
+	WebCore/platform/network/soup/cache/webkit/soup-cache.h \
+	WebCore/platform/network/soup/cache/webkit/soup-cache-private.h \
+	WebCore/plugins/dfb/PluginDataDFB.cpp \
+	WebCore/plugins/dfb/PluginPackageDFB.cpp \
+	WebCore/plugins/dfb/PluginViewDFB.cpp
+endif
+
 # ----
 # icu unicode backend
 # ----
@@ -3678,6 +3818,7 @@ endif # END ENABLE_FAST_MOBILE_SCROLLING
 # ---
 # FreeType font backend
 # ---
+if WITH_GTK
 if USE_FREETYPE
 webcoregtk_cppflags += -DUSE_FREETYPE=1
 webcoregtk_sources += \
@@ -3688,6 +3829,7 @@ webcoregtk_sources += \
 	WebCore/platform/graphics/cairo/GlyphPageTreeNodeCairo.cpp \
 	WebCore/platform/graphics/cairo/SimpleFontDataCairo.cpp
 endif # END USE_FREETYPE
+endif
 
 # ---
 # Pango font backend

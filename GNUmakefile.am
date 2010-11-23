@@ -96,8 +96,9 @@ global_cppflags += \
 
 
 global_cxxflags += \
-	$(SYMBOL_VISIBILITY_INLINES) \
 	-fno-rtti
+#	$(SYMBOL_VISIBILITY_INLINES) \
+#
 
 # -no-undefined required for building DLLs on Windows
 # It breaks the build on other platforms, so we use it conditionally
@@ -163,8 +164,15 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_HEAD
 	$(webkitgtk_static_h_api)
 
 nodist_libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_HEADERS = \
-	$(webkitgtk_built_h_api) \
+	$(webkitgtk_built_h_api)
+
+#if WITH_GTK
+nodist_libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_HEADERS += \
 	WebKit/gtk/webkit/webkitenumtypes.h
+#else
+#nodist_libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_HEADERS += \
+#	WebKit/dfb/webkit/webkitenumtypes.h
+#endif
 
 libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_SOURCES = \
 	$(webcore_sources) \
@@ -188,11 +196,6 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPPF
 	-I$(top_builddir)/DerivedSources/python \
 	-I$(srcdir)/WebCore/bindings \
 	-I$(srcdir)/WebCore/bindings/gobject \
-	-I$(srcdir)/WebKit/gtk \
-	-I$(srcdir)/WebKit/gtk/WebCoreSupport \
-	-I$(srcdir)/WebKit/gtk/webkit \
-	-I$(top_builddir)/WebKit/gtk \
-	-I$(top_builddir)/WebKit/gtk/webkit \
 	-I$(GENSOURCES_WEBKIT) \
 	$(global_cppflags) \
 	$(webcore_cppflags) \
@@ -200,8 +203,11 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPPF
 	$(javascriptcore_cppflags) \
 	-fno-strict-aliasing \
 	$(HILDON_CPPFLAGS) \
+	$(CAIRO_CFLAGS) \
 	$(COVERAGE_CFLAGS) \
+	$(DIRECTFB_CFLAGS) \
 	$(ENCHANT_CFLAGS) \
+	$(FREETYPE_CFLAGS) \
 	$(GAIL_CFLAGS) \
 	$(GEOCLUE_CFLAGS) \
 	$(GLIB_CFLAGS) \
@@ -211,9 +217,26 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPPF
 	$(LIBSOUP_CFLAGS) \
 	$(LIBXML_CFLAGS) \
 	$(LIBXSLT_CFLAGS) \
+	$(LITE_CFLAGS) \
 	$(SQLITE3_CFLAGS) \
 	$(UNICODE_CFLAGS) \
 	$(XT_CFLAGS)
+
+if WITH_GTK
+libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPPFLAGS += \
+	-I$(srcdir)/WebKit/gtk \
+	-I$(srcdir)/WebKit/gtk/WebCoreSupport \
+	-I$(srcdir)/WebKit/gtk/webkit \
+	-I$(top_builddir)/WebKit/gtk \
+	-I$(top_builddir)/WebKit/gtk/webkit
+else
+libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPPFLAGS += \
+	-I$(srcdir)/WebKit/dfb \
+	-I$(srcdir)/WebKit/dfb/WebCoreSupport \
+	-I$(srcdir)/WebKit/dfb/webkit \
+	-I$(top_builddir)/WebKit/dfb \
+	-I$(top_builddir)/WebKit/dfb/webkit
+endif
 
 # For the Gtk port we want to use XP_UNIX both in X11 and Mac
 if !TARGET_WIN32
@@ -232,6 +255,7 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIBA
 	$(webcore_ldflags) \
 	$(CAIRO_LIBS) \
 	$(COVERAGE_LDFLAGS) \
+	$(DIRECTFB_LIBS) \
 	$(ENCHANT_LIBS) \
 	$(FREETYPE_LIBS) \
 	$(GAIL_LIBS) \
@@ -244,6 +268,7 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIBA
 	$(LIBSOUP_LIBS) \
 	$(LIBXML_LIBS) \
 	$(LIBXSLT_LIBS) \
+	$(LITE_LIBS) \
 	$(PANGO_LIBS) \
 	$(PNG_LIBS) \
 	$(SQLITE3_LIBS) \
@@ -257,8 +282,16 @@ libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LIBA
 # Extra checks and flags
 global_cppflags += \
 	-DBUILDING_CAIRO__=1 \
-	-DBUILDING_GTK__=1 \
 	-DWTF_CHANGES
+
+if WITH_GTK
+global_cppflags += \
+	-DBUILDING_GTK__=1
+else
+global_cppflags += \
+	-DBUILDING_DIRECTFB__=1 \
+	-D_GNU_SOURCE
+endif
 
 if USE_ICU_UNICODE
 global_cppflags += \
@@ -290,7 +323,8 @@ endif
 
 if !ENABLE_DEBUG
 global_cppflags += -DNDEBUG
-global_cflags += $(SYMBOL_VISIBILITY)
+global_cflags +=
+# $(SYMBOL_VISIBILITY)
 else
 global_cppflags += \
 	-DG_DISABLE_DEPRECATED \
@@ -308,6 +342,11 @@ global_cppflags += \
 	-DGCC_GENERATE_TEST_COVERAGE_FILES \
 	-DGCC_INSTRUMENT_PROGRAM_FLOW_ARCS
 endif
+
+#
+# GTK+
+#
+if WITH_GTK
 
 webkitgtk_static_h_api += \
 	$(srcdir)/WebCore/platform/network/soup/cache/webkit/soup-cache.h \
@@ -407,6 +446,58 @@ endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = WebKit/gtk/@WEBKITGTK_PC_NAME@-@WEBKITGTK_API_VERSION@.pc
+
+else
+#
+# DirectFB
+#
+webkitgtk_static_h_api += \
+	$(srcdir)/WebCore/platform/network/soup/cache/webkit/soup-cache.h \
+	$(srcdir)/WebKit/dfb/webview.h \
+	$(srcdir)/WebKit/dfb/webkit/webkitrender.h
+
+webkitgtk_built_h_api += \
+	WebKit/dfb/webkit/webkitversion.h
+
+webkitgtk_h_api += \
+	$(webkitgtk_built_h_api) \
+	$(webkitgtk_static_h_api)
+
+webkitgtk_built_sources += \
+	$(webkitgtk_built_h_api) \
+	$(webkitgtk_gdom_built_sources) \
+	DerivedSources/webkit/webkitmarshal.cpp \
+	DerivedSources/webkit/webkitmarshal.h \
+	WebKit/gtk/webkit/webkitenumtypes.cpp \
+	WebKit/gtk/webkit/webkitenumtypes.h
+#	WebKit/dfb/webkit/webkitenumtypes.cpp \
+#	WebKit/dfb/webkit/webkitenumtypes.h
+
+webkitgtk_sources += \
+	WebKit/dfb/WebCoreSupport/ChromeClientDFB.cpp \
+	WebKit/dfb/WebCoreSupport/ChromeClientDFB.h \
+	WebKit/dfb/WebCoreSupport/ContextMenuClientDFB.cpp \
+	WebKit/dfb/WebCoreSupport/ContextMenuClientDFB.h \
+	WebKit/dfb/WebCoreSupport/DragClientDFB.cpp \
+	WebKit/dfb/WebCoreSupport/DragClientDFB.h \
+	WebKit/dfb/WebCoreSupport/EditCommandDFB.h \
+	WebKit/dfb/WebCoreSupport/EditorClientDFB.cpp \
+	WebKit/dfb/WebCoreSupport/EditorClientDFB.h \
+	WebKit/dfb/WebCoreSupport/FrameLoaderClientDFB.cpp \
+	WebKit/dfb/WebCoreSupport/FrameLoaderClientDFB.h \
+	WebKit/dfb/WebCoreSupport/InspectorClientDFB.cpp \
+	WebKit/dfb/WebCoreSupport/InspectorClientDFB.h \
+	WebKit/dfb/webkitdfb.cpp \
+	WebKit/dfb/webview.cpp \
+	WebKit/dfb/webkit/webkitrender.cpp \
+	WebKit/dfb/webkit/webkitversion.cpp
+#	WebKit/dfb/webkit/webkitworkers.cpp
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = WebKit/dfb/webkit-1.0.pc
+
+endif
+
 
 if ENABLE_INTROSPECTION
 
@@ -533,9 +624,12 @@ endif
 
 # Files that will be distributed
 EXTRA_DIST += \
-	$(srcdir)/gtk-doc.make \
 	WebKit/LICENSE \
-	$(srcdir)/autotools/symbols.filter \
+	$(srcdir)/autotools/symbols.filter
+
+if WITH_GTK
+EXTRA_DIST += \
+	$(srcdir)/gtk-doc.make \
 	$(srcdir)/WebKit/gtk/ChangeLog \
 	$(srcdir)/WebKit/gtk/NEWS \
 	$(srcdir)/WebKit/gtk/webkitmarshal.list \
@@ -549,6 +643,16 @@ EXTRA_DIST += \
 	$(srcdir)/WebKit/gtk/tests/resources/* \
 	$(srcdir)/WebKit/gtk/tests/test_utils.h \
 	$(srcdir)/WebKit/gtk/org.webkitgtk.gschema.xml.in
+else
+EXTRA_DIST += \
+	$(srcdir)/WebKit/dfb/ChangeLog \
+	$(srcdir)/WebKit/dfb/NEWS \
+	$(srcdir)/WebKit/gtk/webkitmarshal.list \
+	$(srcdir)/WebKit/dfb/docs/GNUmakefile.* \
+	$(srcdir)/WebKit/dfb/docs/webkitenvironment.xml \
+	$(srcdir)/WebKit/dfb/docs/version.xml.in \
+	$(srcdir)/WebKit/dfb/resources/*
+endif
 
 # extra resource files
 resourcesdir = ${datadir}/webkit-@WEBKITGTK_API_VERSION@/resources
@@ -567,7 +671,10 @@ if ENABLE_PYTHON_BINDINGS
 include WebCore/bindings/python/GNUmakefile.am
 endif
 include WebKitTools/GNUmakefile.am
+
+if WITH_GTK
 include WebKit/gtk/po/GNUmakefile.am
+endif
 
 # Build unit tests
 noinst_PROGRAMS += $(TEST_PROGS)
@@ -576,20 +683,40 @@ webkit_tests_cflags = \
 	-fno-strict-aliasing \
 	-I$(srcdir)/JavaScriptCore/ForwardingHeaders \
 	-I$(srcdir)/WebCore/platform/network/soup/cache \
-	-I$(srcdir)/WebKit/gtk \
-	-I$(top_builddir)/WebKit/gtk \
 	-I$(top_builddir)/DerivedSources \
 	-I$(top_srcdir)/WebCore/bindings \
 	-I$(top_srcdir)/WebCore/bindings/gobject \
 	$(global_cppflags) \
 	$(global_cflags) \
 	$(GLIB_CFLAGS) \
-	$(GTK_CFLAGS) \
 	$(LIBSOUP_CFLAGS)
+  
+if WITH_GTK
+webkit_tests_cflags += \
+	-I$(srcdir)/WebKit/gtk \
+	-I$(top_builddir)/WebKit/gtk \
+	$(GTK_CFLAGS)
+else
+webkit_tests_cflags += \
+	-I$(srcdir)/WebKit/dfb \
+	-I$(srcdir)/WebKit/dfb/WebCoreSupport \
+	-I$(top_builddir)/WebKit/dfb \
+	$(DIRECTFB_CFLAGS) \
+	$(LITE_CFLAGS)
+endif
 
+if WITH_GTK
 webkit_tests_ldadd = \
 	libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la \
-	$(GTK_LIBS) \
+	$(GTK_LIBS)
+else
+webkit_tests_ldadd = \
+	libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la \
+	$(DIRECTFB_LIBS) \
+	$(LITE_LIBS)
+endif
+
+webkit_tests_ldadd += \
 	$(GLIB_LIBS) \
 	$(LIBSOUP_LIBS)
 
@@ -597,6 +724,7 @@ webkit_tests_ldflags = \
 	-no-install \
 	-no-fast-install
 
+if WITH_GTK
 TEST_PROGS += \
 	Programs/unittests/testhttpbackend \
 	Programs/unittests/testloading \
@@ -617,6 +745,15 @@ TEST_PROGS += \
 	Programs/unittests/testwebview \
 	Programs/unittests/testkeyevents \
 	Programs/unittests/testcopyandpaste
+else
+TEST_PROGS += Programs/testdfb
+endif
+
+Programs_testdfb_SOURCES = WebKit/dfb/tests/testdfb.cpp
+Programs_testdfb_CPPFLAGS = $(libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CPPFLAGS)
+Programs_testdfb_CXXFLAGS = $(libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_CXXFLAGS)
+Programs_testdfb_LDADD = $(webkit_tests_ldadd)
+Programs_testdfb_LDFLAGS = $(webkit_tests_ldflags)
 
 if ENABLE_GOBJECT_BINDINGS
 TEST_PROGS += \
@@ -761,6 +898,9 @@ CLEANFILES += \
 	$(top_builddir)/stamp-webkitenumtypes.h \
 	$(top_builddir)/Programs/GtkLauncher
 
+CLEANFILES += \
+	$(top_builddir)/Programs/WebKitDFB
+
 DISTCLEANFILES += \
 	$(CLEANFILES) \
 	$(builddir)/doltcompile \
@@ -770,6 +910,12 @@ DISTCLEANFILES += \
 	$(top_builddir)/WebKit/gtk/@WEBKITGTK_PC_NAME@-@WEBKITGTK_API_VERSION@.pc \
 	$(top_builddir)/WebKit/gtk/webkit/webkitversion.h \
 	$(top_builddir)/WebKit/gtk/org.webkitgtk-@WEBKITGTK_API_VERSION@.gschema.xml
+
+DISTCLEANFILES += \
+	$(top_builddir)/WebKit/dfb/docs/version.xml \
+	$(top_builddir)/WebKit/dfb/docs/GNUmakefile \
+	$(top_builddir)/WebKit/dfb/webkit-1.0.pc \
+	$(top_builddir)/WebKit/dfb/webkit/webkitversion.h
 
 MAINTAINERCLEANFILES += \
 	$(CLEANFILES) \
@@ -789,7 +935,11 @@ MAINTAINERCLEANFILES += \
 
 # Older automake versions (1.7) place Plo files in a different place so we need
 # to create the output directory manually.
+if WITH_GTK
 all-local: stamp-po
+else
+all-local:
+endif
 	$(mkdir_p) $(top_builddir)/$(DEPDIR)/DerivedSources
 
 # remove built sources and program directories
@@ -804,7 +954,9 @@ distclean-local:
 dist-hook:
 	cp $(srcdir)/WebKit/gtk/NEWS $(distdir)
 
+if WITH_GTK
 install-data-local: po-install-data-local
+endif
 
 installdirs-data-local: po-installdirs-data-local
 

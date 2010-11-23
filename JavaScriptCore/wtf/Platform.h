@@ -454,6 +454,7 @@
 /* FIXME: these are all mixes of OS, operating environment and policy choices. */
 /* PLATFORM(CHROMIUM) */
 /* PLATFORM(QT) */
+/* PLATFORM(DIRECTFB) */
 /* PLATFORM(WX) */
 /* PLATFORM(GTK) */
 /* PLATFORM(HAIKU) */
@@ -465,6 +466,8 @@
 #define WTF_PLATFORM_QT 1
 #elif defined(BUILDING_WX__)
 #define WTF_PLATFORM_WX 1
+#elif defined(BUILDING_DIRECTFB__)
+#define WTF_PLATFORM_DIRECTFB 1
 #elif defined(BUILDING_GTK__)
 #define WTF_PLATFORM_GTK 1
 #elif defined(BUILDING_HAIKU__)
@@ -670,6 +673,12 @@
 #else
 #define WTF_USE_ATSUI 1
 #endif
+#endif
+#endif
+
+#if PLATFORM(DIRECTFB)
+#if HAVE(PTHREAD_H)
+#define WTF_USE_PTHREADS 1
 #endif
 #endif
 

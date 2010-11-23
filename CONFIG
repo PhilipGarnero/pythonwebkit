@@ -1,0 +1,21 @@
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/opt/webkit/lib/pkgconfig; \
+export LD_LIBRARY_PATH=/opt/webkit/lib; \
+CXXFLAGS="-g -DDIRECT_ENABLE_DEBUG \
+              -DINSTRUMENT_LAYOUT_SCHEDULING" \
+../autogen.sh --with-target=directfb --without-gtkplus \
+	--enable-optimizations	\
+	--disable-channel-messaging	\
+	--enable-javascript-debugger	\
+	--enable-offline-web-applications	\
+	--enable-dom-storage	\
+	--enable-database	\
+	--disable-eventsource	\
+	--disable-icon-database	\
+	--enable-datalist	\
+	--disable-video	\
+	--enable-svg	\
+	--enable-xpath	\
+	--enable-xslt	\
+	--enable-workers	\
+	--disable-web-sockets	\
+	--enable-jit

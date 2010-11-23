@@ -58,6 +58,10 @@ class wxPoint;
 class BMessage;
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 namespace WebCore {
 
     class FloatPoint;
@@ -149,6 +153,11 @@ namespace WebCore {
 
 #if PLATFORM(HAIKU)
         PlatformWheelEvent(BMessage*);
+#endif
+
+#if PLATFORM(DIRECTFB)
+        PlatformWheelEvent(const DFBEvent*);
+        PlatformWheelEvent(int x, int y, int delta);
 #endif
 
     protected:

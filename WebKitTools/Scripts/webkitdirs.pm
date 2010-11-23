@@ -62,6 +62,7 @@ my $osXVersion;
 my $isQt;
 my $isSymbian;
 my %qtFeatureDefaults;
+my $isDFB;
 my $isGtk;
 my $isWx;
 my $isEfl;
@@ -273,6 +274,7 @@ sub argumentsForConfiguration()
     push(@args, '--release') if $configuration eq "Release";
     push(@args, '--32-bit') if $architecture ne "x86_64";
     push(@args, '--qt') if isQt();
+    push(@args, '--dfb') if isDFB();
     push(@args, '--symbian') if isSymbian();
     push(@args, '--gtk') if isGtk();
     push(@args, '--efl') if isEfl();
@@ -305,7 +307,7 @@ sub determineConfigurationProductDir
         # autotool builds (non build-webkit). In this case and if
         # WEBKITOUTPUTDIR exist, use that as our configuration dir. This will
         # allows us to run run-webkit-tests without using build-webkit.
-        if ($ENV{"WEBKITOUTPUTDIR"} && (isGtk() || isEfl())) {
+        if ($ENV{"WEBKITOUTPUTDIR"} && (isGtk() || isEfl() || isDFB())) {
             $configurationProductDir = "$baseProductDir";
         } else {
             $configurationProductDir = "$baseProductDir/$configuration";
@@ -356,7 +358,7 @@ sub jscProductDir
     my $productDir = productDir();
     $productDir .= "/JavaScriptCore" if isQt();
     $productDir .= "/$configuration" if (isQt() && isWindows());
-    $productDir .= "/Programs" if (isGtk() || isEfl());
+    $productDir .= "/Programs" if (isGtk() || isEfl() || isDFB());
 
     return $productDir;
 }
@@ -604,6 +606,13 @@ sub builtDylibPathForName
         }
         return $libraryDir . "libwebkitgtk-1.0.so";
     }
+    if (isDFB()) {
+        my $libraryDir = "$configurationProductDir/$libraryName/../.libs/";
+        if (-e $libraryDir . "libwebkitdfb-3.0.so") {
+            return $libraryDir . "libwebkitdfb-3.0.so";
+        }
+        return $libraryDir . "libwebkitdfb-1.0.so";
+    }
     if (isEfl()) {
         return "$configurationProductDir/$libraryName/../.libs/libewebkit.so";
     }
@@ -707,7 +716,7 @@ sub determineIsQt()
     }
 
     # The presence of QTDIR only means Qt if --gtk or --wx or --efl are not on the command-line
-    if (isGtk() || isWx() || isEfl()) {
+    if (isGtk() || isWx() || isEfl() || isDFB()) {
         $isQt = 0;
         return;
     }
@@ -735,6 +744,18 @@ sub isEfl()
 {
     determineIsEfl();
     return $isEfl;
+}
+
+sub isDFB()
+{
+    determineIsDFB();
+    return $isDFB;
+}
+
+sub determineIsDFB()
+{
+    return if defined($isDFB);
+    $isDFB = checkForArgumentAndRemoveFromARGV("--dfb");
 }
 
 sub isGtk()
@@ -863,7 +884,7 @@ sub isLinux()
 
 sub isAppleWebKit()
 {
-    return !(isQt() or isGtk() or isWx() or isChromium() or isEfl());
+    return !(isQt() or isDFB() or isGtk() or isWx() or isChromium() or isEfl());
 }
 
 sub isAppleMacWebKit()
@@ -950,7 +971,7 @@ sub relativeScriptsDir()
 sub launcherPath()
 {
     my $relativeScriptsPath = relativeScriptsDir();
-    if (isGtk() || isQt() || isWx() || isEfl()) {
+    if (isDFB() || isGtk() || isQt() || isWx() || isEfl()) {
         return "$relativeScriptsPath/run-launcher";
     } elsif (isAppleWebKit()) {
         return "$relativeScriptsPath/run-safari";
@@ -959,7 +980,9 @@ sub launcherPath()
 
 sub launcherName()
 {
-    if (isGtk()) {
+    if (isDFB()) {
+        return "WebKitDFB";
+    } elsif (isGtk()) {
         return "GtkLauncher";
     } elsif (isQt()) {
         return "QtTestBrowser";
@@ -991,7 +1014,7 @@ sub checkRequiredSystemConfig
             print "http://developer.apple.com/tools/xcode\n";
             print "*************************************************************\n";
         }
-    } elsif (isGtk() or isQt() or isWx() or isEfl()) {
+    } elsif (isDFB() or isGtk() or isQt() or isWx() or isEfl()) {
         my @cmds = qw(flex bison gperf);
         my @missing = ();
         foreach my $cmd (@cmds) {
@@ -1155,7 +1178,7 @@ sub copyInspectorFrontendFiles
         $inspectorResourcesDirPath = $productDir . "/WebCore.framework/Resources/inspector";
     } elsif (isAppleWinWebKit()) {
         $inspectorResourcesDirPath = $productDir . "/WebKit.resources/inspector";
-    } elsif (isQt() || isGtk()) {
+    } elsif (isQt() || isGtk() || isDFB()) {
         my $prefix = $ENV{"WebKitInstallationPrefix"};
         $inspectorResourcesDirPath = (defined($prefix) ? $prefix : "/usr/share") . "/webkit-1.0/webinspector";
     } elsif (isEfl()) {
@@ -1606,6 +1629,17 @@ sub buildQMakeQtProject($$@)
     my ($project, $clean, @buildArgs) = @_;
 
     return buildQMakeProject($clean, @buildArgs);
+}
+
+sub buildDFBProject($$@)
+{
+    my ($project, $clean, @buildArgs) = @_;
+
+    if ($project ne "WebKit") {
+        die "The DFB port builds JavaScriptCore, WebCore and WebKit in one shot! Only call it for 'WebKit'.\n";
+    }
+
+    return buildAutotoolsProject($clean, @buildArgs);
 }
 
 sub buildGtkProject($$@)

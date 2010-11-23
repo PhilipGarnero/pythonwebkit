@@ -45,6 +45,10 @@ typedef cairo_t* PlatformContext;
 class QPainter;
 typedef QImage PlatformImage;
 typedef QPainter* PlatformContext;
+#elif PLATFORM(DIRECTFB)
+#include <directfb.h>
+typedef IDirectFBSurface *PlatformImage;
+typedef IDirectFBSurface *PlatformContext;
 #endif
 
 namespace WebCore {

@@ -1,7 +1,17 @@
+if WITH_GTK
 noinst_PROGRAMS += \
 	Programs/DumpRenderTree \
 	Programs/GtkLauncher \
 	Programs/ImageDiff
+else
+bin_PROGRAMS += \
+	Programs/WebKitDFB
+
+webkitdfbdir = $(datadir)/WebKitDFB
+
+webkitdfb_DATA = \
+	WebKitTools/WebKitDFB/textbuttonbgnd.png
+endif
 
 # GtkLauncher
 Programs_GtkLauncher_CPPFLAGS = \
@@ -16,7 +26,6 @@ Programs_GtkLauncher_SOURCES = \
 	WebKitTools/GtkLauncher/main.c
 
 Programs_GtkLauncher_CFLAGS = \
-	-ansi \
 	-fno-strict-aliasing \
 	$(global_cflags) \
 	$(GTK_CFLAGS) \
@@ -31,6 +40,30 @@ Programs_GtkLauncher_LDADD = \
 Programs_GtkLauncher_LDFLAGS = \
 	-no-fast-install \
 	-no-install
+
+# WebKitDFB
+Programs_WebKitDFB_CPPFLAGS = \
+	-I$(srcdir)/WebKit/dfb \
+	-I$(srcdir)/WebCore/platform/network/soup/cache/ \
+	-I$(top_builddir)/WebKit/dfb \
+	-I$(top_builddir)/DerivedSources \
+	-DDATADIR=\"$(webkitdfbdir)\" \
+	$(global_cppflags) \
+	$(javascriptcore_cppflags)
+
+Programs_WebKitDFB_SOURCES = \
+	WebKitTools/WebKitDFB/main.c
+
+Programs_WebKitDFB_CFLAGS = \
+	-fno-strict-aliasing \
+	$(global_cflags) \
+	$(DIRECTFB_CFLAGS) \
+	$(LIBSOUP_CFLAGS)
+
+Programs_WebKitDFB_LDADD = \
+	libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la \
+	$(DIRECTFB_LIBS) \
+	$(GLIB_LIBS)
 
 # DumpRenderTree
 dumprendertree_cppflags := \

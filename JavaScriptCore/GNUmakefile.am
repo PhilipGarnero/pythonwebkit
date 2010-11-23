@@ -445,8 +445,6 @@ javascriptcore_sources += \
 	JavaScriptCore/wtf/gobject/GRefPtr.cpp \
 	JavaScriptCore/wtf/gobject/GRefPtr.h \
 	JavaScriptCore/wtf/gobject/GTypedefs.h \
-	JavaScriptCore/wtf/gtk/MainThreadGtk.cpp \
-	JavaScriptCore/wtf/gtk/ThreadingGtk.cpp \
 	JavaScriptCore/wtf/HashCountedSet.h \
 	JavaScriptCore/wtf/HashFunctions.h \
 	JavaScriptCore/wtf/HashIterators.h \
@@ -548,6 +546,16 @@ javascriptcore_sources += \
 	JavaScriptCore/yarr/RegexJIT.h \
 	JavaScriptCore/yarr/RegexParser.h \
 	JavaScriptCore/yarr/RegexPattern.h
+
+if WITH_GTK
+javascriptcore_sources += \
+	JavaScriptCore/wtf/gtk/MainThreadGtk.cpp \
+	JavaScriptCore/wtf/gtk/ThreadingGtk.cpp
+else
+javascriptcore_sources += \
+	JavaScriptCore/wtf/dfb/MainThreadDFB.cpp \
+	JavaScriptCore/wtf/dfb/ThreadingDFB.cpp
+endif
 
 if TARGET_WIN32
 javascriptcore_sources += \

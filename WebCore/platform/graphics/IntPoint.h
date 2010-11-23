@@ -68,6 +68,10 @@ class wxPoint;
 typedef struct _point AEEPoint;
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 #if PLATFORM(SKIA)
 struct SkPoint;
 struct SkIPoint;
@@ -146,6 +150,11 @@ public:
 #if PLATFORM(BREWMP)
     IntPoint(const AEEPoint&);
     operator AEEPoint() const;
+#endif
+
+#if PLATFORM(DIRECTFB)
+    IntPoint(const DFBPoint&);
+    operator DFBPoint() const;
 #endif
 
 #if PLATFORM(SKIA)

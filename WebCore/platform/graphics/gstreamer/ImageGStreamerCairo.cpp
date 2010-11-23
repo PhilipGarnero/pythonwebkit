@@ -24,6 +24,9 @@
 
 #include "GOwnPtr.h"
 
+#include <cairo.h>
+
+
 using namespace std;
 using namespace WebCore;
 

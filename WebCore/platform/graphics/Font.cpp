@@ -33,6 +33,10 @@
 #include <wtf/MathExtras.h>
 #include <wtf/UnusedParam.h>
 
+#include <direct/debug.h>
+
+D_DEBUG_DOMAIN( WebCore_Font, "WebCore/Font", "WebCore Font" );
+
 using namespace WTF;
 using namespace Unicode;
 
@@ -61,6 +65,7 @@ Font::Font()
     , m_isPlatformFont(false)
     , m_needsTranscoding(false)
 {
+    D_DEBUG_AT( WebCore_Font, "%s()\n", __FUNCTION__ );
 }
 
 Font::Font(const FontDescription& fd, short letterSpacing, short wordSpacing) 
@@ -70,6 +75,10 @@ Font::Font(const FontDescription& fd, short letterSpacing, short wordSpacing)
     , m_isPlatformFont(false)
     , m_needsTranscoding(fontTranscoder().needsTranscoding(fd))
 {
+    D_DEBUG_AT( WebCore_Font, "%s( %d )\n", __FUNCTION__, fd.computedPixelSize() );
+
+//    if (fd.computedPixelSize() == 1)
+//        abort();
 }
 
 Font::Font(const FontPlatformData& fontData, bool isPrinterFont, FontSmoothingMode fontSmoothingMode)
@@ -78,6 +87,8 @@ Font::Font(const FontPlatformData& fontData, bool isPrinterFont, FontSmoothingMo
     , m_wordSpacing(0)
     , m_isPlatformFont(true)
 {
+    D_DEBUG_AT( WebCore_Font, "%s()\n", __FUNCTION__ );
+
     m_fontDescription.setUsePrinterFont(isPrinterFont);
     m_fontDescription.setFontSmoothing(fontSmoothingMode);
     m_needsTranscoding = fontTranscoder().needsTranscoding(fontDescription());
@@ -92,6 +103,7 @@ Font::Font(const Font& other)
     , m_isPlatformFont(other.m_isPlatformFont)
     , m_needsTranscoding(fontTranscoder().needsTranscoding(other.m_fontDescription))
 {
+    D_DEBUG_AT( WebCore_Font, "%s()\n", __FUNCTION__ );
 }
 
 Font& Font::operator=(const Font& other)

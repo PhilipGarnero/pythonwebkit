@@ -64,6 +64,10 @@ typedef struct _Eina_Rectangle Eina_Rectangle;
 class wxRect;
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 #if PLATFORM(SKIA)
 struct SkRect;
 struct SkIRect;
@@ -146,6 +150,11 @@ public:
 #if PLATFORM(WX)
     IntRect(const wxRect&);
     operator wxRect() const;
+#endif
+
+#if PLATFORM(DIRECTFB)
+    IntRect(const DFBRectangle&);
+    operator DFBRectangle() const;
 #endif
 
 #if PLATFORM(WIN)

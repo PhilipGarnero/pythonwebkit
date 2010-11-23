@@ -234,6 +234,17 @@ esac
 
 AC_MSG_RESULT([$with_target])
 
+
+# determine the GDK/GTK+ usage
+AC_MSG_CHECKING([usage of GTK+])
+AC_ARG_WITH(gtkplus,
+            AC_HELP_STRING([--without-gtk],
+                           [Build without gtk (only DirectFB) [default=no]]),
+            [with_gtkplus="no"],[with_gtkplus="yes"])
+
+AC_MSG_RESULT([$with_gtkplus])
+
+
 AC_MSG_CHECKING([for Hildon UI extensions])
 AC_ARG_WITH(hildon,
             AC_HELP_STRING([--with-hildon],
@@ -265,6 +276,8 @@ SQLITE_REQUIRED_VERSION=3.0
 GSTREAMER_REQUIRED_VERSION=0.10
 GSTREAMER_PLUGINS_BASE_REQUIRED_VERSION=0.10.25
 ENCHANT_REQUIRED_VERSION=0.22
+DIRECTFB_REQUIRED_VERSION=1.2.0
+LITE_REQUIRED_VERSION=0.8.10
 
 # Available modules
 #
@@ -293,26 +306,33 @@ PKG_CHECK_MODULES(LIBXML, libxml-2.0 >= $LIBXML_REQUIRED_VERSION)
 AC_SUBST(LIBXML_CFLAGS)
 AC_SUBST(LIBXML_LIBS)
 
-PKG_CHECK_MODULES(PANGO, 
-                  [pango >= $PANGO_REQUIRED_VERSION
-                   pangoft2])
-AC_SUBST(PANGO_CFLAGS)
-AC_SUBST(PANGO_LIBS)
-
 PKG_CHECK_MODULES(ENCHANT, enchant >= $ENCHANT_REQUIRED_VERSION)
 AC_SUBST(ENCHANT_CFLAGS)
 AC_SUBST(ENCHANT_LIBS)
 
-PKG_CHECK_MODULES(GAIL, $GAIL_PC_NAME >= $GAIL_REQUIRED_VERSION)
-AC_SUBST(GAIL_CFLAGS)
-AC_SUBST(GAIL_LIBS)
-
 # check for target-specific dependencies
 if test "$with_target" = "directfb"; then
-   PKG_CHECK_MODULES(CAIRO, cairo-directfb >= $CAIRO_REQUIRED_VERSION)
-   PKG_CHECK_MODULES(GTK, gtk+-directfb-2.0 >= $GTK_REQUIRED_VERSION)
    AC_DEFINE([WTF_PLATFORM_DIRECTFB],[1],[Define if target is DirectFB])
+
+   if test "$with_gtkplus" = "yes"; then
+      PKG_CHECK_MODULES(CAIRO, cairo-directfb >= $CAIRO_REQUIRED_VERSION)
+      PKG_CHECK_MODULES(GTK, gtk+-directfb-2.0 >= $GTK_REQUIRED_VERSION)
+   else
+      PKG_CHECK_MODULES(DIRECTFB, directfb >= $DIRECTFB_REQUIRED_VERSION)
+      PKG_CHECK_MODULES(LITE, leck >= $LITE_REQUIRED_VERSION)
+      AC_DEFINE([WTF_USE_LITE],[1],[Define if using LiTE])
+   fi
 else
+   PKG_CHECK_MODULES(GAIL, $GAIL_PC_NAME >= $GAIL_REQUIRED_VERSION)
+   AC_SUBST(GAIL_CFLAGS)
+   AC_SUBST(GAIL_LIBS)
+
+   PKG_CHECK_MODULES(PANGO, 
+                     [pango >= $PANGO_REQUIRED_VERSION
+                      pangoft2])
+   AC_SUBST(PANGO_CFLAGS)
+   AC_SUBST(PANGO_LIBS)
+
    PKG_CHECK_MODULES(CAIRO, cairo >= $CAIRO_REQUIRED_VERSION)
    PKG_CHECK_MODULES(GTK, gtk+-$GTK_API_VERSION >= $GTK_REQUIRED_VERSION)
 
@@ -337,6 +357,10 @@ else
       AC_DEFINE([WTF_PLATFORM_X11],[1],[Define if target is X11])
    fi
 fi
+AC_SUBST(DIRECTFB_CFLAGS)
+AC_SUBST(DIRECTFB_LIBS)
+AC_SUBST(LITE_CFLAGS)
+AC_SUBST(LITE_LIBS)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 AC_SUBST(CAIRO_CFLAGS)
@@ -929,6 +953,7 @@ AM_CONDITIONAL([TARGET_X11], [test "$with_target" = "x11"])
 AM_CONDITIONAL([TARGET_WIN32], [test "$with_target" = "win32"])
 AM_CONDITIONAL([TARGET_QUARTZ], [test "$with_target" = "quartz"])
 AM_CONDITIONAL([TARGET_DIRECTFB], [test "$with_target" = "directfb"])
+AM_CONDITIONAL([WITH_GTK], [test "$with_gtkplus" = "yes"])
 
 # Unicode backend conditionals
 AM_CONDITIONAL([USE_ICU_UNICODE], [test "$with_unicode_backend" = "icu"])
@@ -998,6 +1023,12 @@ AM_CONDITIONAL([ENABLE_INTROSPECTION],[test "$enable_introspection" = "yes"])
 
 AC_CONFIG_FILES([
 GNUmakefile
+
+WebKit/dfb/webkit-1.0.pc:WebKit/dfb/webkit.pc.in
+WebKit/dfb/webkit/webkitversion.h
+WebKit/dfb/docs/GNUmakefile
+WebKit/dfb/docs/version.xml
+
 WebKit/gtk/webkit/webkitversion.h
 WebKit/gtk/docs/GNUmakefile
 WebKit/gtk/docs/version.xml
@@ -1064,6 +1095,7 @@ Features:
 GTK+ configuration:
  GTK+ version                                             : $with_gtk
  GDK target                                               : $with_target
+ Use GTK+                                                 : $with_gtk
  Hildon UI extensions                                     : $with_hildon
  Introspection support                                    : $enable_introspection
  Python bindings                                          : $enable_python_bindings

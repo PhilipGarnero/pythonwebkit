@@ -38,6 +38,8 @@
 #if PLATFORM(CG)
 typedef struct CGPattern* CGPatternRef;
 typedef CGPatternRef PlatformPatternPtr;
+#elif PLATFORM(DIRECTFB)
+typedef void* PlatformPatternPtr;
 #elif PLATFORM(CAIRO)
 #include <cairo.h>
 typedef cairo_pattern_t* PlatformPatternPtr;

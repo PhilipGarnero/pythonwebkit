@@ -57,6 +57,10 @@ class wxSize;
 typedef struct AEESize AEESize;
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 namespace WebCore {
 
 class IntSize {
@@ -137,6 +141,11 @@ public:
 #if PLATFORM(BREWMP)
     IntSize(const AEESize&);
     operator AEESize() const;
+#endif
+
+#if PLATFORM(DIRECTFB)
+    IntSize(const DFBDimension&);
+    operator DFBDimension() const;
 #endif
 
 private:

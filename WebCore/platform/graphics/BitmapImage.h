@@ -49,6 +49,10 @@ typedef struct HBITMAP__ *HBITMAP;
 class BBitmap;
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 namespace WebCore {
     struct FrameData;
 }
@@ -177,6 +181,10 @@ protected:
 
 #if PLATFORM(HAIKU)
     virtual BBitmap* getBBitmap() const;
+#endif
+
+#if PLATFORM(DIRECTFB)
+    virtual IDirectFBSurface* getDirectFBSurface() const;
 #endif
 
     size_t currentFrame() const { return m_currentFrame; }

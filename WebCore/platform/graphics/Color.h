@@ -50,6 +50,10 @@ typedef struct _GdkColor GdkColor;
 class wxColour;
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 #if PLATFORM(HAIKU)
 struct rgb_color;
 #endif
@@ -130,6 +134,11 @@ public:
 #if PLATFORM(WX)
     Color(const wxColour&);
     operator wxColour() const;
+#endif
+
+#if PLATFORM(DIRECTFB)
+    Color(const DFBColor&);
+    operator DFBColor() const;
 #endif
 
 #if PLATFORM(CG)

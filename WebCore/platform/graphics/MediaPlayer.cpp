@@ -177,7 +177,7 @@ static Vector<MediaPlayerFactory*>& installedMediaEngines()
 #else
         MediaPlayerPrivatePhonon::registerMediaEngine(addMediaEngine);
 #endif
-#elif !PLATFORM(GTK) && !PLATFORM(EFL)
+#elif !PLATFORM(GTK) && !PLATFORM(EFL) && !PLATFORM(DIRECTFB)
         // FIXME: currently all the MediaEngines are named
         // MediaPlayerPrivate. This code will need an update when bug
         // 36663 is adressed.

@@ -67,6 +67,10 @@ typedef unsigned long int uint32;
 #define AEEEvent uint16
 #endif
 
+#if PLATFORM(DIRECTFB)
+#include <directfb.h>
+#endif
+
 namespace WebCore {
     
     // These button numbers match the ones used in the DOM API, 0 through 2, except for NoButton which isn't specified.
@@ -165,6 +169,15 @@ namespace WebCore {
 
 #if PLATFORM(BREWMP)
         PlatformMouseEvent(AEEEvent, uint16 wParam, uint32 dwParam);
+#endif
+
+#if PLATFORM(DIRECTFB)
+        PlatformMouseEvent(const DFBEvent*);
+        PlatformMouseEvent(int x, int y,
+                           DFBInputDeviceButtonIdentifier button,
+                           bool down);
+        PlatformMouseEvent(int x, int y,
+                           DFBInputDeviceButtonMask buttons);
 #endif
 
     protected:

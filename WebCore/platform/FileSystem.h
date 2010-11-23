@@ -30,7 +30,7 @@
 #ifndef FileSystem_h
 #define FileSystem_h
 
-#if PLATFORM(GTK)
+#if PLATFORM(GTK) || PLATFORM(DIRECTFB)
 #include <gmodule.h>
 #endif
 #if PLATFORM(QT)
@@ -77,7 +77,7 @@ typedef QLibrary* PlatformModule;
 #else
 typedef void* PlatformModule;
 #endif
-#elif PLATFORM(GTK)
+#elif PLATFORM(GTK) || PLATFORM(DIRECTFB)
 typedef GModule* PlatformModule;
 #elif PLATFORM(CF)
 typedef CFBundleRef PlatformModule;
@@ -186,7 +186,7 @@ String roamingUserSpecificStorageDirectory();
 bool safeCreateFile(const String&, CFDataRef);
 #endif
 
-#if PLATFORM(GTK)
+#if PLATFORM(DIRECTFB) || PLATFORM(GTK)
 String filenameToString(const char*);
 String filenameForDisplay(const String&);
 #endif
