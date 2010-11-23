@@ -2,7 +2,9 @@ export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/opt/webkit/lib/pkgconfig; \
 export LD_LIBRARY_PATH=/opt/webkit/lib; \
 CXXFLAGS="-g -DDIRECT_ENABLE_DEBUG \
               -DINSTRUMENT_LAYOUT_SCHEDULING" \
-../autogen.sh --with-target=directfb --without-gtkplus \
+../autogen.sh \
+    --with-target=directfb \
+    --without-gtkplus \
 	--enable-optimizations	\
 	--disable-channel-messaging	\
 	--enable-javascript-debugger	\
@@ -18,4 +20,6 @@ CXXFLAGS="-g -DDIRECT_ENABLE_DEBUG \
 	--enable-xslt	\
 	--enable-workers	\
 	--disable-web-sockets	\
+	--enable-python-bindings \
+	--disable-gobject-bindings \
 	--enable-jit
