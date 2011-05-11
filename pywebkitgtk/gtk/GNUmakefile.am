@@ -33,10 +33,19 @@ pywebkitgtk_la_LIBADD += \
     $(LIBSOUP_LIBS)
 
 pywebkitgtk_la_CFLAGS += \
+    -fno-strict-aliasing \
+    $(global_cflags) \
+    $(GTK_CFLAGS) \
     $(LIBSOUP_CFLAGS)
 
 pywebkitgtk_la_CPPFLAGS += \
-    -I$(srcdir)/WebCore/platform/network/soup/cache/
+    -I$(srcdir)/WebCore/platform/network/soup/cache/ \
+    -I$(srcdir)/WebKit/gtk \
+    -I$(top_builddir)/WebKit/gtk \
+    -I$(top_builddir)/DerivedSources \
+    $(global_cppflags) \
+    $(javascriptcore_cppflags)
+
 
 
 # Build components
