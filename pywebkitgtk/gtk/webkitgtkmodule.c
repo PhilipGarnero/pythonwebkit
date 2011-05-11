@@ -256,7 +256,7 @@ void webkit_init_pywebkit(PyObject *m, struct pyjoinapi *api_fns);
 struct pyjoinapi pywebkit_api_fns;
 
 PyMODINIT_FUNC
-initwebkitgtk(void)
+initpywebkitgtk(void)
 {
 #ifdef WTF_USE_SOUP
     g_type_init();

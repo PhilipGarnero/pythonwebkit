@@ -49,6 +49,7 @@ noinst_PROGRAMS :=
 noinst_HEADERS :=
 noinst_LTLIBRARIES :=
 lib_LTLIBRARIES :=
+pyexec_LTLIBRARIES :=
 IDL_BINDINGS :=
 TEST_PROGS :=
 POFILES :=
