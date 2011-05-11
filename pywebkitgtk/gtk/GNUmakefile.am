@@ -11,15 +11,29 @@ pycommon_ldflags = -module -avoid-version
 # webkitgtk library
 pyexec_LTLIBRARIES += pywebkitgtk.la
 
-pywebkitgtk_la_CPPFLAGS = $(PYTHON_INCLUDES) $(WEBKIT_CPPFLAGS) \
-                        $(global_cppflags)
+pywebkitgtk_la_CPPFLAGS = \
+    $(PYTHON_INCLUDES) \
+    $(PYGTK_CPPFLAGS) \
+    $(WEBKIT_CPPFLAGS) \
+    $(global_cppflags) \
+    -I$(srcdir)/WebCore/platform/network/soup/cache/ \
+    -I$(srcdir)/WebKit/gtk \
+    -I$(top_builddir)/WebKit/gtk \
+    -I$(top_builddir)/DerivedSources \
+    $(javascriptcore_cppflags)
 
-pywebkitgtk_la_CFLAGS = $(global_cflags) $(DIRECTFB_CFLAGS) \
+pywebkitgtk_la_CFLAGS = $(global_cflags) \
                 -I$(srcdir)/WebCore/bindings/python \
                 -I$(srcdir)/WebKit/gtk \
-                -I$(srcdir)/WebKit/gtk/webkit 
+                -I$(srcdir)/WebKit/gtk/webkit \
+                -fno-strict-aliasing \
+                $(global_cflags) \
+                $(GTK_CFLAGS) \
+                $(PYGTK_CFLAGS) \
+                $(LIBSOUP_CFLAGS)
 
-pywebkitgtk_la_LDFLAGS = $(pycommon_ldflags) -export-symbols-regex initpywebkitgtk 
+pywebkitgtk_la_LDFLAGS = $(pycommon_ldflags) \
+                -export-symbols-regex initpywebkitgtk 
 
 pywebkitgtk_la_SOURCES = $(pywebkitgtk_sources)
 nodist_pywebkitgtk_la_SOURCES = $(nodist_pywebkitgtk_sources)
@@ -27,25 +41,9 @@ nodist_pywebkitgtk_la_SOURCES = $(nodist_pywebkitgtk_sources)
 pywebkitgtk_la_LIBADD = \
     libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la\
     $(GTK_LIBS) \
-    $(GLIB_LIBS)
-
-pywebkitgtk_la_LIBADD += \
-    $(LIBSOUP_LIBS)
-
-pywebkitgtk_la_CFLAGS += \
-    -fno-strict-aliasing \
-    $(global_cflags) \
-    $(GTK_CFLAGS) \
-    $(LIBSOUP_CFLAGS)
-
-pywebkitgtk_la_CPPFLAGS += \
-    -I$(srcdir)/WebCore/platform/network/soup/cache/ \
-    -I$(srcdir)/WebKit/gtk \
-    -I$(top_builddir)/WebKit/gtk \
-    -I$(top_builddir)/DerivedSources \
-    $(global_cppflags) \
-    $(javascriptcore_cppflags)
-
+    $(GLIB_LIBS) \
+    $(LIBSOUP_LIBS) \
+    $(PYGTK_LIBS)
 
 
 # Build components

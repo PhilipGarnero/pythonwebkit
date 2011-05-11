@@ -374,6 +374,15 @@ AC_ARG_ENABLE(python_bindings,
               [],[enable_python_bindings="yes"])
 AC_MSG_RESULT([$enable_python_bindings])
 
+# check whether to add pygtk - for gtk2 with python bindings
+if test "$with_target" = "x11" && test "$enable_python_bindings" = "yes"; then
+    PKG_CHECK_MODULES(PYGTK,
+                      [pygtk-2.0])
+fi
+AC_SUBST(PYGTK_CFLAGS)
+AC_SUBST(PYGTK_LIBS)
+AC_SUBST(PYGTK_CPPFLAGS)
+
 # check whether to build gobject bindings
 AC_MSG_CHECKING([whether to enable gobject bindings])
 AC_ARG_ENABLE(gobject_bindings,
