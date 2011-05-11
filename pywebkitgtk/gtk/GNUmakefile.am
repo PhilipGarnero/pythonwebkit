@@ -1,0 +1,58 @@
+# webkitgtk basic python module.  a DFB WebView can be created; access to DOM
+# obtained; LiTE event-loop called.  that's it.
+
+webkitgtk_defs :=
+webkitgtk_sources :=
+webkitgtk_py_sources :=
+nodist_webkitgtk_sources :=
+
+pycommon_ldflags = -module -avoid-version
+
+# webkitgtk library
+pyexec_LTLIBRARIES += webkitgtk.la
+
+webkitgtk_la_CPPFLAGS = $(PYTHON_INCLUDES) $(WEBKIT_CPPFLAGS) \
+                        $(global_cppflags)
+
+webkitgtk_la_CFLAGS = $(global_cflags) $(DIRECTFB_CFLAGS) \
+                -I$(srcdir)/WebCore/bindings/python \
+                -I$(srcdir)/WebKit/gtk \
+                -I$(srcdir)/WebKit/gtk/webkit 
+
+webkitgtk_la_LDFLAGS = $(pycommon_ldflags) -export-symbols-regex initwebkitgtk 
+
+webkitgtk_la_SOURCES = $(webkitgtk_sources)
+nodist_webkitgtk_la_SOURCES = $(nodist_webkitgtk_sources)
+
+webkitgtk_la_LIBADD = \
+    libwebkitgtk-@WEBKITGTK_API_MAJOR_VERSION@.@WEBKITGTK_API_MINOR_VERSION@.la\
+    $(DIRECTFB_LIBS) \
+    $(GLIB_LIBS)
+
+if USE_CURL
+webkitgtk_la_LIBADD += \
+    $(CURL_LIBS)
+
+webkitgtk_la_CFLAGS += \
+    $(CURL_CFLAGS)
+
+webkitgtk_la_CPPFLAGS += \
+    -I$(srcdir)/WebCore/platform/network/curl
+endif
+
+if USE_SOUP
+webkitgtk_la_LIBADD += \
+    $(LIBSOUP_LIBS)
+
+webkitgtk_la_CFLAGS += \
+    $(LIBSOUP_CFLAGS)
+
+webkitgtk_la_CPPFLAGS += \
+    -I$(srcdir)/WebCore/platform/network/soup/cache/
+endif
+
+
+# Build components
+webkitgtk_sources += \
+	pywebkitgtk/gtk/webkitgtkmodule.c
+
