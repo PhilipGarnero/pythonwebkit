@@ -64,8 +64,7 @@ WebView_init(WebViewObject *self, PyObject *args, PyObject *kwds)
 {
     int width = 800;
     int height = 600;
-    gchar *url = NULL, fileURL;
-    GtkWidget *vbox;
+    gchar *url = NULL, *fileURL;
     GtkWidget *window;
     GtkWidget* scrolled_window;
     static char *kwlist[] = {"width", "height", "url", NULL};
@@ -74,22 +73,26 @@ WebView_init(WebViewObject *self, PyObject *args, PyObject *kwds)
                      &width, &height, &url))
         return -1;
 
-    self->web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size (GTK_WINDOW (window), 800, 600);
+    gtk_widget_set_name (window, "pywebkitgtk");
+    g_signal_connect (window, "destroy", G_CALLBACK (destroy_cb), NULL);
+
+    self->webview = WEBKIT_WEB_VIEW (webkit_web_view_new ());
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
                                     GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add (GTK_CONTAINER (scrolled_window),
-                       GTK_WIDGET (self->web_view));
+                       GTK_WIDGET (self->webview));
     gtk_container_add (GTK_CONTAINER (window),
                        scrolled_window);
-    g_signal_connect (window, "destroy", G_CALLBACK (destroy_cb), NULL);
 
     fileURL = filenameToURL(url);
-    webkit_web_view_load_uri(web_view, fileURL ? fileURL : uri);
+    webkit_web_view_load_uri(self->webview, fileURL ? fileURL : url);
     g_free(fileURL);
 
-    gtk_widget_grab_focus (GTK_WIDGET (web_view));
-    gtk_widget_show_all (main_window);
+    gtk_widget_grab_focus (GTK_WIDGET (self->webview));
+    gtk_widget_show_all (window);
 
     return 0;
 }
@@ -97,24 +100,27 @@ WebView_init(WebViewObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 _webview_get_dom_document(WebViewObject *self, PyObject* unused)
 {
+    WebKitWebFrame *frame = webkit_web_view_get_main_frame(self->webview);
     gpointer* ptr;
-    ptr = webkit_web_frame_get_dom_document(self->webview);
+    ptr = webkit_web_frame_get_dom_document(frame);
     return pywebkit_api_fns.doc(ptr);
 }
 
 static PyObject *
 _webview_get_xml_http_request(WebViewObject *self, PyObject* unused)
 {
+    WebKitWebFrame *frame = webkit_web_view_get_main_frame(self->webview);
     gpointer* ptr;
-    ptr = webkit_web_frame_get_xml_http_request(self->webview);
+    ptr = webkit_web_frame_get_xml_http_request(frame);
     return pywebkit_api_fns.xhr(ptr);
 }
 
 static PyObject *
 _webview_get_dom_window(WebViewObject *self, PyObject* unused)
 {
+    WebKitWebFrame *frame = webkit_web_view_get_main_frame(self->webview);
     gpointer* ptr;
-    ptr = webkit_web_frame_get_dom_window(self->webview);
+    ptr = webkit_web_frame_get_dom_window(frame);
     return pywebkit_api_fns.win(ptr);
 }
 
@@ -199,7 +205,7 @@ static char WebView_doc[] =
 static PyTypeObject WebViewObjectType = {
     PyObject_HEAD_INIT(NULL)
     0,              /* ob_size           */
-    "webkitgtk.WebView",            /* tp_name           */
+    "pywebkitgtk.WebView",            /* tp_name           */
     sizeof(WebViewObject),     /* tp_basicsize      */
     0,              /* tp_itemsize       */
     0,              /* tp_dealloc        */
@@ -267,7 +273,7 @@ initpywebkitgtk(void)
     if (PyType_Ready(&WebViewObjectType) < 0)
         return;
 
-    m = Py_InitModule3("webkitgtk", webkitgtk_methods, webkitgtk_doc);
+    m = Py_InitModule3("pywebkitgtk", webkitgtk_methods, webkitgtk_doc);
     if (m == NULL)
         return;
 
