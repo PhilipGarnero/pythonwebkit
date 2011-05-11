@@ -29,12 +29,7 @@
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
-#ifdef WTF_USE_SOUP
-#include <libsoup/soup.h>
-#endif
-
-#include "webkitgtk.h"
-#include "webview.h"
+#include <webkit/webkit.h>
 
 #include "pywebkit.h"
 
@@ -258,11 +253,6 @@ struct pyjoinapi pywebkit_api_fns;
 PyMODINIT_FUNC
 initpywebkitgtk(void)
 {
-#ifdef WTF_USE_SOUP
-    g_type_init();
-    g_thread_init(NULL);
-#endif
-
     PyObject* m;
     PyObject* d;
 
