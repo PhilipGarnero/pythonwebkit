@@ -1,12 +1,13 @@
+import gtk
 import sys
-import webkitdfb
+import webkitgtk
 
 class WebView:
     def __init__(self, url):
-        self.v = webkitdfb.WebView(1024,768,
+        self.v = webkitgtk.WebView(1024,768,
                         url=url)
         self.is_loaded = False
-        self.v.SetDocumentLoadedCallback(self._doc_loaded)
+        #self.v.SetDocumentLoadedCallback(self._doc_loaded)
 
     def _doc_loaded(self):
         print "loaded callback called"
@@ -19,13 +20,12 @@ if __name__ == '__main__':
     wv = WebView(url)
 
     while not wv.is_loaded:
-        webkitdfb.loop()
+        webkitgtk.loop()
 
     d = wv.v.GetDomDocument()
     b = d.body
     txt = d.createTextNode("hello")
     b.appendChild(txt)
 
-    while 1:
-        webkitdfb.loop()
+    gtk.main_loop()
 

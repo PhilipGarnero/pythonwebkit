@@ -669,6 +669,9 @@ include WebCore/bindings/gobject/GNUmakefile.am
 endif
 if ENABLE_PYTHON_BINDINGS
 include WebCore/bindings/python/GNUmakefile.am
+if WITH_GTK
+include pywebkitgtk/gtk/GNUmakefile.am
+endif
 endif
 include WebKitTools/GNUmakefile.am
 
