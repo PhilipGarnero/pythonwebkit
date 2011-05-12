@@ -47,36 +47,25 @@ destroy_cb (GtkWidget* widget, GtkWidget* window)
   gtk_main_quit ();
 }
 
-static gchar* filenameToURL(const char* filename)
-{
-    if (!g_file_test(filename, G_FILE_TEST_EXISTS))
-        return 0;
-
-    GFile *gfile = g_file_new_for_path(filename);
-    gchar *fileURL = g_file_get_uri(gfile);
-    g_object_unref(gfile);
-
-    return fileURL;
-}
-
 static int
 WebView_init(WebViewObject *self, PyObject *args, PyObject *kwds)
 {
     int width = 800;
     int height = 600;
-    gchar *url = NULL, *fileURL;
-    GtkWidget *window;
+    gchar *url = NULL;
     GtkWidget* scrolled_window;
+    GtkWidget *main_window;
+
     static char *kwlist[] = {"width", "height", "url", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iis", kwlist,
                      &width, &height, &url))
         return -1;
 
-    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size (GTK_WINDOW (window), width, height);
-    gtk_widget_set_name (window, "pywebkitgtk");
-    g_signal_connect (window, "destroy", G_CALLBACK (destroy_cb), NULL);
+    main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size (GTK_WINDOW (main_window), width, height);
+    gtk_widget_set_name (main_window, "pywebkitgtk");
+    g_signal_connect (main_window, "destroy", G_CALLBACK (destroy_cb), NULL);
 
     self->webview = WEBKIT_WEB_VIEW (webkit_web_view_new ());
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
@@ -84,15 +73,13 @@ WebView_init(WebViewObject *self, PyObject *args, PyObject *kwds)
                                     GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add (GTK_CONTAINER (scrolled_window),
                        GTK_WIDGET (self->webview));
-    gtk_container_add (GTK_CONTAINER (window),
+    gtk_container_add (GTK_CONTAINER (main_window),
                        scrolled_window);
 
-    fileURL = filenameToURL(url);
-    webkit_web_view_load_uri(self->webview, fileURL ? fileURL : url);
-    g_free(fileURL);
+    webkit_web_view_load_uri(self->webview, url);
 
     gtk_widget_grab_focus (GTK_WIDGET (self->webview));
-    gtk_widget_show_all (window);
+    gtk_widget_show_all (main_window);
 
     return 0;
 }
@@ -258,6 +245,11 @@ initpywebkitgtk(void)
 {
     PyObject* m;
     PyObject* d;
+
+    gtk_init(NULL, NULL);
+    g_type_init();
+    if (!g_thread_supported ())
+        g_thread_init(NULL);
 
     if (!pygobject_init(-1, -1, -1)) {
         PyErr_Print();
