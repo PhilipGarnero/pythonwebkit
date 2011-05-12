@@ -74,7 +74,7 @@ WebView_init(WebViewObject *self, PyObject *args, PyObject *kwds)
         return -1;
 
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size (GTK_WINDOW (window), 800, 600);
+    gtk_window_set_default_size (GTK_WINDOW (window), width, height);
     gtk_widget_set_name (window, "pywebkitgtk");
     g_signal_connect (window, "destroy", G_CALLBACK (destroy_cb), NULL);
 
@@ -124,8 +124,8 @@ _webview_get_dom_window(WebViewObject *self, PyObject* unused)
     return pywebkit_api_fns.win(ptr);
 }
 
-#if 0
-static void _webview_docloaded_cb(LiteWebView *view, void *data)
+static void _webview_docloaded_cb(WebKitWebFrame *view, GParamSpec* pspec,
+                                  gpointer data)
 {
     PyObject* arglist = Py_BuildValue((char*)"()");
     PyObject *callback = (PyObject*)data;
@@ -159,12 +159,11 @@ _webview_on_webview_doc_loaded(WebViewObject *self, PyObject* args)
     if (cb_fn)
         Py_INCREF(cb_fn);
 
-    lite_on_webview_doc_loaded(self->webview, _webview_docloaded_cb,
-                               (void*)cb_fn);
+    g_signal_connect (self->webview, "load-finished", G_CALLBACK (_webview_docloaded_cb), (void*)cb_fn);
+
     Py_INCREF(Py_None);
     return Py_None;
 }
-#endif
 
 static PyMethodDef WebView_methods[] = {
     {"GetDomDocument", (PyCFunction)_webview_get_dom_document,
@@ -176,12 +175,10 @@ static PyMethodDef WebView_methods[] = {
     {"GetXMLHttpRequest", (PyCFunction)_webview_get_xml_http_request,
                 METH_NOARGS,
      PyDoc_STR("Gets DOM XMLHttpRequest object")},
-/*
     {"SetDocumentLoadedCallback",
      (PyCFunction)_webview_on_webview_doc_loaded,
      METH_VARARGS,
      PyDoc_STR("Sets Document callback function")},
-*/
     {NULL,  NULL, NULL, NULL},
 };
 
