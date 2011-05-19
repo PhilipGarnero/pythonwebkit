@@ -378,6 +378,7 @@ AC_MSG_RESULT([$enable_python_bindings])
 if test "$with_target" = "x11" && test "$enable_python_bindings" = "yes"; then
     PKG_CHECK_MODULES(PYGTK,
                       [pygtk-2.0])
+  WEBKITGTK_API_MAJOR_VERSION=python-$WEBKITGTK_API_MAJOR_VERSION
 fi
 AC_SUBST(PYGTK_CFLAGS)
 AC_SUBST(PYGTK_LIBS)
