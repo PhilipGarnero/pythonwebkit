@@ -6,10 +6,10 @@
 # the python-webkit initialisation function (as higher-order callbacks)
 # isn't going to cut it.
 libwebkitgtk_@WEBKITGTK_API_MAJOR_VERSION@_@WEBKITGTK_API_MINOR_VERSION@_la_LDFLAGS += \
-	$(shell python-config --libs)
+	$(shell $(PYTHON_CONFIG) --libs)
 
 webcore_cppflags += \
-	$(shell python-config --includes) \
+	$(shell $(PYTHON_CONFIG) --includes) \
 	-I$(srcdir)/WebCore/bindings/python \
 	-I$(top_builddir)/DerivedSources/python
 

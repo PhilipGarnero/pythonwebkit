@@ -374,6 +374,18 @@ AC_ARG_ENABLE(python_bindings,
               [],[enable_python_bindings="yes"])
 AC_MSG_RESULT([$enable_python_bindings])
 
+# find python-config
+AC_MSG_CHECKING([finding python-config])
+AC_ARG_WITH(python-config,
+            AC_HELP_STRING([--with-python-config=/usr/bin/python2.N-config],
+                           [Select python config [default=python-config]]),
+            [],[with_python_config="python-config"])
+
+AC_MSG_RESULT([$with_python_config])
+
+PYTHON_CONFIG="$with_python_config"
+AC_SUBST(PYTHON_CONFIG)
+
 # check whether to add pygtk - for gtk2 with python bindings
 if test "$with_target" = "x11" && test "$enable_python_bindings" = "yes"; then
     PKG_CHECK_MODULES(PYGTK,
