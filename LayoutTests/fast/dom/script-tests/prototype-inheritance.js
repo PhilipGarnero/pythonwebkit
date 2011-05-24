@@ -14,18 +14,20 @@ var skippedProperties = [
     "appleScriptController", "plainText", "accessibilityController",
     // Ignore these properties because they do not exist in all implementations. They will be tested separately
     "webkitNotifications",
-    "webkitPerformance",
-    "WebGLRenderingContext",
+    "webkitAudioPannerNode",
+    "performance",
+    "WebGLRenderingContext", "WebGLActiveInfo", "WebGLBuffer", "WebGLFramebuffer", "WebGLProgram", "WebGLRenderbuffer", "WebGLShader", "WebGLTexture", "WebGLUniformLocation",
     "ArrayBuffer",
-    "Int8Array", "Uint8Array", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array",
-    "FileError", "FileReader", "requestFileSystem",
+    "DataView", "Int8Array", "Uint8Array", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array",
+    "FileError", "FileReader", "WebKitBlobBuilder", "requestFileSystem",
     "indexedDB", "IDBKeyRange", "IDBCursor", "IDBDatabase", "IDBDatabaseError", "IDBDatabaseException", "IDBErrorEvent", "IDBEvent", "IDBFactory", "IDBIndex", "IDBObjectStore", "IDBRequest", "IDBSuccessEvent", "IDBTransaction",
     "showModalDialog",
-    "createObjectURL", "revokeObjectURL",
+    "webkitURL",
     "DeviceOrientationEvent",
     "DeviceMotionEvent",
     "TEMPORARY", "PERSISTENT",
-    "Flags",
+    "WebKitFlags",
+    "v8Locale",
     // Ignore this property because it only appears in debug builds.
     "jscprint"
 ];
@@ -65,6 +67,9 @@ for (var x = 0; x < windowProperites.length; x++) {
         continue;
     // Skip enumerable properties which default to null (like on* listeners)
     if (value === null)
+        continue;
+    // Ignore primitive types like numbers because their prototype rules are different.
+    if (typeof value !== "object" && typeof value !== "function")
         continue;
     shouldBeTrue("inner." + property + ".isInner");
     shouldBeTrue("inner." + property + ".constructor.isInner");

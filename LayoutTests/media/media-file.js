@@ -44,6 +44,14 @@ function mimeTypeForExtension(extension) {
     return "";
 }
 
+function mimeTypeForFile(filename) {
+ var lastPeriodIndex = filename.lastIndexOf(".");
+  if (lastPeriodIndex > 0)
+    return mimeTypeForExtension(filename.substring(lastPeriodIndex + 1));
+
+  return "";
+}
+
 function setSrcByTagName(tagName, src) {
     var elements = document.getElementsByTagName(tagName);
     if (elements) {
@@ -56,4 +64,11 @@ function setSrcById(id, src) {
     var element = document.getElementById(id);
     if (element)
         element.src = src;
+}
+
+function stripExtension(filename) {
+  var lastPeriodIndex = filename.lastIndexOf(".");
+  if (lastPeriodIndex > 0)
+    return filename.substring(0, lastPeriodIndex);
+  return filename;
 }

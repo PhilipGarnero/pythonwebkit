@@ -11,9 +11,6 @@
 </style>
 </head>
 <body>
-<p id="description"></p>
-<div id="console"></div>
-<iframe id="xmlframe" onload="frameLoaded()" style="height:0px" src="data:application/xhtml+xml,<?xml version='1.0' encoding='UTF-8'?><body/>"></iframe>
 <script>
 
 if (window.layoutTestController)
@@ -210,7 +207,7 @@ function runTest()
     testTag("ins", "HTMLModElement");
     testTag("isindex", "HTMLIsIndexElement");
     testTag("kbd", "HTMLElement");
-    testTag("keygen", "HTMLSelectElement");
+    testTag("keygen", "HTMLKeygenElement");
     testTag("label", "HTMLLabelElement");
     testTag("layer", "HTMLElement");
     testTag("legend", "HTMLLegendElement");
@@ -299,5 +296,8 @@ function frameLoaded()
 }
 
 </script>
+<p id="description"></p>
+<div id="console"></div>
+<iframe id="xmlframe" onload="frameLoaded()" style="height:0px" src="data:application/xhtml+xml,<?xml version='1.0' encoding='UTF-8'?><body/>"></iframe>
 </body>
 </html>

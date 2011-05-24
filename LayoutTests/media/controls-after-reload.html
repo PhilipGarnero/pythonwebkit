@@ -8,17 +8,31 @@
     if (window.layoutTestController)
         layoutTestController.waitUntilDone();
 
+    function finish()
+    {
+        video.pause();
+        video.currentTime = 0;
+        if (window.layoutTestController)
+            layoutTestController.notifyDone();
+    }
+
+    function playing()
+    {
+        // Ensure that the frame is always the same in pixel result.
+        video.addEventListener("seeked", finish);
+        video.pause();
+        video.currentTime = 0;
+    }
+
     function canplaythrough()
     {
-        loadedCount++;
-        if (loadedCount == 2) {
-            if (window.layoutTestController)
-                layoutTestController.notifyDone();
-            return;
+        if (!loadedCount) {
+            video.src = findMediaFile("video", "content/test");
+            video.load();
+            video.play();
+            video.addEventListener("playing", playing);
         }
-        
-        video.src = findMediaFile("video", "content/test");
-        video.load();
+        loadedCount++;
     }
 
     function test()

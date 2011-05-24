@@ -1,6 +1,6 @@
 <html>
 <head>
-<script src="../http/tests/inspector/inspector-test2.js"></script>
+<script src="../http/tests/inspector/inspector-test.js"></script>
 <script>
 
 function test()
@@ -8,21 +8,18 @@ function test()
     var messages = [
         'some wrong string',
         '{}',
-        '{"command":1}',
-        '{"command":"test"}',
-        '{"seq":"not a number","command":"test"}',
-        '{"seq":1,"command":"test"}',
-        '{"seq":2,"command":"resourceContent"}',
-        '{"seq":3,"command":"resourceContent","arguments":[]}',
-        '{"seq":4,"command":"resourceContent","arguments":{}}',
-        '{"seq":5,"command":"resourceContent","arguments":{"identifier":"not a number"}}',
-        '{"seq":6,"command":"removeBreakpoint","arguments":{}}',
-        '{"seq":7,"command":"removeBreakpoint","arguments":{"sourceID":"someSourceId","lineNumber":0}}',
-
+        '{"id":"not a number"}',
+        '{"id":1,"method":1}',
+        '{"id":2,"method":"resourceContent"}',
+        '{"id":3,"method":"DOM.test"}',
+        '{"id":4,"method":"Page.getResourceContent"}',
+        '{"id":5,"method":"Page.getResourceContent","params":[]}',
+        '{"id":6,"method":"Page.getResourceContent","params":{}}',
+        '{"id":7,"method":"Page.getResourceContent","params":{"frameId":"not a number"}}',
     ];
     var numberOfReports = 0;
 
-    WebInspector.reportProtocolError = function(message)
+    InspectorBackend.reportProtocolError = function(message)
     {
         if (numberOfReports < messages.length)
             InspectorTest.addObject(message);
@@ -36,7 +33,7 @@ function test()
             InspectorFrontendHost.sendMessageToBackend(messages[i]);
     }
 
-    InspectorBackend.disableDebugger(true, fire);
+    DebuggerAgent.disable(fire);
 }
 
 </script>

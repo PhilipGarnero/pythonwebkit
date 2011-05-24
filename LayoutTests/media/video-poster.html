@@ -43,20 +43,16 @@
                 ]
             };
 
-            function openNextPoster()
-            {
-                consoleWrite("");
-                if (posterInfo.current >= posterInfo.posters.length)
-                {
-                    endTest();
-                    return;
-                }
-
-                var url = posterInfo.posters[posterInfo.current].url;
-                var desc = "<b>Setting poster to <em>\""+ url + "\"</em></b>";
-                consoleWrite(desc);
-                video.poster = url;
-                setTimeout(testPoster, 100);
+            // Wait for |video| to have the |expectedWidth| and |expectedHeight|
+            // and invoke |callback()|.
+            function listenForWidthAndHeight(expectedWidth, expectedHeight, callback) {
+              if (video.clientWidth == expectedWidth && video.clientHeight == expectedHeight) {
+                callback();
+              } else {
+                // This uses a 20ms sleep loop to accomplish the wait, since the
+                // standard specifies no events that fire on poster load or error.
+                window.setTimeout(listenForWidthAndHeight, 20, expectedWidth, expectedHeight, callback);
+              }
             }
 
             function testPoster()
@@ -81,22 +77,38 @@
                     video.removeAttribute('height');
 
                 posterInfo.current++;
-                openNextPoster();
+                consoleWrite("");
+                if (posterInfo.current >= posterInfo.posters.length) {
+                  endTest();
+                  return;
+                }
+                var currentPoster = posterInfo.posters[posterInfo.current];
+                listenForWidthAndHeight(currentPoster.width, currentPoster.height, testPoster);
+                var url = currentPoster.url;
+                var desc = "<b>Setting poster to <em>\""+ url + "\"</em></b>";
+                consoleWrite(desc);
+                video.poster = url;
             }
 
-            function test()
+            function unexpectedEvent(evt)
             {
-                findMediaElement();
+                consoleWrite("");
+                failTest("Unexpected '" + evt.type + "' event fired!");
+            }
 
+            function setup()
+            {
+                document.addEventListener("error", unexpectedEvent);
+                document.addEventListener("load", unexpectedEvent);
+                findMediaElement();
                 testPoster();
             }
         </script>
     </head>
 
-    <body onload="setTimeout(test, 100)">
-
+    <body>
         <video controls width=320 height=240></video>
         <p>Test &lt;video&gt; element with and without a poster.</p>
-
+        <script>setup();</script>
     </body>
 </html>

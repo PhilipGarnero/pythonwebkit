@@ -1,6 +1,6 @@
 
 var video = null;
-var mediaElement = null;
+var mediaElement = document; // If not set, an event from any element will trigger a waitForEvent() callback.
 var console = null;
 var printFullTestDetails = true; // This is optionaly switched of by test whose tested values can differ. (see disableFullTestDetailsPrinting())
 var Failed = false;
@@ -16,6 +16,11 @@ if (window.layoutTestController) {
 function disableFullTestDetailsPrinting()
 {
     printFullTestDetails = false;
+}
+
+function enableFullTestDetailsPrinting()
+{
+    printFullTestDetails = true;
 }
 
 function logConsole()
@@ -45,7 +50,7 @@ function test(testFuncString, endit)
 {
     logResult(eval(testFuncString), "TEST(" + testFuncString + ")");
     if (endit)
-        endTest();  
+        endTest();
 }
 
 function testExpected(testFuncString, expected, comparison)
@@ -56,7 +61,7 @@ function testExpected(testFuncString, expected, comparison)
         consoleWrite(ex);
         return;
     }
-    
+
     if (comparison === undefined)
         comparison = '==';
 
@@ -70,7 +75,7 @@ function testExpected(testFuncString, expected, comparison)
         case '!=':  success = observed != expected; break;
         case '==': success = observed == expected; break;
     }
-    
+
     reportExpected(success, testFuncString, comparison, expected, observed)
 }
 
@@ -130,12 +135,12 @@ function waitForEvent(eventName, func, endit)
 
         if (func)
             func(event);
-        
+
         if (endit)
-            endTest();    
+            endTest();
     }
 
-    mediaElement.addEventListener(eventName, _eventCallback);
+    mediaElement.addEventListener(eventName, _eventCallback, true);
 }
 
 function waitForEventTestAndEnd(eventName, testFuncString)
@@ -154,17 +159,17 @@ function waitForEventAndTest(eventName, testFuncString, endit)
     {
         logResult(eval(testFuncString), "EVENT(" + eventName + ") TEST(" + testFuncString + ")");
         if (endit)
-            endTest();    
+            endTest();
     }
-    
-    mediaElement.addEventListener(eventName, _eventCallback);
+
+    mediaElement.addEventListener(eventName, _eventCallback, true);
 }
 
 function testException(testString, exceptionString)
 {
     try {
         eval(testString);
-    } catch (ex) { 
+    } catch (ex) {
         logResult(ex.code == eval(exceptionString), "TEST(" + testString + ") THROWS("+exceptionString+")");
     }
 }
@@ -176,7 +181,7 @@ function endTest()
     consoleWrite("END OF TEST");
     testEnded = true;
     if (window.layoutTestController)
-        layoutTestController.notifyDone();     
+        layoutTestController.notifyDone();
 }
 
 function endTestLater()

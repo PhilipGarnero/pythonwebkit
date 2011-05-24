@@ -32,7 +32,7 @@ layer at (0,0) size 800x544
             text run at (0,7) width 27: "text "
           RenderBlock {math} at (27,0) size 33x34
             RenderBlock {mfrac} at (1,0) size 31x34
-              RenderBlock {mfrac} at (0,0) size 22x16
+              RenderBlock {mfrac} at (0,0) size 31x16
                 RenderBlock {mrow} at (3,0) size 25x16
                   RenderInline {mi} at (0,0) size 7x16
                     RenderText {#text} at (0,0) size 7x16
@@ -44,10 +44,10 @@ layer at (0,0) size 800x544
                   RenderInline {mn} at (0,0) size 8x16
                     RenderText {#text} at (17,0) size 8x16
                       text run at (17,0) width 8: "1"
-              RenderBlock {mfrac} at (0,16) size 22x18
-                RenderInline {mn} at (0,0) size 8x16
-                  RenderText {#text} at (7,2) size 8x16
-                    text run at (7,2) width 8: "2"
+              RenderBlock {mfrac} at (0,16) size 31x18
+                RenderInline {mn} at (0,0) size 9x16
+                  RenderText {#text} at (11,2) size 9x16
+                    text run at (11,2) width 9: "2"
           RenderText {#text} at (0,0) size 0x0
         RenderBlock {p} at (0,97) size 784x34
           RenderText {#text} at (0,7) size 27x18
@@ -61,7 +61,7 @@ layer at (0,0) size 800x544
                 RenderText {mo} at (0,0) size 9x16
                   text run at (0,0) width 9: "+"
             RenderBlock {mfrac} at (18,0) size 31x34
-              RenderBlock {mfrac} at (0,0) size 22x16
+              RenderBlock {mfrac} at (0,0) size 31x16
                 RenderBlock {mrow} at (3,0) size 25x16
                   RenderInline {mi} at (0,0) size 7x16
                     RenderText {#text} at (0,0) size 7x16
@@ -73,10 +73,10 @@ layer at (0,0) size 800x544
                   RenderInline {mn} at (0,0) size 8x16
                     RenderText {#text} at (17,0) size 8x16
                       text run at (17,0) width 8: "1"
-              RenderBlock {mfrac} at (0,16) size 22x18
-                RenderInline {mn} at (0,0) size 8x16
-                  RenderText {#text} at (7,2) size 8x16
-                    text run at (7,2) width 8: "2"
+              RenderBlock {mfrac} at (0,16) size 31x18
+                RenderInline {mn} at (0,0) size 9x16
+                  RenderText {#text} at (11,2) size 9x16
+                    text run at (11,2) width 9: "2"
           RenderText {#text} at (0,0) size 0x0
       RenderBlock {div} at (0,235) size 784x274
         RenderBlock {h2} at (0,0) size 784x28
@@ -95,7 +95,7 @@ layer at (0,0) size 800x544
                 RenderText {mo} at (0,0) size 9x16
                   text run at (0,0) width 9: "+"
             RenderBlock {mfrac} at (24,2) size 31x34
-              RenderBlock {mfrac} at (0,0) size 22x16
+              RenderBlock {mfrac} at (0,0) size 31x16
                 RenderBlock {mrow} at (3,0) size 25x16
                   RenderInline {mi} at (0,0) size 7x16
                     RenderText {#text} at (0,0) size 7x16
@@ -107,10 +107,10 @@ layer at (0,0) size 800x544
                   RenderInline {mn} at (0,0) size 8x16
                     RenderText {#text} at (17,0) size 8x16
                       text run at (17,0) width 8: "1"
-              RenderBlock {mfrac} at (0,16) size 22x18
-                RenderInline {mn} at (0,0) size 8x16
-                  RenderText {#text} at (7,2) size 8x16
-                    text run at (7,2) width 8: "2"
+              RenderBlock {mfrac} at (0,16) size 31x18
+                RenderInline {mn} at (0,0) size 9x16
+                  RenderText {#text} at (11,2) size 9x16
+                    text run at (11,2) width 9: "2"
             RenderBlock {mo} at (55,0) size 6x41
           RenderText {#text} at (0,0) size 0x0
         RenderBlock {p} at (0,104) size 784x85
@@ -131,7 +131,7 @@ layer at (0,0) size 800x544
                   RenderText {#text} at (4,3) size 5x12
                     text run at (4,3) width 5: "x"
             RenderBlock {mfrac} at (27,10) size 54x70
-              RenderBlock {mfrac} at (0,0) size 36x34
+              RenderBlock {mfrac} at (0,0) size 54x34
                 RenderBlock {mrow} at (3,0) size 48x34
                   RenderInline {mi} at (0,0) size 7x16
                     RenderText {#text} at (0,10) size 7x16
@@ -141,7 +141,7 @@ layer at (0,0) size 800x544
                       RenderText {mo} at (0,0) size 9x16
                         text run at (0,0) width 9: "+"
                   RenderBlock {mfrac} at (17,0) size 31x34
-                    RenderBlock {mfrac} at (0,0) size 22x16
+                    RenderBlock {mfrac} at (0,0) size 31x16
                       RenderBlock {mrow} at (3,0) size 25x16
                         RenderInline {mi} at (0,0) size 7x16
                           RenderText {#text} at (0,0) size 7x16
@@ -153,11 +153,11 @@ layer at (0,0) size 800x544
                         RenderInline {mn} at (0,0) size 8x16
                           RenderText {#text} at (17,0) size 8x16
                             text run at (17,0) width 8: "1"
-                    RenderBlock {mfrac} at (0,16) size 22x18
-                      RenderInline {mn} at (0,0) size 8x16
-                        RenderText {#text} at (7,2) size 8x16
-                          text run at (7,2) width 8: "2"
-              RenderBlock {mfrac} at (0,34) size 36x36
+                    RenderBlock {mfrac} at (0,16) size 31x18
+                      RenderInline {mn} at (0,0) size 9x16
+                        RenderText {#text} at (11,2) size 9x16
+                          text run at (11,2) width 9: "2"
+              RenderBlock {mfrac} at (0,34) size 54x36
                 RenderBlock {mrow} at (3,2) size 48x34
                   RenderInline {mi} at (0,0) size 7x16
                     RenderText {#text} at (0,10) size 7x16
@@ -167,7 +167,7 @@ layer at (0,0) size 800x544
                       RenderText {mo} at (0,0) size 9x16
                         text run at (0,0) width 9: "+"
                   RenderBlock {mfrac} at (17,0) size 31x34
-                    RenderBlock {mfrac} at (0,0) size 22x16
+                    RenderBlock {mfrac} at (0,0) size 31x16
                       RenderBlock {mrow} at (3,0) size 25x16
                         RenderInline {mi} at (0,0) size 7x16
                           RenderText {#text} at (0,0) size 7x16
@@ -179,10 +179,10 @@ layer at (0,0) size 800x544
                         RenderInline {mn} at (0,0) size 8x16
                           RenderText {#text} at (17,0) size 8x16
                             text run at (17,0) width 8: "1"
-                    RenderBlock {mfrac} at (0,16) size 22x18
-                      RenderInline {mn} at (0,0) size 8x16
-                        RenderText {#text} at (7,2) size 8x16
-                          text run at (7,2) width 8: "2"
+                    RenderBlock {mfrac} at (0,16) size 31x18
+                      RenderInline {mn} at (0,0) size 9x16
+                        RenderText {#text} at (11,2) size 9x16
+                          text run at (11,2) width 9: "2"
             RenderBlock {mo} at (81,0) size 6x85
           RenderText {#text} at (0,0) size 0x0
         RenderBlock {p} at (0,205) size 784x69
@@ -250,7 +250,7 @@ layer at (0,0) size 800x544
                           text run at (8,7) width 12: "23"
                 RenderTableRow {mtr} at (0,38) size 78x19
                   RenderTableCell {mtd} at (0,38) size 26x19 [r=2 c=0 rs=1 cs=1]
-                    RenderBlock {msub} at (3,0) size 19x19
+                    RenderBlock {msub} at (4,0) size 19x19
                       RenderBlock {msub} at (0,0) size 7x16
                         RenderInline {mi} at (0,0) size 7x16
                           RenderText {#text} at (0,0) size 7x16
@@ -259,7 +259,7 @@ layer at (0,0) size 800x544
                         RenderText {#text} at (7,7) size 12x12
                           text run at (7,7) width 12: "31"
                   RenderTableCell {mtd} at (26,38) size 26x19 [r=2 c=1 rs=1 cs=1]
-                    RenderBlock {msub} at (3,0) size 19x19
+                    RenderBlock {msub} at (4,0) size 19x19
                       RenderBlock {msub} at (0,0) size 7x16
                         RenderInline {mi} at (0,0) size 7x16
                           RenderText {#text} at (0,0) size 7x16
@@ -268,7 +268,7 @@ layer at (0,0) size 800x544
                         RenderText {#text} at (7,7) size 12x12
                           text run at (7,7) width 12: "32"
                   RenderTableCell {mtd} at (52,38) size 26x19 [r=2 c=2 rs=1 cs=1]
-                    RenderBlock {msub} at (3,0) size 19x19
+                    RenderBlock {msub} at (4,0) size 19x19
                       RenderBlock {msub} at (0,0) size 7x16
                         RenderInline {mi} at (0,0) size 7x16
                           RenderText {#text} at (0,0) size 7x16
@@ -414,51 +414,51 @@ layer at (120,509) size 5x8 scrollHeight 14
       text run at (0,-3) width 5: "\x{23A5}"
 layer at (120,517) size 5x11 scrollHeight 14
   RenderBlock {mo} at (0,58) size 5x11
-layer at (36,302) size 5x14 backgroundClip at (36,301) size 5x10 clip at (36,301) size 5x10 outlineClip at (36,301) size 5x10
+layer at (36,302) size 5x11 backgroundClip at (36,301) size 5x10 clip at (36,301) size 5x10 outlineClip at (36,301) size 5x10
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{239B}"
-layer at (36,328) size 5x14 backgroundClip at (36,331) size 5x11 clip at (36,331) size 5x11 outlineClip at (36,331) size 5x11
+layer at (36,328) size 5x11 backgroundClip at (36,331) size 5x11 clip at (36,331) size 5x11 outlineClip at (36,331) size 5x11
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{239D}"
-layer at (90,302) size 5x14 backgroundClip at (90,301) size 5x10 clip at (90,301) size 5x10 outlineClip at (90,301) size 5x10
+layer at (90,302) size 5x11 backgroundClip at (90,301) size 5x10 clip at (90,301) size 5x10 outlineClip at (90,301) size 5x10
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{239E}"
-layer at (90,328) size 5x14 backgroundClip at (90,331) size 5x11 clip at (90,331) size 5x11 outlineClip at (90,331) size 5x11
+layer at (90,328) size 5x11 backgroundClip at (90,331) size 5x11 clip at (90,331) size 5x11 outlineClip at (90,331) size 5x11
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{23A0}"
-layer at (43,359) size 5x14 backgroundClip at (43,358) size 5x10 clip at (43,358) size 5x10 outlineClip at (43,358) size 5x10
+layer at (43,359) size 5x11 backgroundClip at (43,358) size 5x10 clip at (43,358) size 5x10 outlineClip at (43,358) size 5x10
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{239B}"
-layer at (43,429) size 5x14 backgroundClip at (43,432) size 5x11 clip at (43,432) size 5x11 outlineClip at (43,432) size 5x11
+layer at (43,429) size 5x11 backgroundClip at (43,432) size 5x11 clip at (43,432) size 5x11 outlineClip at (43,432) size 5x11
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{239D}"
-layer at (116,359) size 5x14 backgroundClip at (116,358) size 5x10 clip at (116,358) size 5x10 outlineClip at (116,358) size 5x10
+layer at (116,359) size 5x11 backgroundClip at (116,358) size 5x10 clip at (116,358) size 5x10 outlineClip at (116,358) size 5x10
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{239E}"
-layer at (116,429) size 5x14 backgroundClip at (116,432) size 5x11 clip at (116,432) size 5x11 outlineClip at (116,432) size 5x11
+layer at (116,429) size 5x11 backgroundClip at (116,432) size 5x11 clip at (116,432) size 5x11 outlineClip at (116,432) size 5x11
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{23A0}"
-layer at (36,460) size 5x14 backgroundClip at (36,459) size 5x10 clip at (36,459) size 5x10 outlineClip at (36,459) size 5x10
+layer at (36,460) size 5x11 backgroundClip at (36,459) size 5x10 clip at (36,459) size 5x10 outlineClip at (36,459) size 5x10
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{23A1}"
-layer at (36,514) size 5x14 backgroundClip at (36,517) size 5x11 clip at (36,517) size 5x11 outlineClip at (36,517) size 5x11
+layer at (36,514) size 5x11 backgroundClip at (36,517) size 5x11 clip at (36,517) size 5x11 outlineClip at (36,517) size 5x11
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{23A3}"
-layer at (120,460) size 5x14 backgroundClip at (120,459) size 5x10 clip at (120,459) size 5x10 outlineClip at (120,459) size 5x10
+layer at (120,460) size 5x11 backgroundClip at (120,459) size 5x10 clip at (120,459) size 5x10 outlineClip at (120,459) size 5x10
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{23A4}"
-layer at (120,514) size 5x14 backgroundClip at (120,517) size 5x11 clip at (120,517) size 5x11 outlineClip at (120,517) size 5x11
+layer at (120,514) size 5x11 backgroundClip at (120,517) size 5x11 clip at (120,517) size 5x11 outlineClip at (120,517) size 5x11
   RenderBlock (relative positioned) {mo} at (0,0) size 5x11
     RenderText {mo} at (0,-3) size 5x17
       text run at (0,-3) width 5: "\x{23A6}"

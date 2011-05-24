@@ -4,9 +4,17 @@ function init()
     var count = totalCount;
     document.addEventListener("canplaythrough", function () {
         if (!--count) {
+            var video = document.getElementsByTagName('video')[0];
+            video.play();
+            video.addEventListener("playing", function() {
+                video.pause();
+                video.currentTime = 0;
+                video.addEventListener("seeked", function() {
+                    if (window.layoutTestController)
+                        layoutTestController.notifyDone();
+                });
+            });
             document.body.offsetLeft;
-            if (window.layoutTestController)
-                setTimeout(function() { layoutTestController.notifyDone(); }, totalCount * 100);
         }
     }, true);
 }

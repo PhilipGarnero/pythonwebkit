@@ -10,8 +10,8 @@ layer at (0,0) size 800x420
         RenderText {#text} at (555,0) size 229x19
           text run at (555,0) width 229: "This sentence should be right-justified."
       RenderBlock {P} at (0,72) size 784x20 [color=#000080]
-        RenderText {#text} at (290,0) size 203x19
-          text run at (290,0) width 203: "This sentence should be centered."
+        RenderText {#text} at (290,0) size 204x19
+          text run at (290,0) width 204: "This sentence should be centered."
       RenderBlock {P} at (0,108) size 784x280 [color=#000080]
         RenderText {#text} at (0,0) size 465x19
           text run at (0,0) width 368: "This paragraph should be justified (the right and left margins "

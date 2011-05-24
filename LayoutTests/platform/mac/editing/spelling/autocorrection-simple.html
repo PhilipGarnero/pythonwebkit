@@ -28,14 +28,29 @@ function editingTest() {
     typeCharacterCommand('l');
     eventSender.leapForward(1000);
     typeCharacterCommand(' ');
+    typeCharacterCommand('\n');
+    typeCharacterCommand('t');
+    typeCharacterCommand('h');
+    typeCharacterCommand('e');
+    typeCharacterCommand(' ');
+    typeCharacterCommand('n');
+    typeCharacterCommand('o');
+    typeCharacterCommand('t');
+    typeCharacterCommand('a');
+    typeCharacterCommand('t');
+    typeCharacterCommand('i');
+    typeCharacterCommand('o');
+    typeCharacterCommand('n');
+    typeCharacterCommand('l');
+    typeCharacterCommand(',');
 }
 
 </script>
 
-<title>Autocorrection Simple Test</title> 
-</head> 
+<title>Autocorrection Simple Test</title>
+</head>
 <body>
-<div>You should see phrase 'the notational', in which the word 'notational' has blue underline.</div>
+<div>You should see two phrases 'the notational'. In the second phrase, the word 'notational' has blue underline.</div>
 <p style="color:green">
     This test does not run interactively.
     It uses the event sender to do mouse clicks.

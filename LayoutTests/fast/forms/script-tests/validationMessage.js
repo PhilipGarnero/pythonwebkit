@@ -24,6 +24,13 @@ requiredTextArea.required = true;
 form.appendChild(requiredTextArea);
 shouldBe("requiredTextArea.validationMessage", "'value missing'");
 
+// A required select with an empty value
+var requiredSelect = document.createElement("select");
+requiredSelect.name = "requiredSelect";
+requiredSelect.required = true;
+form.appendChild(requiredSelect);
+shouldBe("requiredSelect.validationMessage", "'value missing'");
+
 // A type=email input for the "type mismatch" flag
 var emailInput = document.createElement("input");
 emailInput.name = "emailInput";
@@ -54,5 +61,23 @@ var happySelect = document.createElement("select");
 happySelect.name = "select";
 form.appendChild(happySelect);
 shouldBe("happySelect.validationMessage", "''");
+
+// Output elements can't be validated
+var happyOutput = document.createElement("output");
+happySelect.name = "output";
+form.appendChild(happyOutput);
+shouldBe("happyOutput.validationMessage", "''");
+
+// Object elements can't be validated
+var happyObject = document.createElement("object");
+happySelect.name = "object";
+form.appendChild(happyObject);
+shouldBe("happyObject.validationMessage", "''");
+
+// Keygen controls can't be validated
+var happyKeygen = document.createElement("keygen");
+happySelect.name = "keygen";
+form.appendChild(happyKeygen);
+shouldBe("happyKeygen.validationMessage", "''");
 
 var successfullyParsed = true;

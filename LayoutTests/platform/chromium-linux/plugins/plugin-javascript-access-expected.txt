@@ -2,7 +2,7 @@ Name: WebKit Test PlugIn
 
 Description: Simple Netscape plug-in that handles test content for WebKit
 
-Filename: libnpapi_layout_test_plugin.so
+Filename: libTestNetscapePlugIn.so
 
 Mime Types:
 
@@ -17,11 +17,11 @@ Plugin.item() works.
 
 Plugin.namedItem() works.
 
-Type: application/x-webkit-test-netscape2
+Type: image/png
 
-Description: test netscape content2
+Description: PNG image
 
-Suffixes: testnetscape2
+Suffixes: png
 
 
 Plugin.item() works.

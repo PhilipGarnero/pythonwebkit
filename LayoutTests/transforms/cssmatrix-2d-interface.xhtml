@@ -14,24 +14,15 @@ description("This test exercises the CSSMatrix interface");
 debug("");
 debug("CSSMatrix constructors");
 
-var m = null;
-m = new WebKitCSSMatrix();
-if (m)
-  testPassed("default constructor");
-else
-  testFailed("default constructor");
 
-var m2 = new WebKitCSSMatrix(m);
-if (m2)
-  testPassed("object constructor");
-else
-  testFailed("object constructor");
-
-m = new WebKitCSSMatrix("matrix(1, 0, 0, 1, 0, 0)");
-if (m)
-  testPassed("string constructor");
-else
-  testFailed("string constructor");
+var m = new WebKitCSSMatrix();
+shouldBeNonNull('m');
+shouldBeNonNull('new WebKitCSSMatrix()');
+shouldBeNonNull('new WebKitCSSMatrix(m)');
+shouldBeNonNull('new WebKitCSSMatrix("matrix(1, 0, 0, 1, 0, 0)")');
+shouldBeNonNull('new WebKitCSSMatrix("")');
+shouldBeNonNull('new WebKitCSSMatrix("none")');
+shouldBeNonNull('new WebKitCSSMatrix("   none   ")');
 
 debug("");
 debug("Test toString");
@@ -173,6 +164,46 @@ shouldBe('m.f', '0');
 
 debug("");
 debug("Test immutability of rotate");
+shouldBe('parseFloat(m.a)', '1');
+shouldBe('parseFloat(m.b)', '0');
+shouldBe('parseFloat(m.c)', '0');
+shouldBe('parseFloat(m.d)', '1');
+shouldBe('parseFloat(m.e)', '0');
+shouldBe('parseFloat(m.f)', '0');
+
+debug("");
+debug("Test skew in horizontal direction");
+m = new WebKitCSSMatrix();
+m2 = m.skewX(10);
+shouldBe('parseFloat(m2.a)', '1');
+shouldBe('parseFloat(m2.b)', '0');
+shouldBe('parseFloat(m2.c.toPrecision(6))', '0.176327');
+shouldBe('parseFloat(m2.d)', '1');
+shouldBe('parseFloat(m2.e)', '0');
+shouldBe('parseFloat(m2.f)', '0');
+
+debug("");
+debug("Test immutability of horizontal skew");
+shouldBe('parseFloat(m.a)', '1');
+shouldBe('parseFloat(m.b)', '0');
+shouldBe('parseFloat(m.c)', '0');
+shouldBe('parseFloat(m.d)', '1');
+shouldBe('parseFloat(m.e)', '0');
+shouldBe('parseFloat(m.f)', '0');
+
+debug("");
+debug("Test skew in vertical direction");
+m = new WebKitCSSMatrix();
+m2 = m.skewY(35);
+shouldBe('parseFloat(m2.a)', '1');
+shouldBe('parseFloat(m2.b.toPrecision(6))', '0.700208');
+shouldBe('parseFloat(m2.c)', '0');
+shouldBe('parseFloat(m2.d)', '1');
+shouldBe('parseFloat(m2.e)', '0');
+shouldBe('parseFloat(m2.f)', '0');
+
+debug("");
+debug("Test immutability of vertical skew");
 shouldBe('parseFloat(m.a)', '1');
 shouldBe('parseFloat(m.b)', '0');
 shouldBe('parseFloat(m.c)', '0');

@@ -1,93 +1,104 @@
 Tests that InspectorBackendDispatcher is catching incorrect messages.
 
 {
-    seq : 0
-    success : false
-    errors : {
-        0 : "Protocol Error: Invalid message format. Message should be in JSON format."
+    error : {
+        code : -32700
+        message : "Parse error."
+        data : [
+            "Message should be in JSON format."
+        ]
     }
+    id : null
 }
 {
-    seq : 0
-    success : false
-    errors : {
-        0 : "Protocol Error: Invalid message format. 'command' property wasn't found."
+    error : {
+        code : -32600
+        message : "Invalid Request."
+        data : [
+            "Invalid message format. 'id' property was not found in the request."
+        ]
     }
+    id : null
 }
 {
-    seq : 0
-    success : false
-    errors : {
-        0 : "Protocol Error: Invalid message format. The type of 'command' property should be string."
+    error : {
+        code : -32600
+        message : "Invalid Request."
+        data : [
+            "Invalid message format. The type of 'id' property should be number."
+        ]
     }
+    id : null
 }
 {
-    seq : 0
-    success : false
-    errors : {
-        0 : "Protocol Error: Invalid message format. 'seq' property was not found in the request."
+    error : {
+        code : -32600
+        message : "Invalid Request."
+        data : [
+            "Invalid message format. The type of 'method' property should be string."
+        ]
     }
+    id : 1
 }
 {
-    seq : 0
-    success : false
-    errors : {
-        0 : "Protocol Error: Invalid message format. The type of 'seq' property should be number."
+    error : {
+        code : -32601
+        message : "Method not found."
+        data : [
+            "Invalid method name was received. 'resourceContent' wasn't found."
+        ]
     }
+    id : 2
 }
 {
-    seq : 1
-    success : false
-    errors : {
-        0 : "Protocol Error: Invalid command was received. 'test' wasn't found."
+    error : {
+        code : -32601
+        message : "Method not found."
+        data : [
+            "Invalid method name was received. 'DOM.test' wasn't found."
+        ]
     }
+    id : 3
 }
 {
-    seq : 2
-    success : false
-    errors : {
-        0 : "Protocol Error: 'arguments' property with type 'object' was not found."
+    error : {
+        code : -32602
+        message : "Invalid params."
+        data : [
+            "'params' property with type 'object' was not found."
+        ]
     }
+    id : 4
 }
 {
-    seq : 3
-    success : false
-    errors : {
-        0 : "Protocol Error: 'arguments' property with type 'object' was not found."
+    error : {
+        code : -32602
+        message : "Invalid params."
+        data : [
+            "'params' property with type 'object' was not found."
+        ]
     }
+    id : 5
 }
 {
-    seq : 4
-    success : false
-    errors : {
-        0 : "Protocol Error: Argument 'frameId' with type 'Number' was not found."
-        1 : "Protocol Error: Argument 'url' with type 'String' was not found."
-        2 : "Protocol Error: Argument 'base64Encode' with type 'Boolean' was not found."
+    error : {
+        code : -32602
+        message : "Invalid params."
+        data : [
+            "Parameter 'frameId' with type 'String' was not found."
+            "Parameter 'url' with type 'String' was not found."
+        ]
     }
+    id : 6
 }
 {
-    seq : 5
-    success : false
-    errors : {
-        0 : "Protocol Error: Argument 'frameId' with type 'Number' was not found."
-        1 : "Protocol Error: Argument 'url' with type 'String' was not found."
-        2 : "Protocol Error: Argument 'base64Encode' with type 'Boolean' was not found."
+    error : {
+        code : -32602
+        message : "Invalid params."
+        data : [
+            "Parameter 'url' with type 'String' was not found."
+        ]
     }
-}
-{
-    seq : 6
-    success : false
-    errors : {
-        0 : "Protocol Error: Debug handler is not available."
-        1 : "Protocol Error: Argument 'sourceID' with type 'String' was not found."
-        2 : "Protocol Error: Argument 'lineNumber' with type 'Number' was not found."
-    }
-}
-{
-    seq : 7
-    success : false
-    errors : {
-        0 : "Protocol Error: Debug handler is not available."
-    }
+    id : 7
 }
 

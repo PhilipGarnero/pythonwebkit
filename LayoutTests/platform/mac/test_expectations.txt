@@ -13,8 +13,9 @@
 //
 // Valid values for METADATA:
 //
-// BUG[0-9]+: See this bug for more information. Every test that isn't marked
-//            WONTFIX should have a BUG annotation.
+// BUG(CR|WK|V8_)[0-9]+: See this chromium/webkit/v8 bug for more information.
+//                       Every test that isn't marked WONTFIX should have the
+//                       appropriate BUG annotation.
 // SKIP: Doesn't run the test.
 // SLOW: The test takes a long time to run, but does not timeout indefinitely.
 // DEFER: For tests we'll fix in the future.
@@ -48,7 +49,7 @@
 // DEBUG : fast/js/no-good.js = TIMEOUT PASS
 // DEBUG SKIP : fast/js/no-good.js = TIMEOUT PASS
 // LINUX DEBUG SKIP : fast/js/no-good.js = TIMEOUT PASS
-// BUG1234 DEBUG MAC : fast/js/no-good.js = TIMEOUT PASS
+// BUGCR1234 DEBUG MAC : fast/js/no-good.js = TIMEOUT PASS
 //
 // Notes:
 // -A test cannot be both SLOW and TIMEOUT
@@ -57,53 +58,25 @@
 // -CRASH tests cannot be WONTFIX
 
 // Our slow tests, in alphabetical order.
-SLOW BUGXXX : http/tests/cache/subresource-expiration.html = PASS
-SLOW BUGXXX : tables/mozilla/other/slashlogo.html = PASS
-SLOW BUGXXX : http/tests/websocket/tests/frame-lengths.html = PASS
+BUGWK57672 : http/tests/local/fileapi/send-sliced-dragged-file.html = TEXT PASS
 
-BUG36620 : compositing/color-matching/image-color-matching.html = IMAGE
-BUG36620 : compositing/direct-image-compositing.html = IMAGE
-BUG36620 : compositing/geometry/clipped-video-controller.html = IMAGE
-BUG36620 : compositing/geometry/video-fixed-scrolling.html = IMAGE
-BUG36620 : compositing/geometry/video-opacity-overlay.html = IMAGE
-BUG36620 : compositing/layers-inside-overflow-scroll.html = IMAGE
-BUG36620 : compositing/overflow/scroll-ancestor-update.html = IMAGE
-BUG36620 : compositing/reflections/animation-inside-reflection.html = IMAGE
-BUG36620 : compositing/reflections/load-video-in-reflection.html = IMAGE
-BUG36620 : compositing/reflections/masked-reflection-on-composited.html = IMAGE
-BUG36620 : compositing/reflections/nested-reflection-anchor-point.html = IMAGE
-BUG36620 : compositing/reflections/nested-reflection-animated.html = IMAGE
-BUG36620 : compositing/reflections/nested-reflection-mask-change.html = IMAGE
-BUG36620 : compositing/reflections/nested-reflection-opacity.html = IMAGE
-BUG36620 : compositing/reflections/nested-reflection-transition.html = IMAGE
-BUG36620 : compositing/reflections/transform-inside-reflection.html = IMAGE
-BUG36620 : compositing/self-painting-layers.html = IMAGE
-BUG36620 : compositing/webgl/webgl-reflection.html = IMAGE
-BUG36620 : css1/font_properties/font_family.html = IMAGE
-BUG36620 : css2.1/t1503-c522-font-family-00-b.html = IMAGE
-BUG36620 : fast/backgrounds/svg-as-background-2.html = IMAGE
-BUG36620 : fast/borders/border-image-rotate-transform.html = IMAGE
-BUG36620 : fast/box-shadow/inset.html = IMAGE
-BUG36620 : fast/css/first-letter-first-line-hover.html = IMAGE
-BUG36620 : fast/css/shadow-multiple.html = IMAGE
-BUG36620 : fast/frames/content-opacity-1.html = IMAGE
-BUG36620 : fast/frames/content-opacity-2.html = IMAGE
-BUG36620 : fast/images/animated-svg-as-image.html = IMAGE
-BUG36620 : fast/text/international/khmer-selection.html = IMAGE
-BUG36620 : fast/text/monospace-width-cache.html = IMAGE
-BUG36620 : fast/text/shadow-no-blur.html = IMAGE
-BUG36620 : fast/text/shadow-translucent-fill.html = IMAGE
-BUG36620 : fast/text/stroking.html = IMAGE
-BUG36620 : media/audio-controls-rendering.html = IMAGE
-BUG36620 : transforms/2d/hindi-rotated.html = IMAGE
+BUGWK57799 : storage/domstorage/localstorage/storagetracker/storage-tracker-4-create.html = TEXT PASS
+BUGWK57799 : storage/domstorage/localstorage/storagetracker/storage-tracker-5-delete-one.html = TEXT PASS
 
-// Needs re-baselining.
-BUG42370 : svg/custom/image-rescale-scroll.html = FAIL
+// Flaky tests that appear to be fail depending on which earlier tests
+// run in the same process
+BUGWK57688 : fast/text/international/bidi-AN-after-empty-run.html = PASS TEXT
+BUGWK57688 : fast/text/international/bidi-CS-after-AN.html = PASS TEXT
+BUGWK57688 : fast/text/international/thai-line-breaks.html = PASS TEXT
 
-// These fail depending on order due to interactions with previous tests:
-BUG35006 : fast/dom/global-constructors.html = PASS TEXT
-BUG37007 : fast/tokenizer/doctype-search-reset.html = PASS TEXT
-BUG37255 : fast/repaint/renderer-destruction-by-invalidateSelection-crash.html = PASS TEXT
-BUG37256 : fast/text/international/thai-line-breaks.html = PASS TEXT
-BUG37259 : fast/dom/SelectorAPI/dumpNodeList-almost-strict.html = PASS TEXT
-BUG37259 : fast/dom/SelectorAPI/dumpNodeList.html = PASS TEXT
+BUGWK58192 : plugins/npp-set-window-called-during-destruction.html = TEXT
+
+// Flaky tests when run multi-process
+BUGWK58192 : fast/dom/frame-loading-via-document-write.html = TEXT PASS
+BUGWK58192 : http/tests/appcache/fail-on-update-2.html = TEXT PASS
+BUGWK58192 : http/tests/appcache/fail-on-update.html = TEXT PASS
+BUGWK58192 : http/tests/inspector/console-websocket-error.html = TEXT PASS
+BUGWK58192 : fast/canvas/webgl/gl-teximage.html = TEXT PASS
+BUGWK58192 : fast/frames/flattening/iframe-flattening-offscreen.html = TEXT PASS
+BUGWK58192 : svg/dom/SVGScriptElement/script-set-href.svg = TEXT PASS
+

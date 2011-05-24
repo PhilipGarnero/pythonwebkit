@@ -1,38 +1,8 @@
 <html>
 <head>
 <script src="inspector-test.js"></script>
-<script src="console-tests.js"></script>
+<script src="console-test.js"></script>
 <script>
-
-function doit()
-{
-    // Enable XMLHttpRequest Logging.
-    evaluateInWebInspector("frontend_enableXMLHttpRequestLogging", function(result) {
-        console.log(result);
-        makeRequests();
-        testDisabled();
-    });
-}
-
-function testDisabled()
-{
-    // Disable XMLHttpRequest Logging.
-    evaluateInWebInspector("frontend_disableXMLHttpRequestLogging", function(result) {
-        console.log(result);
-        makeRequests();
-        dumpConsoleMessages();
-    });
-}
-
-function makeRequests()
-{
-    // 1. Page that exists.
-    requestHelper("GET", "resources/xhr-exists.html");
-    // 2. Page that doesn't exist.
-    requestHelper("GET", "resources/xhr-does-not-exist.html");
-    // 3. POST to a page.
-    requestHelper("POST", "resources/post-target.cgi");
-}
 
 function requestHelper(method, url)
 {
@@ -43,36 +13,55 @@ function requestHelper(method, url)
     xhr.send();
 }
 
-function frontend_enableXMLHttpRequestLogging(testController)
+function makeRequests()
 {
-    InspectorBackend.setMonitoringXHREnabled(true, function(newStatus) {
-         if (newStatus)
-            testController.notifyDone("enabled");
-    });
-
-    if (WebInspector.monitoringXHREnabled)
-        return "enabled";
-
-    testController.waitUntilDone();
+    // 1. Page that exists.
+    requestHelper("GET", "resources/xhr-exists.html");
+    // 2. Page that doesn't exist.
+    requestHelper("GET", "resources/xhr-does-not-exist.html");
+    // 3. POST to a page.
+    requestHelper("POST", "resources/post-target.cgi");
+    // 4. Cross-origin request
+    requestHelper("GET", "http://localhost:8000/inspector/resources/xhr-exists.html");
 }
 
-function frontend_disableXMLHttpRequestLogging(testController)
+function test()
 {
-    InspectorBackend.setMonitoringXHREnabled(false, function(newStatus) {
-        if (!newStatus)
-            testController.notifyDone("disabled");
-    });
+    step1();
 
-    if (!WebInspector.monitoringXHREnabled)
-        return "disabled";
+    function step1()
+    {
+        function callback()
+        {
+            InspectorTest.evaluateInPage("makeRequests()", step2);
+        }
+        ConsoleAgent.setMonitoringXHREnabled(true, callback);
+    }
 
-    testController.waitUntilDone();
+    function step2()
+    {
+        function callback()
+        {
+            InspectorTest.evaluateInPage("makeRequests()", step3);
+        }
+        ConsoleAgent.setMonitoringXHREnabled(false, callback);
+    }
+
+    function step3()
+    {
+        function finish()
+        {
+            InspectorTest.dumpConsoleMessages();
+            InspectorTest.completeTest();
+        }
+        InspectorTest.runAfterPendingDispatches(finish);
+    }
 }
 
 </script>
 </head>
 
-<body onload="onload()">
+<body onload="runTest()">
 <p>
 Tests that XMLHttpRequest Logging works when Enabled and doesn't show logs when Disabled.
 </p>

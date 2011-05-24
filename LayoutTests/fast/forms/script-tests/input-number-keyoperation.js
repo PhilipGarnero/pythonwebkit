@@ -7,14 +7,26 @@ var input = document.getElementById('number');
 input.focus();
 debug('Inserting "ab123cd":');
 document.execCommand('InsertText', false, 'ab123cd');
-shouldBe('input.value', '"123"');
+shouldBe('input.value', '""');
 
 debug('Press the up arrow key:');
+input.valueAsNumber = 123;
 eventSender.keyDown('upArrow');
 shouldBe('input.value', '"124"');
 
 debug('Press the down arrow key:');
 eventSender.keyDown('downArrow');
+shouldBe('input.value', '"123"');
+
+debug('Disable input element:');
+input.disabled = true;
+eventSender.keyDown('upArrow');
+shouldBe('input.value', '"123"');
+input.removeAttribute('disabled');
+
+debug('Read-only input element:');
+input.readOnly = true;
+eventSender.keyDown('upArrow');
 shouldBe('input.value', '"123"');
 
 var successfullyParsed = true;

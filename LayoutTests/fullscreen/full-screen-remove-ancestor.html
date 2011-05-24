@@ -19,18 +19,18 @@
         var div = span.parentNode;
 
         var spanEnteredFullScreen = function(event) {
-            callback = documentEnteredFullScreen;
+            callback = spanExitedFullScreen;
             testExpected("document.webkitCurrentFullScreenElement", span);
             document.body.removeChild(div);
         };
 
-        var documentEnteredFullScreen = function(event) {
+        var spanExitedFullScreen = function(event) {
             callback = null;
-            testExpected("document.webkitCurrentFullScreenElement", document.documentElement);
+            testExpected("document.webkitCurrentFullScreenElement", null);
             endTest();
         };
 
         callback = spanEnteredFullScreen;
-        span.webkitRequestFullScreen();
+        runWithKeyDown(function(){span.webkitRequestFullScreen()});
     }
 </script>

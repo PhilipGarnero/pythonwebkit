@@ -1,16 +1,24 @@
 function debug(message)
 {
-    postMessage(message);
+    postMessage("MESG:" + message);
 }
 
 function finishJSTest()
 {
-    postMessage("DONE");
+    postMessage("DONE:");
 }
 
 function description(message)
 {
-    postMessage('Description: ' + message);
+    postMessage('DESC:' + message);
+}
+
+function testPassed(msg) {
+    postMessage("PASS:" + msg);
+}
+
+function testFailed(msg) {
+    postMessage("FAIL:" + msg);
 }
 
 function shouldBe(_a, _b)
@@ -20,9 +28,9 @@ function shouldBe(_a, _b)
   var _av = eval(_a);
   var _bv = eval(_b);
   if (_av === _bv)
-    debug("PASS: " + _a + " is " + _b);
+    testPassed(_a + " is " + _b);
   else
-    debug("FAIL: " + _a + " should be " + _bv + " (of type " + typeof _bv + "). Was " + _av + " (of type " + typeof _av + ").");
+    testFailed(_a + " should be " + _bv + " (of type " + typeof _bv + "). Was " + _av + " (of type " + typeof _av + ").");
 }
 
 function shouldBeTrue(_a) { shouldBe(_a, "true"); }
@@ -42,7 +50,7 @@ function removeAllInDirectorySync(directory) {
     } while (entries.length);
 }
 
-if (this.importScripts && !this.requestFileSystem) {
+if (this.importScripts && !this.webkitRequestFileSystem) {
     debug('This test requires FileSystem API.');
     finishJSTest();
 }

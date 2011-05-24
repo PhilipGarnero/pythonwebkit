@@ -25,6 +25,7 @@ Computed style of an element whose parent's 'display' value is 'none':
     border-top-style: solid
     border-top-width: 16px
     bottom: auto
+    box-shadow: none
     box-sizing: content-box
     caption-side: top
     clear: none
@@ -48,7 +49,7 @@ Computed style of an element whose parent's 'display' value is 'none':
     list-style-position: outside
     list-style-type: disc
     margin-bottom: 0px
-    margin-left: auto
+    margin-left: 0px
     margin-right: 0px
     margin-top: 0px
     max-height: none
@@ -159,6 +160,7 @@ Computed style of an element whose parent's 'display' value is 'none':
     -webkit-text-combine: none
     -webkit-text-decorations-in-effect: none
     -webkit-text-fill-color: rgb(0, 0, 0)
+    -webkit-text-orientation: vertical-right
     -webkit-text-security: none
     -webkit-text-stroke-color: rgb(0, 0, 0)
     -webkit-text-stroke-width: 0px
@@ -226,12 +228,12 @@ After changing grandparent's 'color' and the parent's 'font-size' inherited prop
 
 After changing the parent's 'display' property to 'block', so that the child gets a renderer:
     height: 100px
-    margin-left: 385px
+    margin-left: 0px
     width: 384px
 
 After changing the parent's 'display' property back to 'none':
     height: 100px
-    margin-left: auto
+    margin-left: 0px
     width: 50%
 
 

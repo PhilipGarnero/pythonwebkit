@@ -1,6 +1,6 @@
 <html>
 <head>
-<script src="../http/tests/inspector/inspector-test2.js"></script>
+<script src="../http/tests/inspector/inspector-test.js"></script>
 <script>
 
 function test()
@@ -11,12 +11,15 @@ function test()
         InspectorTest.addResult(String.sprintf.apply(this, arguments));
     }
 
-    InspectorBackend.setMonitoringXHREnabled(1);
-    InspectorBackend.setMonitoringXHREnabled();
-    InspectorBackend.setMonitoringXHREnabled(true, "not a function");
-    InspectorBackend.setMonitoringXHREnabled(true, undefined);
-    InspectorBackend.setMonitoringXHREnabled(false, undefined);
-    WebInspector_syncDispatch('{"type": "event", "domain": "dom", "event": "something-strange", "data": {}}');
+    ConsoleAgent.setMonitoringXHREnabled(1);
+    ConsoleAgent.setMonitoringXHREnabled();
+    ConsoleAgent.setMonitoringXHREnabled(false, "not a function");
+    ConsoleAgent.setMonitoringXHREnabled(false, undefined);
+    RuntimeAgent.evaluate("true", "test");
+    RuntimeAgent.evaluate("true", "test", function(){});
+    RuntimeAgent.evaluate("true", "test", undefined, function(){});
+    InspectorBackend.dispatch('{"method": "wrongDomain.something-strange", "params": {}}');
+    InspectorBackend.dispatch('{"method": "Inspector.something-strange", "params": {}}');
 
     InspectorTest.completeTest();
 }

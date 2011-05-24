@@ -18,14 +18,17 @@ PASS input.validity.tooLong is true
 PASS input.validity.tooLong is false
 
 Sets a value via DOM property
-PASS input.validity.tooLong is true
+PASS input.validity.tooLong is false
+
+Disabled
+PASS input.validity.tooLong is false
 
 Grapheme length is not greater than maxLength though character length is greater
 PASS input.validity.tooLong is false
 
 Change the type with a too long value
 PASS input.validity.tooLong is true
-PASS input.validity.tooLong is false
+PASS input.type = "number"; input.validity.tooLong is false
 PASS successfullyParsed is true
 
 TEST COMPLETE

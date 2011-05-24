@@ -20,7 +20,16 @@ var __skip__ = {
     "textInputController" : 1,
     // Ignore these properties because they do not exist in all implementations. They will be tested separately
     "WebGLRenderingContext" : 1,
+    "WebGLActiveInfo" : 1,
+    "WebGLBuffer" : 1,
+    "WebGLFramebuffer" : 1,
+    "WebGLProgram" : 1,
+    "WebGLRenderbuffer" : 1,
+    "WebGLShader" : 1,
+    "WebGLTexture" : 1,
+    "WebGLUniformLocation" : 1,
     "ArrayBuffer" : 1,
+    "DataView" : 1,
     "Int8Array" : 1,
     "Uint8Array" : 1,
     "Int16Array" : 1,
@@ -30,9 +39,12 @@ var __skip__ = {
     "Float32Array" : 1,
     "FileError" : 1,
     "FileReader" : 1,
+    "WebKitBlobBuilder" : 1,
     "ondeviceorientation" : 1,
     // Ignore this property because it only appears in debug builds and not in release.
-    "jscprint" : 1
+    "jscprint" : 1,
+    // Ignore this property because it is not supported in all platforms.
+    "webkitURL" : 1,
 };
 
 var windowPropertyNames = Object.getOwnPropertyNames(window)
@@ -57,9 +69,6 @@ for (var name in protoPropertySet)
 protoPropertyNames.sort();
 
 for (var i = 0; i < protoPropertyNames.length; ++i) {
-    // Ignore these properties because they do not exist in all implementations.
-    if (protoPropertyNames[i] == "createObjectURL" || protoPropertyNames[i] == "revokeObjectURL")
-        continue;
     if (protoPropertyNames[i] == "constructor")
         continue;
     shouldBeUndefined("Object.getOwnPropertyDescriptor(window, '" + protoPropertyNames[i] + "')");

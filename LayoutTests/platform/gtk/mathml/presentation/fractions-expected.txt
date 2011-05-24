@@ -4,9 +4,9 @@ layer at (0,0) size 800x320
   RenderBlock {html} at (0,0) size 800x320
     RenderBody {body} at (8,16) size 784x288
       RenderBlock {p} at (0,0) size 784x34
-        RenderText {#text} at (0,6) size 45x19
-          text run at (0,6) width 45: "simple: "
-        RenderBlock {math} at (45,0) size 16x34
+        RenderText {#text} at (0,6) size 49x19
+          text run at (0,6) width 49: "simple: "
+        RenderBlock {math} at (49,0) size 16x34
           RenderBlock {mfrac} at (1,0) size 14x34
             RenderBlock {mfrac} at (0,0) size 14x16
               RenderInline {mn} at (0,0) size 8x25
@@ -17,9 +17,9 @@ layer at (0,0) size 800x320
                 RenderText {#text} at (3,-2) size 8x25
                   text run at (3,-2) width 8: "2"
       RenderBlock {p} at (0,50) size 784x34
-        RenderText {#text} at (0,6) size 189x19
-          text run at (0,6) width 189: "more complex (should be red): "
-        RenderBlock {math} at (189,0) size 35x34
+        RenderText {#text} at (0,6) size 197x19
+          text run at (0,6) width 197: "more complex (should be red): "
+        RenderBlock {math} at (197,0) size 35x34
           RenderBlock {mfrac} at (1,0) size 33x34 [color=#FF0000]
             RenderBlock {mfrac} at (0,0) size 22x16
               RenderBlock {mrow} at (3,0) size 27x16
@@ -47,9 +47,9 @@ layer at (0,0) size 800x320
                     text run at (19,-4) width 8: "2"
         RenderText {#text} at (0,0) size 0x0
       RenderBlock {p} at (0,100) size 784x34
-        RenderText {#text} at (0,6) size 29x19
-          text run at (0,6) width 29: "text: "
-        RenderBlock {math} at (29,0) size 128x34
+        RenderText {#text} at (0,6) size 31x19
+          text run at (0,6) width 31: "text: "
+        RenderBlock {math} at (31,0) size 128x34
           RenderBlock {mfrac} at (1,0) size 126x34
             RenderBlock {mfrac} at (0,0) size 126x16
               RenderInline {mtext} at (0,0) size 99x25
@@ -61,9 +61,9 @@ layer at (0,0) size 800x320
                   text run at (3,-2) width 120: "number of changes"
         RenderText {#text} at (0,0) size 0x0
       RenderBlock {p} at (0,150) size 784x38
-        RenderText {#text} at (0,6) size 163x19
-          text run at (0,6) width 163: "line thickness by keyword: "
-        RenderBlock {math} at (163,0) size 16x34
+        RenderText {#text} at (0,6) size 173x19
+          text run at (0,6) width 173: "line thickness by keyword: "
+        RenderBlock {math} at (173,0) size 16x34
           RenderBlock {mfrac} at (1,0) size 14x34
             RenderBlock {mfrac} at (0,0) size 14x16
               RenderInline {mn} at (0,0) size 8x25
@@ -73,7 +73,7 @@ layer at (0,0) size 800x320
               RenderInline {mn} at (0,0) size 8x25
                 RenderText {#text} at (3,-2) size 8x25
                   text run at (3,-2) width 8: "2"
-        RenderBlock {math} at (179,0) size 16x36
+        RenderBlock {math} at (189,0) size 16x36
           RenderBlock {mfrac} at (1,0) size 14x36
             RenderBlock {mfrac} at (0,0) size 14x16
               RenderInline {mn} at (0,0) size 8x25
@@ -83,7 +83,7 @@ layer at (0,0) size 800x320
               RenderInline {mn} at (0,0) size 8x25
                 RenderText {#text} at (3,0) size 8x25
                   text run at (3,0) width 8: "2"
-        RenderBlock {math} at (195,0) size 16x38
+        RenderBlock {math} at (205,0) size 16x38
           RenderBlock {mfrac} at (1,0) size 14x38
             RenderBlock {mfrac} at (0,0) size 14x16
               RenderInline {mn} at (0,0) size 8x25
@@ -94,9 +94,9 @@ layer at (0,0) size 800x320
                 RenderText {#text} at (3,2) size 8x25
                   text run at (3,2) width 8: "2"
       RenderBlock {p} at (0,204) size 784x34
-        RenderText {#text} at (0,6) size 128x19
-          text run at (0,6) width 128: "numerator alignment: "
-        RenderBlock {math} at (128,0) size 97x34
+        RenderText {#text} at (0,6) size 138x19
+          text run at (0,6) width 138: "numerator alignment: "
+        RenderBlock {math} at (138,0) size 97x34
           RenderBlock {mfrac} at (1,0) size 95x34
             RenderBlock {mfrac} at (0,0) size 51x16
               RenderInline {mi} at (0,0) size 7x25
@@ -135,9 +135,9 @@ layer at (0,0) size 800x320
                 RenderInline {mn} at (0,0) size 8x25
                   RenderText {#text} at (80,-4) size 8x25
                     text run at (80,-4) width 8: "5"
-        RenderText {#text} at (225,6) size 4x19
-          text run at (225,6) width 4: " "
-        RenderBlock {math} at (229,0) size 97x34
+        RenderText {#text} at (235,6) size 4x19
+          text run at (235,6) width 4: " "
+        RenderBlock {math} at (239,0) size 97x34
           RenderBlock {mfrac} at (1,0) size 95x34
             RenderBlock {mfrac} at (0,0) size 51x16
               RenderInline {mi} at (0,0) size 7x25
@@ -176,9 +176,9 @@ layer at (0,0) size 800x320
                 RenderInline {mn} at (0,0) size 8x25
                   RenderText {#text} at (80,-4) size 8x25
                     text run at (80,-4) width 8: "5"
-        RenderText {#text} at (326,6) size 4x19
-          text run at (326,6) width 4: " "
-        RenderBlock {math} at (330,0) size 97x34
+        RenderText {#text} at (336,6) size 4x19
+          text run at (336,6) width 4: " "
+        RenderBlock {math} at (340,0) size 97x34
           RenderBlock {mfrac} at (1,0) size 95x34
             RenderBlock {mfrac} at (0,0) size 51x16
               RenderInline {mi} at (0,0) size 7x25
@@ -219,9 +219,9 @@ layer at (0,0) size 800x320
                     text run at (80,-4) width 8: "5"
         RenderText {#text} at (0,0) size 0x0
       RenderBlock {p} at (0,254) size 784x34
-        RenderText {#text} at (0,6) size 142x19
-          text run at (0,6) width 142: "denominator alignment: "
-        RenderBlock {math} at (142,0) size 96x34
+        RenderText {#text} at (0,6) size 153x19
+          text run at (0,6) width 153: "denominator alignment: "
+        RenderBlock {math} at (153,0) size 96x34
           RenderBlock {mfrac} at (1,0) size 94x34
             RenderBlock {mfrac} at (0,0) size 50x16
               RenderBlock {mrow} at (3,0) size 88x16
@@ -260,9 +260,9 @@ layer at (0,0) size 800x320
               RenderInline {mi} at (0,0) size 7x25
                 RenderText {#text} at (3,-2) size 7x25
                   text run at (3,-2) width 7: "x"
-        RenderText {#text} at (238,6) size 4x19
-          text run at (238,6) width 4: " "
-        RenderBlock {math} at (242,0) size 96x34
+        RenderText {#text} at (249,6) size 4x19
+          text run at (249,6) width 4: " "
+        RenderBlock {math} at (253,0) size 96x34
           RenderBlock {mfrac} at (1,0) size 94x34
             RenderBlock {mfrac} at (0,0) size 50x16
               RenderBlock {mrow} at (3,0) size 88x16
@@ -301,9 +301,9 @@ layer at (0,0) size 800x320
               RenderInline {mi} at (0,0) size 7x25
                 RenderText {#text} at (21,-2) size 7x25
                   text run at (21,-2) width 7: "x"
-        RenderText {#text} at (338,6) size 4x19
-          text run at (338,6) width 4: " "
-        RenderBlock {math} at (342,0) size 96x34
+        RenderText {#text} at (349,6) size 4x19
+          text run at (349,6) width 4: " "
+        RenderBlock {math} at (353,0) size 96x34
           RenderBlock {mfrac} at (1,0) size 94x34
             RenderBlock {mfrac} at (0,0) size 50x16
               RenderBlock {mrow} at (3,0) size 88x16

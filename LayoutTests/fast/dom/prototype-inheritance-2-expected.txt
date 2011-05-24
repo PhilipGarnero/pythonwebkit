@@ -3,13 +3,12 @@ Make sure prototypes are set up using the window a property came from, instead o
 On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
 
 
-FAIL Array from inner.document.forms.testForm.0.ownerDocument.defaultView.console.profiles
+PASS Array from inner.document.forms.testForm.0.ownerDocument.defaultView.console.profiles
 PASS Attr from inner.document.forms.testForm.0.attributes.0
 PASS AttrConstructor from inner.document.forms.testForm.0.attributes.0.constructor
 PASS AttrPrototype from inner.document.forms.testForm.0.attributes.0.__proto__
 PASS BarInfo from inner.document.forms.testForm.0.ownerDocument.defaultView.menubar
 PASS BarInfoPrototype from inner.document.forms.testForm.0.ownerDocument.defaultView.menubar.__proto__
-FAIL Boolean from inner.document.forms.testForm.0.noValidate
 PASS CSSCharsetRule from inner.document.getElementById("dummyStyle").sheet.cssRules.0
 PASS CSSCharsetRuleConstructor from inner.document.getElementById("dummyStyle").sheet.cssRules.0.constructor
 PASS CSSCharsetRulePrototype from inner.document.getElementById("dummyStyle").sheet.cssRules.0.__proto__
@@ -41,15 +40,15 @@ PASS CSSStyleRulePrototype from inner.document.getElementById("dummyStyle").shee
 PASS CSSStyleSheet from inner.document.forms.testForm.0.ownerDocument.styleSheets.0
 PASS CSSStyleSheetConstructor from inner.document.forms.testForm.0.ownerDocument.styleSheets.0.constructor
 PASS CSSStyleSheetPrototype from inner.document.forms.testForm.0.ownerDocument.styleSheets.0.__proto__
-PASS CSSValue from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-animation-timing-function).0
-PASS CSSValueConstructor from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-animation-timing-function).0.constructor
+PASS CSSValue from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-line-box-contain)
+PASS CSSValueConstructor from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-line-box-contain).constructor
 PASS CSSValueList from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-transition-timing-function)
 PASS CSSValueListConstructor from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(background-position).constructor
 PASS CSSValueListPrototype from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-transition-timing-function).__proto__
-PASS CSSValuePrototype from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(background-clip).__proto__.__proto__
-FAIL CanvasPattern from inner.document.getElementsByTagName("canvas")[0].getContext("2d").createPattern(inner.document.getElementsByTagName("img")[0], "")
-FAIL CanvasPatternConstructor from inner.document.getElementsByTagName("canvas")[0].getContext("2d").createPattern(inner.document.getElementsByTagName("img")[0], "").constructor
-FAIL CanvasPatternPrototype from inner.document.getElementsByTagName("canvas")[0].getContext("2d").createPattern(inner.document.getElementsByTagName("img")[0], "").__proto__
+PASS CSSValuePrototype from inner.getComputedStyle(inner.document.body).getPropertyCSSValue(-webkit-line-box-contain).__proto__
+PASS CanvasPattern from inner.document.getElementsByTagName("canvas")[0].getContext("2d").createPattern(inner.document.getElementsByTagName("img")[0], "")
+PASS CanvasPatternConstructor from inner.document.getElementsByTagName("canvas")[0].getContext("2d").createPattern(inner.document.getElementsByTagName("img")[0], "").constructor
+PASS CanvasPatternPrototype from inner.document.getElementsByTagName("canvas")[0].getContext("2d").createPattern(inner.document.getElementsByTagName("img")[0], "").__proto__
 PASS CanvasRenderingContext2D from inner.document.getElementsByTagName("canvas")[0].getContext("2d")
 PASS CanvasRenderingContext2DConstructor from inner.document.getElementsByTagName("canvas")[0].getContext("2d").constructor
 PASS CanvasRenderingContext2DPrototype from inner.document.getElementsByTagName("canvas")[0].getContext("2d").__proto__
@@ -69,6 +68,8 @@ PASS ConsolePrototype from inner.document.forms.testForm.0.ownerDocument.default
 PASS Counter from inner.document.getElementById("styledSpan").style.getPropertyCSSValue("content")[0].getCounterValue()
 PASS CounterConstructor from inner.document.getElementById("styledSpan").style.getPropertyCSSValue("content")[0].getCounterValue().constructor
 PASS CounterPrototype from inner.document.getElementById("styledSpan").style.getPropertyCSSValue("content")[0].getCounterValue().__proto__
+PASS Crypto from inner.document.forms.testForm.0.ownerDocument.defaultView.crypto
+PASS CryptoPrototype from inner.document.forms.testForm.0.ownerDocument.defaultView.crypto.__proto__
 PASS DOMApplicationCache from inner.document.forms.testForm.0.ownerDocument.defaultView.applicationCache
 PASS DOMApplicationCachePrototype from inner.document.forms.testForm.0.ownerDocument.defaultView.applicationCache.__proto__
 PASS DOMImplementation from inner.document.forms.testForm.0.ownerDocument.implementation
@@ -85,7 +86,7 @@ PASS DOMWindowConstructor from inner.document.forms.testForm.0.ownerDocument.def
 PASS DOMWindowPrototype from inner.document.forms.testForm.0.ownerDocument.defaultView.__proto__
 PASS DocumentPrototype from inner.document.forms.testForm.0.ownerDocument.__proto__.__proto__
 PASS ElementPrototype from inner.document.forms.testForm.0.__proto__.__proto__.__proto__
-FAIL Function from inner.document.location.protocol.constructor
+PASS Function from inner.document.createElement
 PASS HTMLAnchorElement from inner.document.forms.testForm.0.parentNode.firstElementChild
 PASS HTMLAnchorElementConstructor from inner.document.forms.testForm.0.parentNode.firstElementChild.constructor
 PASS HTMLAnchorElementPrototype from inner.document.forms.testForm.0.parentNode.firstElementChild.__proto__
@@ -110,7 +111,7 @@ PASS HTMLButtonElementPrototype from inner.document.getElementsByTagName("canvas
 PASS HTMLCanvasElement from inner.document.getElementsByTagName("canvas")[0].getContext("2d").canvas
 PASS HTMLCanvasElementConstructor from inner.document.getElementsByTagName("canvas")[0].getContext("2d").canvas.constructor
 PASS HTMLCanvasElementPrototype from inner.document.getElementsByTagName("canvas")[0].getContext("2d").canvas.__proto__
-FAIL HTMLCollection from inner.document.testForm
+PASS HTMLCollection from inner.document.testForm
 PASS HTMLDListElement from inner.document.getElementsByTagName("canvas")[0].getContext("2d").canvas.nextElementSibling
 PASS HTMLDListElementConstructor from inner.document.getElementsByTagName("canvas")[0].getContext("2d").canvas.nextElementSibling.constructor
 PASS HTMLDListElementPrototype from inner.document.getElementsByTagName("canvas")[0].getContext("2d").canvas.nextElementSibling.__proto__
@@ -170,7 +171,6 @@ PASS NodeList from inner.document.forms.testForm
 PASS NodeListConstructor from inner.document.forms.testForm.constructor
 PASS NodeListPrototype from inner.document.forms.testForm.__proto__
 PASS NodePrototype from inner.document.forms.testForm.0.attributes.0.__proto__.__proto__
-FAIL Number from inner.document.forms.testForm.length
 PASS Object from inner.document.location.__proto__.__proto__
 PASS Plugin from inner.document.forms.testForm.0.ownerDocument.defaultView.clientInformation.mimeTypes.0.enabledPlugin
 PASS PluginArray from inner.document.forms.testForm.0.ownerDocument.defaultView.clientInformation.plugins
@@ -193,7 +193,6 @@ PASS ScreenPrototype from inner.document.forms.testForm.0.ownerDocument.defaultV
 PASS Storage from inner.document.forms.testForm.0.ownerDocument.defaultView.localStorage
 PASS StorageConstructor from inner.document.forms.testForm.0.ownerDocument.defaultView.localStorage.constructor
 PASS StoragePrototype from inner.document.forms.testForm.0.ownerDocument.defaultView.localStorage.__proto__
-FAIL String from inner.document.location.protocol
 PASS StyleMedia from inner.document.forms.testForm.0.ownerDocument.defaultView.styleMedia
 PASS StyleMediaConstructor from inner.document.forms.testForm.0.ownerDocument.defaultView.styleMedia.constructor
 PASS StyleMediaPrototype from inner.document.forms.testForm.0.ownerDocument.defaultView.styleMedia.__proto__
@@ -216,7 +215,6 @@ PASS WebKitCSSKeyframesRule from inner.document.getElementById("dummyStyle").she
 PASS WebKitCSSKeyframesRuleConstructor from inner.document.getElementById("dummyStyle").sheet.cssRules.6.constructor
 PASS WebKitCSSKeyframesRulePrototype from inner.document.getElementById("dummyStyle").sheet.cssRules.6.__proto__
 Never found Audio
-Never found BlobBuilder
 Never found Blob
 Never found CDATASection
 Never found CSSRule
@@ -252,6 +250,7 @@ Never found HTMLHeadingElement
 Never found HTMLIFrameElement
 Never found HTMLImageElement
 Never found HTMLIsIndexElement
+Never found HTMLKeygenElement
 Never found HTMLLIElement
 Never found HTMLLabelElement
 Never found HTMLLegendElement
@@ -271,7 +270,6 @@ Never found HTMLOutputElement
 Never found HTMLParagraphElement
 Never found HTMLParamElement
 Never found HTMLPreElement
-Never found HTMLProgressElement
 Never found HTMLQuoteElement
 Never found HTMLScriptElement
 Never found HTMLSelectElement
@@ -329,6 +327,7 @@ Never found SVGFEConvolveMatrixElement
 Never found SVGFEDiffuseLightingElement
 Never found SVGFEDisplacementMapElement
 Never found SVGFEDistantLightElement
+Never found SVGFEDropShadowElement
 Never found SVGFEFloodElement
 Never found SVGFEFuncAElement
 Never found SVGFEFuncBElement

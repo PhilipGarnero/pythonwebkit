@@ -8,7 +8,6 @@ PASS typeof Object.getOwnPropertyDescriptor(window, 'Attr') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'Audio') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'BeforeLoadEvent') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'Blob') is 'object'
-PASS typeof Object.getOwnPropertyDescriptor(window, 'BlobBuilder') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'Boolean') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'CDATASection') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'CSSCharsetRule') is 'object'
@@ -31,6 +30,7 @@ PASS typeof Object.getOwnPropertyDescriptor(window, 'CharacterData') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'ClientRect') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'ClientRectList') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'Clipboard') is 'object'
+PASS typeof Object.getOwnPropertyDescriptor(window, 'CloseEvent') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'Comment') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'Counter') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'DOMException') is 'object'
@@ -88,6 +88,7 @@ PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLIFrameElement') is 'obj
 PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLImageElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLInputElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLIsIndexElement') is 'object'
+PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLKeygenElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLLIElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLLabelElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'HTMLLegendElement') is 'object'
@@ -200,6 +201,7 @@ PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEConvolveMatrixElement'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEDiffuseLightingElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEDisplacementMapElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEDistantLightElement') is 'object'
+PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEDropShadowElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEFloodElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEFuncAElement') is 'object'
 PASS typeof Object.getOwnPropertyDescriptor(window, 'SVGFEFuncBElement') is 'object'
@@ -507,6 +509,7 @@ PASS Object.getOwnPropertyDescriptor(window, 'getMatchedCSSRules') is undefined.
 PASS Object.getOwnPropertyDescriptor(window, 'getSelection') is undefined.
 PASS Object.getOwnPropertyDescriptor(window, 'hasOwnProperty') is undefined.
 PASS Object.getOwnPropertyDescriptor(window, 'isPrototypeOf') is undefined.
+PASS Object.getOwnPropertyDescriptor(window, 'matchMedia') is undefined.
 PASS Object.getOwnPropertyDescriptor(window, 'moveBy') is undefined.
 PASS Object.getOwnPropertyDescriptor(window, 'moveTo') is undefined.
 PASS Object.getOwnPropertyDescriptor(window, 'open') is undefined.

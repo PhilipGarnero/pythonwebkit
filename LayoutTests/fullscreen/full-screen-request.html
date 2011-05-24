@@ -6,7 +6,7 @@
         logResult(false, "Element.prototype.webkitRequestFullScreen == undefined");
         endTest();
     } else {
-        waitForEventTestAndEnd(document, 'webkitfullscreenchange', "document.webkitFullScreen==true");
-        document.documentElement.webkitRequestFullScreen();
+        waitForEventTestAndEnd(document, 'webkitfullscreenchange', "document.webkitIsFullScreen==true");
+        runWithKeyDown(function(){document.documentElement.webkitRequestFullScreen()});
     }
 </script>

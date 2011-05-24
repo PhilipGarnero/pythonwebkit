@@ -4,9 +4,9 @@ layer at (0,0) size 800x53
   RenderBlock {html} at (0,0) size 800x53
     RenderBody {body} at (8,16) size 784x21
       RenderBlock {p} at (0,0) size 784x21
-        RenderText {#text} at (0,0) size 73x19
-          text run at (0,0) width 73: "superscript: "
-        RenderBlock {math} at (73,2) size 15x19
+        RenderText {#text} at (0,0) size 76x19
+          text run at (0,0) width 76: "superscript: "
+        RenderBlock {math} at (76,2) size 15x19
           RenderBlock {msup} at (1,0) size 13x19
             RenderBlock {msup} at (0,3) size 7x16
               RenderInline {mi} at (0,0) size 7x25

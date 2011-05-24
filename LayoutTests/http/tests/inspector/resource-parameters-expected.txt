@@ -4,43 +4,47 @@ Tests that resources panel shows form data parameters.
 
 {
     pageref : "http://localhost:8000/inspector/resources/post-target.cgi?queryParam1=queryValue1&queryParam2="
-    startedDateTime : <string>
+    startedDateTime : <object>
     time : <number>
     request : {
         method : "POST"
         url : "http://localhost:8000/inspector/resources/post-target.cgi?queryParam1=queryValue1&queryParam2="
         headers : <object>
-        headersSize : -1
-        bodySize : -1
-        queryString : {
-            0 : {
+        queryString : [
+            {
                 name : "queryParam1"
                 value : "queryValue1"
             }
-            1 : {
+            {
                 name : "queryParam2"
                 value : ""
             }
-        }
+        ]
+        cookies : [
+        ]
+        headersSize : -1
+        bodySize : -1
         postData : {
             mimeType : "application/x-www-form-urlencoded"
             text : "formParam1=formValue1&formParam2="
-            params : {
-                0 : {
+            params : [
+                {
                     name : "formParam1"
                     value : "formValue1"
                 }
-                1 : {
+                {
                     name : "formParam2"
                     value : ""
                 }
-            }
+            ]
         }
     }
     response : {
         status : 200
         statusText : "OK"
         headers : <object>
+        cookies : [
+        ]
         content : {
             size : 14
             mimeType : "application/xml"
@@ -48,6 +52,8 @@ Tests that resources panel shows form data parameters.
         redirectURL : ""
         headersSize : -1
         bodySize : 14
+    }
+    cache : {
     }
     timings : <object>
 }

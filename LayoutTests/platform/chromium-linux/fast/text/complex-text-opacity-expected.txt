@@ -13,29 +13,29 @@ layer at (0,0) size 800x600
           text run at (427,0) width 9: ")."
       RenderBlock {P} at (0,36) size 784x0
       RenderBlock {DIV} at (0,36) size 784x30
-        RenderInline {SPAN} at (0,0) size 42x29
-          RenderText {#text} at (0,0) size 42x29
-            text run at (0,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-        RenderText {#text} at (42,0) size 6x29
-          text run at (42,0) width 6: " "
-        RenderText {#text} at (90,0) size 6x29
-          text run at (90,0) width 6: " "
-        RenderText {#text} at (138,0) size 6x29
-          text run at (138,0) width 6: " "
-        RenderText {#text} at (186,0) size 6x29
-          text run at (186,0) width 6: " "
-        RenderText {#text} at (234,0) size 6x29
-          text run at (234,0) width 6: " "
-        RenderText {#text} at (282,0) size 6x29
-          text run at (282,0) width 6: " "
-        RenderText {#text} at (330,0) size 6x29
-          text run at (330,0) width 6: " "
-        RenderText {#text} at (378,0) size 6x29
-          text run at (378,0) width 6: " "
-        RenderText {#text} at (426,0) size 6x29
-          text run at (426,0) width 6: " "
-        RenderText {#text} at (474,0) size 6x29
-          text run at (474,0) width 6: " "
+        RenderInline {SPAN} at (0,0) size 45x29
+          RenderText {#text} at (0,0) size 45x29
+            text run at (0,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+        RenderText {#text} at (45,0) size 6x29
+          text run at (45,0) width 6: " "
+        RenderText {#text} at (96,0) size 6x29
+          text run at (96,0) width 6: " "
+        RenderText {#text} at (147,0) size 6x29
+          text run at (147,0) width 6: " "
+        RenderText {#text} at (198,0) size 6x29
+          text run at (198,0) width 6: " "
+        RenderText {#text} at (249,0) size 6x29
+          text run at (249,0) width 6: " "
+        RenderText {#text} at (300,0) size 6x29
+          text run at (300,0) width 6: " "
+        RenderText {#text} at (351,0) size 6x29
+          text run at (351,0) width 6: " "
+        RenderText {#text} at (402,0) size 6x29
+          text run at (402,0) width 6: " "
+        RenderText {#text} at (453,0) size 6x29
+          text run at (453,0) width 6: " "
+        RenderText {#text} at (504,0) size 6x29
+          text run at (504,0) width 6: " "
         RenderText {#text} at (0,0) size 0x0
       RenderBlock {DIV} at (0,66) size 784x30
         RenderInline {SPAN} at (0,0) size 53x29
@@ -62,46 +62,46 @@ layer at (0,0) size 800x600
         RenderText {#text} at (53,0) size 6x29
           text run at (53,0) width 6 RTL: " "
         RenderText {#text} at (0,0) size 0x0
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (48,0) size 42x29
-      text run at (48,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (96,0) size 42x29
-      text run at (96,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (144,0) size 42x29
-      text run at (144,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (192,0) size 42x29
-      text run at (192,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (240,0) size 42x29
-      text run at (240,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (288,0) size 42x29
-      text run at (288,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (336,0) size 42x29
-      text run at (336,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (384,0) size 42x29
-      text run at (384,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (432,0) size 42x29
-      text run at (432,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
-layer at (8,44) size 42x29
-  RenderInline {SPAN} at (0,0) size 42x29
-    RenderText {#text} at (480,0) size 42x29
-      text run at (480,0) width 42: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (51,0) size 45x29
+      text run at (51,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (102,0) size 45x29
+      text run at (102,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (153,0) size 45x29
+      text run at (153,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (204,0) size 45x29
+      text run at (204,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (255,0) size 45x29
+      text run at (255,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (306,0) size 45x29
+      text run at (306,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (357,0) size 45x29
+      text run at (357,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (408,0) size 45x29
+      text run at (408,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (459,0) size 45x29
+      text run at (459,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
+layer at (8,44) size 45x29
+  RenderInline {SPAN} at (0,0) size 45x29
+    RenderText {#text} at (510,0) size 45x29
+      text run at (510,0) width 45: "\x{916}\x{94B}\x{91C}\x{947}\x{902}"
 layer at (8,74) size 53x29
   RenderInline {SPAN} at (0,0) size 53x29
     RenderText {#text} at (531,0) size 53x29

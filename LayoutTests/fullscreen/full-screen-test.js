@@ -1,11 +1,26 @@
 var console = null;
 var printFullTestDetails = true; // This is optionaly switched of by test whose tested values can differ. (see disableFullTestDetailsPrinting())
+var runPixelTests;
 
 logConsole();
 
 if (window.layoutTestController) {
-    layoutTestController.dumpAsText();
+    layoutTestController.dumpAsText(runPixelTests);
     layoutTestController.waitUntilDone();
+}
+
+function runWithKeyDown(fn) 
+{
+    // FIXME: WKTR does not yet support the keyDown() message.  Do a mouseDown here
+    // instead until keyDown support is added.
+	var eventName = !window.layoutTestController || eventSender.keyDown ? 'keypress' : 'mousedown'
+    document.addEventListener(eventName, function() { fn(); }, false);
+    if (window.layoutTestController) {
+        if (eventSender.keyDown)
+            eventSender.keyDown(" ", []);
+        else
+            eventSender.mouseDown();
+    }
 }
 
 function logConsole()
@@ -72,9 +87,9 @@ function reportExpected(success, testFuncString, comparison, expected, observed)
     logResult(success, msg);
 }
 
-function waitForEventAndEnd(eventName, funcString)
+function waitForEventAndEnd(element, eventName, funcString)
 {
-    waitForEvent(eventName, funcString, true)
+    waitForEvent(element, eventName, funcString, true)
 }
 
 function waitForEvent(element, eventName, func, endit)
