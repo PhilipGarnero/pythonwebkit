@@ -1,0 +1,26 @@
+Source: pythonwebkit
+Priority: extra
+Maintainer: Philip Hands <phil@hands.com>
+Build-Depends: debhelper (>= 7.0.50~),
+    libatk1.0-0 (>= 1.29.3), libc6 (>= 2.3.2), libcairo2 (>= 1.6.0), libenchant1c2a (>= 1.6), libfontconfig1 (>= 2.8.0), libfreetype6 (>= 2.2.1), libgail18 (>= 1.18.0), libglib2.0-0 (>= 2.24.0),
+    libgstreamer-plugins-base0.10-0 (>= 0.10.23), libgstreamer0.10-0 (>= 0.10.20), libgtk2.0-0 (>= 2.20.0), libicu44 (>= 4.4.1-1), libjpeg62 (>= 6b1), libpango1.0-0 (>= 1.22.0), libpng12-0 (>= 1.2.13-4),
+    libsoup2.4-1 (>= 2.29.90), libsqlite3-0 (>= 3.7.3), libstdc++6 (>= 4.1.1), libxml2 (>= 2.7.4), libxslt1.1 (>= 1.1.25), libxt6, libwebkit-1.0-common (>= 1.2.7)
+Standards-Version: 3.8.4
+Section: libs
+Homepage: http://www.gnu.org/software/pythonwebkit/
+#Vcs-Git: git://git.debian.org/collab-maint/pythonwebkit.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/pythonwebkit.git;a=summary
+
+Package: libpythonwebkit-dev
+Section: libdevel
+Architecture: any
+Depends: libpythonwebkit0 (= ${binary:Version})
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
+
+Package: libpythonwebkit0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
