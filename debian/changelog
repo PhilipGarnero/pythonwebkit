@@ -1,5 +1,6 @@
-pythonwebkit (0~hands.20010627.1-1) unstable; urgency=low
+pythonwebkit (1.0-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release.  Closes #627659
 
- -- Philip Hands <phil@hands.com>  Mon, 27 Jun 2011 23:48:27 +0100
+ -- Phil Hands <phil@hands.com>  Thu, 28 Apr 2011 17:55:41 -0300
+

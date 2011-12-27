@@ -1,26 +1,76 @@
 Source: pythonwebkit
-Priority: extra
-Maintainer: Philip Hands <phil@hands.com>
-Build-Depends: debhelper (>= 7.0.50~),
-    libatk1.0-0 (>= 1.29.3), libc6 (>= 2.3.2), libcairo2 (>= 1.6.0), libenchant1c2a (>= 1.6), libfontconfig1 (>= 2.8.0), libfreetype6 (>= 2.2.1), libgail18 (>= 1.18.0), libglib2.0-0 (>= 2.24.0),
-    libgstreamer-plugins-base0.10-0 (>= 0.10.23), libgstreamer0.10-0 (>= 0.10.20), libgtk2.0-0 (>= 2.20.0), libicu44 (>= 4.4.1-1), libjpeg62 (>= 6b1), libpango1.0-0 (>= 1.22.0), libpng12-0 (>= 1.2.13-4),
-    libsoup2.4-1 (>= 2.29.90), libsqlite3-0 (>= 3.7.3), libstdc++6 (>= 4.1.1), libxml2 (>= 2.7.4), libxslt1.1 (>= 1.1.25), libxt6, libwebkit-1.0-common (>= 1.2.7)
+Priority: optional
+Section: libs
+Maintainer: Phil Hands <phil@hands.com>
+Uploaders: Phil Hands <phil@hands.com>
+Build-Depends: debhelper (>= 5.0),
+               chrpath,
+               libgtk2.0-dev (>= 2.10),
+               libpango1.0-dev (>= 1.16),
+               libicu-dev,
+               python-support (>= 1.0.4),
+               python-all-dev (>= 2.3.5-11),
+               python-ply,
+               libxslt-dev,
+               libsoup2.4-dev (>= 2.29.90),
+               libsqlite3-dev,
+               gperf,
+               bison,
+               flex,
+               libjpeg62-dev,
+               libpng12-dev,
+               libxt-dev,
+               autotools-dev,
+               libgstreamer-plugins-base0.10-dev,
+               libenchant-dev,
+               libgail-dev
 Standards-Version: 3.8.4
-Section: libs
-Homepage: http://www.gnu.org/software/pythonwebkit/
-#Vcs-Git: git://git.debian.org/collab-maint/pythonwebkit.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/pythonwebkit.git;a=summary
+DM-Upload-Allowed: yes
+Homepage: http://www.gnu.org/software/pythonwebkit
+XS-Python-Version: >= 2.4
 
-Package: libpythonwebkit-dev
-Section: libdevel
-Architecture: any
-Depends: libpythonwebkit0 (= ${binary:Version})
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
-
-Package: libpythonwebkit0
+Package: libwebkitgtk-python-1.0-1
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}
+Description: Web content engine library for Gtk+
+ WebKit is a web content engine, derived from KHTML and KJS from KDE, and
+ used primarily in Apple's Safari browser.  It is made to be embedded in
+ other applications, such as mail readers, or web browsers.
+ .
+ It is able to display content such as HTML, SVG, XML, and others. It also
+ supports DOM, XMLHttpRequest, XSLT, CSS, Javascript/ECMAscript and more.
+ .
+ This is the library for embedding in Python-Gtk+ applications.
+
+
+Package: python-pywebkitgtk
+Section: python
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, libwebkitgtk-python-1.0-1, ${python:Depends}, python-gtk2
+XB-Python-Version: ${python:Versions}
+Description: Python DOM (HTML5) Bindings to Webkit (GTK2 version)
+ WebKit is a web content engine, derived from KHTML and KJS from KDE, and
+ used primarily in Apple's Safari browser.  
+ .
+ It is able to display content such as HTML, SVG, XML, and others. It also
+ supports DOM, XMLHttpRequest, XSLT, CSS, Javascript/ECMAscript and more.
+ .
+ This package contains a python module which provides a simple, single
+ stand-alone window, where access to the full features of HTML5 are
+ provided, directly, to python.  Features and functions which are normally
+ the exclusive domain of javascript are made available in a 100% compatible
+ way: Webkit "javascript" Timers, HTTPRequest, onmouseover and other callbacks,
+ CSS properties, appendChild, getElementsByTagName: everything that can be
+ expected to be accessed via javascript is made available to python
+ programmers.
+ .
+ There are several "ports" of PythonWebkit: this module contains the GTK2
+ version.  The PythonWebkit bindings are faster than the GObject bindings
+ because they are direct; they are also feature-comparable to Javascript;
+ they are also more stable than the GObject bindings.
+ .
+ For more information see the GNU PythonWebkit Project at:
+ http://www.gnu.org/software/pythonwebkit
+
+
