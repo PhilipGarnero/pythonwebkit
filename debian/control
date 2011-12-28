@@ -34,7 +34,7 @@ DM-Upload-Allowed: yes
 Homepage: http://www.gnu.org/software/pythonwebkit
 XS-Python-Version: >= 2.4
 
-Package: libwebkitgtk-python-1.0-1
+Package: libwebkitgtk-python1
 Section: libs
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}
@@ -48,15 +48,14 @@ Description: Web content engine library for Gtk+
  .
  This is the library for embedding in Python-Gtk+ applications.
 
-
 Package: python-pywebkitgtk
 Section: python
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, libwebkitgtk-python-1.0-1, ${python:Depends}, python-gtk2
+Depends: ${misc:Depends}, ${shlibs:Depends}, libwebkitgtk-python1, ${python:Depends}, python-gtk2
 XB-Python-Version: ${python:Versions}
 Description: Python DOM (HTML5) Bindings to Webkit (GTK2 version)
  WebKit is a web content engine, derived from KHTML and KJS from KDE, and
- used primarily in Apple's Safari browser.  
+ used primarily in Apple's Safari browser.
  .
  It is able to display content such as HTML, SVG, XML, and others. It also
  supports DOM, XMLHttpRequest, XSLT, CSS, Javascript/ECMAscript and more.
@@ -77,5 +76,3 @@ Description: Python DOM (HTML5) Bindings to Webkit (GTK2 version)
  .
  For more information see the GNU PythonWebkit Project at:
  http://www.gnu.org/software/pythonwebkit
-
-
