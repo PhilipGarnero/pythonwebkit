@@ -64,10 +64,7 @@ clean:
 
 	dh_clean
 
-configure:
-	./autogen.sh
-
-build: configure $(PYVERS:%=build-%/build-stamp)
+build: $(PYVERS:%=build-%/build-stamp)
 
 build-%/build-stamp:
 	dh_testdir
@@ -78,7 +75,7 @@ build-%/build-stamp:
 	CXXFLAGS="$(CFLAGS)" \
 	CC="gcc -Wl,--as-needed" \
 	CXX="g++ -Wl,--as-needed" \
-	PYTHON=`which python$*` ../configure --prefix=/usr \
+	PYTHON=`which python$*` ../autogen.sh --prefix=/usr \
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--with-python-config=python$*-config \
