@@ -4,6 +4,11 @@ Section: libs
 Maintainer: Phil Hands <phil@hands.com>
 Uploaders: Phil Hands <phil@hands.com>
 Build-Depends: debhelper (>= 5.0),
+               autoconf,
+               automake,
+               libtool,
+               gtk-doc-tools,
+               python-gtk2-dev,
                chrpath,
                libgtk2.0-dev (>= 2.10),
                libpango1.0-dev (>= 1.16),
