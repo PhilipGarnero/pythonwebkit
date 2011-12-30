@@ -14,7 +14,7 @@ Build-Depends: debhelper (>= 5.0),
                libpango1.0-dev (>= 1.16),
                libicu-dev,
                python-support (>= 1.0.4),
-               python-all-dev (>=2.7) | python2.6-dev,
+               python-all-dev,
                python-ply,
                libxslt-dev,
                libsoup2.4-dev (>= 2.29.90),
@@ -32,7 +32,7 @@ Build-Depends: debhelper (>= 5.0),
 Standards-Version: 3.8.4
 DM-Upload-Allowed: yes
 Homepage: http://www.gnu.org/software/pythonwebkit
-XS-Python-Version: >= 2.4
+XS-Python-Version: >= 2.6
 
 Package: libwebkitgtk-python1
 Section: libs
