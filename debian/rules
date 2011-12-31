@@ -110,6 +110,7 @@ binary-indep: build install
 	dh_compress -i
 	dh_fixperms -i
 	dh_pysupport -i
+	dpkg-shlibdeps debian/tmp/usr/lib/*
 	dh_installdeb -i
 	dh_gencontrol -i
 	dh_md5sums -i
@@ -127,6 +128,7 @@ binary-arch: build install
 	dh_compress -a
 	dh_fixperms -a
 	dh_pysupport -a
+	dpkg-shlibdeps debian/tmp/usr/lib/*  # FIXME -- should amost certainly be using dh_shlibdeps more cleverly
 	dh_makeshlibs -a -V 'libwebkitgtk-python-1.0-1 (>= 1.0.2)' -- -c4
 	dh_installdeb -a
 	dh_shlibdeps -a
