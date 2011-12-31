@@ -129,7 +129,7 @@ binary-arch: build install
 	dh_fixperms -a
 	dh_pysupport -a
 	dpkg-shlibdeps debian/tmp/usr/lib/*  # FIXME -- should amost certainly be using dh_shlibdeps more cleverly
-	dh_makeshlibs -a -V 'libwebkitgtk-python-1.0-1 (>= 1.0.2)' -- -c4
+	dh_makeshlibs -a -V 'libwebkitgtk-python1 (>= 1.0-1)' -- -c4
 	dh_installdeb -a
 	dh_shlibdeps -a
 	dh_gencontrol -a
