@@ -32,7 +32,6 @@ Build-Depends: debhelper (>= 5.0),
 Standards-Version: 3.8.4
 DM-Upload-Allowed: yes
 Homepage: http://www.gnu.org/software/pythonwebkit
-XS-Python-Version: >= 2.6
 
 Package: libwebkitgtk-python1
 Section: libs
