@@ -1,57 +1,75 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
 
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
+CFLAGS = -Wall
 PYVERS := $(shell pyversions -r)
 
+ifeq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+        CFLAGS += -O2
+else
+        CFLAGS += -O0
+endif
+
+ifeq ($(DEB_BUILD_ARCH),alpha)
+        CFLAGS += -Wl,--no-relax
+endif
+
+ifeq ($(DEB_BUILD_ARCH),s390)
+        CFLAGS += -gstabs
+endif
+
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	MAKEARGUMENTS += -j$(NUMJOBS)
+endif
+
 %:
-	dh $@ 
+	dh $@ --parallel
 
 override_dh_auto_clean:
 	# mostly over-riding to avoid attempt to run xcodebuild -- not sure what's up there
-	rm -f build-stamp install-stamp
-	rm -rf build-*
-	rm -f WebKit/gtk/docs/version.xml
-	rm -f GNUmakefile.in
-	rm -f WebKit/dfb/docs/GNUmakefile.in
-	rm -f WebKit/gtk/docs/GNUmakefile.in
-	rm -f aclocal.m4
-	rm -rf autom4te.cache/
-	rm -f autotools/compile
-	rm -f autotools/config.guess
-	rm -f autotools/config.sub
-	rm -f autotools/depcomp
-	rm -f autotools/gtk-doc.m4
-	rm -f autotools/install-sh
-	rm -f autotools/libtool.m4
-	rm -f autotools/ltmain.sh
-	rm -f autotools/ltoptions.m4
-	rm -f autotools/ltsugar.m4
-	rm -f autotools/ltversion.m4
-	rm -f autotools/lt~obsolete.m4
-	rm -f autotools/missing
-	rm -f autotoolsconfig.h.in
-	rm -f config.log
-	rm -f config.status
-	rm -f configure
-	rm -f doltcompile
-	rm -f doltlibtool
-	rm -f gtk-doc.make
+	#rm -f build-stamp install-stamp
+	#rm -rf build-*
+	#rm -f WebKit/gtk/docs/version.xml
+	#rm -f GNUmakefile.in
+	#rm -f WebKit/dfb/docs/GNUmakefile.in
+	#rm -f WebKit/gtk/docs/GNUmakefile.in
+	#rm -f aclocal.m4
+	#rm -rf autom4te.cache/
+	#rm -f autotools/compile
+	#rm -f autotools/config.guess
+	#rm -f autotools/config.sub
+	#rm -f autotools/depcomp
+	#rm -f autotools/gtk-doc.m4
+	#rm -f autotools/install-sh
+	#rm -f autotools/libtool.m4
+	#rm -f autotools/ltmain.sh
+	#rm -f autotools/ltoptions.m4
+	#rm -f autotools/ltsugar.m4
+	#rm -f autotools/ltversion.m4
+	#rm -f autotools/lt~obsolete.m4
+	#rm -f autotools/missing
+	#rm -f autotoolsconfig.h.in
+	#rm -f config.log
+	#rm -f config.status
+	#rm -f configure
+	#rm -f doltcompile
+	#rm -f doltlibtool
+	#rm -f gtk-doc.make
 
 override_dh_install:
 override_dh_auto_configure:
 override_dh_auto_build:
 override_dh_auto_install:
 	for pyver in $(PYVERS); do \
+		CFLAGS="$(CFLAGS)" \
+		CXXFLAGS="$(CFLAGS)" \
+		CC="gcc -Wl,--as-needed" \
+		CXX="g++ -Wl,--as-needed" \
 		PYTHON="$$pyver" ./autogen.sh --prefix=/usr && \
-		$(MAKE) && $(MAKE) install \
-			DESTDIR=$(CURDIR)/debian/tmp && \
-		$(MAKE) clean ; \
+			$(MAKE) $(MAKEARGUMENTS) &&\
+			$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp && \
+			$(MAKE) clean ; \
 	done
