@@ -31,7 +31,7 @@
 #include <objc/objc.h>
 #endif
 
-#if PLATFORM(CF)
+#if PLATFORM(CF) || OS(DARWIN)
 typedef const struct __CFString * CFStringRef;
 #endif
 
@@ -268,7 +268,7 @@ public:
     // to ever prefer copy() over plain old assignment.
     String threadsafeCopy() const;
 
-#if PLATFORM(CF)
+#if PLATFORM(CF) || OS(DARWIN)
     String(CFStringRef);
     CFStringRef createCFString() const;
 #endif

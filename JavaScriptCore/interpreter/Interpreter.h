@@ -34,7 +34,7 @@
 #include "JSCell.h"
 #include "JSValue.h"
 #include "JSObject.h"
-#include "Opcode.h"
+#include "JavaScriptCore/bytecode/Opcode.h"
 #include "RegisterFile.h"
 
 #include <wtf/HashMap.h>

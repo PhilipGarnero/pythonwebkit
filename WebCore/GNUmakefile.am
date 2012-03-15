@@ -3474,7 +3474,12 @@ endif
 if WITH_GTK
 
 webcore_sources += \
-	WebCore/editing/gtk/SelectionControllerGtk.cpp
+	WebCore/editing/gtk/SelectionControllerGtk.cpp 
+
+if OS_DARWIN
+webcore_sources += \
+	WebCore/platform/text/cf/StringCF.cpp
+endif
 
 webcoregtk_sources += \
 	WebCore/accessibility/gtk/AccessibilityObjectAtk.cpp \

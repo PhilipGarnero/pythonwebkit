@@ -28,8 +28,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "UUID.h"
+#include "WebCore/config.h"
+#include "WebCore/platform/UUID.h"
 
 #include "NotImplemented.h"
 
