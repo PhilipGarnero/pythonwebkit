@@ -113,6 +113,7 @@ static GtkWidget*
 create_browser ()
 {
     GtkWidget* scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+    WebKitWebSettings *settings = webkit_web_settings_new ();
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
     web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
@@ -122,6 +123,10 @@ create_browser ()
     g_signal_connect (web_view, "notify::load-status", G_CALLBACK (notify_load_status_cb), web_view);
     g_signal_connect (web_view, "notify::progress", G_CALLBACK (notify_progress_cb), web_view);
     g_signal_connect (web_view, "hovering-over-link", G_CALLBACK (link_hover_cb), web_view);
+
+    g_object_set (G_OBJECT(settings), "user-agent", "Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10"
+, NULL);
+    webkit_web_view_set_settings (WEBKIT_WEB_VIEW(web_view), settings);
 
     return scrolled_window;
 }
