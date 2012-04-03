@@ -1333,10 +1333,10 @@ class IDLDefsParser(defsparser.DefsParser):
                     if obj.name == 'DOMWindow' and m.name == 'open':
                         # XXX HACK! skip it for now
                         continue
-                    if obj.name == 'HTMLMediaElement' \
-                       and m.name in ['pause', 'play', 'load']:
-                        # XXX HACK! skip it for now - needs gesture check
-                        continue
+                    #if obj.name == 'HTMLMediaElement' \
+                    #   and m.name in ['pause', 'play', 'load']:
+                    #    # XXX HACK! skip it for now - needs gesture check
+                    #    continue
                     
                     if obj.name == 'HTMLVideoElement' \
                        and m.name in ['webkitEnterFullScreen',

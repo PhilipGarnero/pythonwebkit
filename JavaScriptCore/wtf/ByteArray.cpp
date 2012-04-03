@@ -26,6 +26,7 @@
 #include "config.h"
 #include "ByteArray.h"
 #include "StdLibExtras.h"
+#include <cstddef>
 
 namespace WTF {
 

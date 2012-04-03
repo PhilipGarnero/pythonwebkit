@@ -398,6 +398,9 @@ class Wrapper:
             handler.write_param(param.ptype, param.pname, param.pdflt,
                                 param.pnull, info)
 
+        if function_obj.attributes.get('NeedsUserGestureCheck', False):
+            info.arglist.append("false")
+            
         if exception_needed:
             info.arglist.append("ec")
             info.codebefore.append("    WebCore::ExceptionCode ec = 0;\n")
