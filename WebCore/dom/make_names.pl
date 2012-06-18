@@ -66,7 +66,7 @@ if ($ENV{CC}) {
 } else {
     $gccLocation = "/usr/bin/gcc";
 }
-my $preprocessor = $gccLocation . " -E -P -x c++";
+my $preprocessor = $gccLocation . " -E -x c++";
 
 GetOptions(
     'tags=s' => \$tagsFile, 
