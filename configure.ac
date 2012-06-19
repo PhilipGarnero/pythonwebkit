@@ -180,17 +180,26 @@ AC_SUBST([WINMM_LIBS])
 AC_SUBST([SHLWAPI_LIBS])
 AC_SUBST([OLE32_LIBS])
 
+# determine the GDK/GTK+ usage
+AC_MSG_CHECKING([usage of GTK+])
+AC_ARG_WITH(gtkplus,
+            AC_HELP_STRING([--without-gtk],
+                           [Build without gtk (only DirectFB) [default=no]]),
+            [with_gtkplus="no"],[with_gtkplus="yes"])
+
+AC_MSG_RESULT([$with_gtkplus])
 
 # determine the GTK+ version to use
 AC_MSG_CHECKING([the GTK+ version to use])
 AC_ARG_WITH([gtk],
         [AS_HELP_STRING([--with-gtk=2.0|3.0], [the GTK+ version to use (default: 2.0)])],
-        [case "$with_gtk" in
+        [case $with_gtkplus != "no" && "$with_gtk" in
         2.0|3.0) ;;
         *) AC_MSG_ERROR([invalid GTK+ version specified]) ;;
         esac],
         [with_gtk=2.0])
 AC_MSG_RESULT([$with_gtk])
+
 
 case "$with_gtk" in
      2.0) GTK_REQUIRED_VERSION=2.10
@@ -233,17 +242,6 @@ case "$with_target" in
 esac
 
 AC_MSG_RESULT([$with_target])
-
-
-# determine the GDK/GTK+ usage
-AC_MSG_CHECKING([usage of GTK+])
-AC_ARG_WITH(gtkplus,
-            AC_HELP_STRING([--without-gtk],
-                           [Build without gtk (only DirectFB) [default=no]]),
-            [with_gtkplus="no"],[with_gtkplus="yes"])
-
-AC_MSG_RESULT([$with_gtkplus])
-
 
 AC_MSG_CHECKING([for Hildon UI extensions])
 AC_ARG_WITH(hildon,
